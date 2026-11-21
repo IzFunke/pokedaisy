@@ -31,6 +31,8 @@ The initial inventory preceded completion of the user's dump. A user-owned Europ
 
 The user's European Pokémon Ultra Moon image was inspected read-only (valid NCSD, decrypted, title ID `0x00040000001B5100`), copied to the same temporary device validation directory, and launched on the Galaxy S25 Ultra. The user chose German and advanced through the opening dialogue to Kukui's first player-profile photo question; no personal profile choice was made. Captured logs identify the running title as `00040000001b5100`; after loading, performance settled near 29.8–30.0 game FPS / 59.8 system FPS at 100% speed. A 445,440-byte `main` file is present in the title's data directory, but it is the only file there (no metadata file), and this does not establish an in-game save or reload. German persistence is unverified because the game has not been restarted since selection. Graphics, title classification, German-language input, and opening dialogue rendering are verified; audio, companion polling, gameplay after setup, save persistence, and longer stability remain unverified. Ultra Sun shares the routing implementation and unit-tested identity mapping but has not been launched on hardware.
 
+A read-only filename check of the user's designated host ROM folder and Dev ROM folder found Pokémon Y and Ultra Moon, but no Ultra Sun image. Ultra Sun's hardware boot check therefore remains pending on the user's own dump becoming available.
+
 Copying settings from the installed official package requires an official settings-export path or access Android does not grant on this device.
 
 ## Git state
