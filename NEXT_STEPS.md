@@ -8,4 +8,4 @@
 6. Reconcile code defects against current upstream behavior; keep changes focused and add regression coverage. Run relevant tests, standard and feature-enabled builds, and `git diff --check` before committing.
 7. Commit validated changes and push only to `origin`. Review fork diff and licensing before drafting (not submitting) an upstream PR; request user approval before submission.
 8. For a complete official-to-Dev settings migration, add an export to an official signed build or use a user-provided export/root-enabled device; current Android package isolation prevents direct extraction. Do not overwrite or reset either app's data.
-9. Add/verify USUM memory maps from live title dumps before enabling companion snapshots; then test game boot and save lifecycle on ARM64 hardware.
+9. Add/verify USUM memory maps from live title dumps before enabling companion snapshots; Ultra Moon boot is verified, but Ultra Sun boot and both titles' save lifecycle still need ARM64 hardware checks.
