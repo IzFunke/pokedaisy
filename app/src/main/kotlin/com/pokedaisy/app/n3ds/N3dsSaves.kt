@@ -36,7 +36,12 @@ object N3dsSaves {
         // Sun's own new save (headless, 2026-11-17): X's format again; Moon the same.
         N3dsCart.POKEMON_SUN_USA to Format(0x40000, 1, 1, true),
         N3dsCart.POKEMON_MOON_USA to Format(0x40000, 1, 1, true),
+        // Ultra Moon's live Azahar metadata on the S25 Ultra (2026-11-21): same 16-byte archive format.
+        N3dsCart.POKEMON_ULTRA_MOON_USA to Format(0x40000, 1, 1, true),
     )
+
+    /** The save archive format known for [titleId], or null when we must not synthesize its metadata. */
+    internal fun formatFor(titleId: Long): Format? = FORMATS[titleId]
 
     /** Azahar's user folder: its SD card, NAND, config and shader caches. On the shared storage, so a save can be put
      * in or copied out over USB. */
@@ -67,7 +72,7 @@ object N3dsSaves {
         val files = folder.listFiles()?.filter { it.isFile }.orEmpty()
         if (files.isEmpty()) return Ready.Ok // a new game: the game formats its own save
         if (!metadata(folder).isFile) {
-            val format = FORMATS[titleId]
+            val format = formatFor(titleId)
                 ?: return Ready.Refused("This game's save has no format file, and PokeDaisy doesn't know the game's own.")
             writeFormat(metadata(folder), format)
             Log.i(TAG, "wrote the save format for ${java.lang.Long.toHexString(titleId)}")
