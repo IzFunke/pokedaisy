@@ -45,6 +45,8 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 
 ## 3DS single-screen portrait follow-up
 
+- 2026-11-22 focused routing rerun: `N3dsCartTest` (4 pass / 1 ROM-dependent skip), `OrasSmCartTest` (2 pass / 6 ROM-dependent skips), `N3dsBattleTapsTest` (3 pass), and `DsStagePolicyTest` (3 pass). No failures. USUM checks verify launch classification and shared Sun/Moon battle taps while explicitly asserting that Ultra Sun / Ultra Moon do not yet have companion memory configs.
+- `:app:assembleDev -Ppokedaisy.n3ds=true --offline --no-daemon`: PASS (APK 84,293,811 bytes, built 2026-11-22). The host build is refreshed; it is not installed on the phone yet.
 - `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.DsStagePolicyTest`: PASS (3 tests). 3DS stages are enabled in portrait and landscape; portrait DS remains unchanged; second-screen, debug-mirror, companion-over-game and fold cases remain excluded.
 - `:app:assembleDev -Ppokedaisy.n3ds=true`: PASS (2026-11-22), APK packaged at `app/build/outputs/apk/dev/app-dev.apk` (84,293,811 bytes).
 - The APK is not yet installed on the Galaxy S25 Ultra. The active Ultra Moon session remains at the player-profile prompt, and the device is locked; no app data was cleared or app uninstalled. Device visual verification remains pending.
