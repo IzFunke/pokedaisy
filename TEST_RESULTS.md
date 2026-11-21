@@ -30,7 +30,7 @@ Gradle completed after 11m42s: 4,194 tests completed, 17 failed, 59 skipped. Fai
 
 ## Game checks
 
-No 3DS game was launched. Pokémon Y was not found in the expected directory during inventory. No ROM was downloaded or touched. Azahar core initialization with a game, graphics/audio/input/save behavior, performance, and long-session stability remain unverified.
+The initial inventory occurred before the user's Pokémon Y dump was available. Afterward, the user's European Pokémon Y image was inspected read-only and a temporary copy was linked from a dedicated Download subfolder in Dev. On the Galaxy S25 Ultra, the actual game booted to its language-selection screen and rendered at about 59.8 FPS / 100% speed in the observed session. The user chose German, which is currently highlighted while the game awaits confirmation to begin. The original ROM was not modified. This verifies title boot, graphics, and D-pad navigation only; it does not yet verify gameplay, audio, save persistence, broad controls, or stability.
 
 ## Current save-folder and title-routing changes
 

@@ -19,15 +19,15 @@ Development is on `feature/azahar-3ds-single-screen` in the personal fork `IzFun
 
 The pushed checkpoint fixes `make submodules` and the developer setup instructions to initialize DSperate, which the Android app build and license asset require but the old setup command omitted. It also adds project status, architecture, research, decision, issue, test and next-step documentation.
 
-Uncommitted work adds USUM retail title recognition and Sun/Moon-style presentation without claiming USUM companion memory support, plus Settings > FOLDERS options for one shared DS save folder and an Azahar 3DS user-data root. DS saves are copied (not moved) when switching to a shared folder. Selecting an empty 3DS root copies the old Azahar tree first. Focused tests and a Dev build pass. The Dev APK was updated on the Galaxy S25 Ultra with `adb install -r`; the regular app was not modified.
+Commit `89c80ab2` adds USUM retail title recognition and Sun/Moon-style presentation without claiming USUM companion memory support, plus Settings > FOLDERS options for one shared DS save folder and an Azahar 3DS user-data root. DS saves are copied (not moved) when switching to a shared folder. Selecting an empty 3DS root copies the old Azahar tree first. Focused tests and a Dev build pass. The Dev APK was updated on the Galaxy S25 Ultra with `adb install -r`; the regular app was not modified.
 
 The official app's private settings have not been copied into Dev. The installed official package is non-debuggable and declares `allowBackup=false`, so Android blocks `run-as` and backup access to its preferences. Dev's existing data remains preserved by in-place installation.
 
 ## Not verified yet
 
-No Pokémon Y ROM was found in the designated directory during the initial inventory. No game content was downloaded or modified. Azahar initialization with a game, Pokémon Y gameplay, X/Y single-screen behavior on hardware, graphics/audio/input/saves, performance, and long-session stability remain unverified. Physical-device checks cover app startup and Android/JNI setup only.
+The initial inventory preceded completion of the user's dump. A user-owned European Pokémon Y `.3ds` image is now present in the designated directory. Its NCSD header and title ID (`0x0004000000055E00`) were checked read-only; the original was left untouched. A temporary device copy in a dedicated Download subfolder was linked in Dev. On the Galaxy S25 Ultra, the actual title booted into its first language-selection screen and rendered at about 59.8 FPS / 100% speed in the captured Azahar session. The user selected German; the language selection is visibly highlighted and the game is awaiting the final “Begin game” confirmation. Do not claim language commitment or gameplay beyond this point. Graphics/title boot and D-pad input are verified; audio, broader gameplay controls, battle/field behavior, save persistence, pause/resume, and long-session stability remain unverified.
 
-USUM real-game boot and companion polling remain unverified; the title detection test is not a launch test. Copying settings from the installed official package requires an official settings-export path or access Android does not grant on this device.
+The user-owned European Pokémon Ultra Moon image is present locally, but has not been launched. USUM real-game boot and companion polling remain unverified; the title detection test is not a launch test. Copying settings from the installed official package requires an official settings-export path or access Android does not grant on this device.
 
 ## Git state
 
