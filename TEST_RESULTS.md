@@ -42,3 +42,9 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 - `:app:assembleDev -Ppokedaisy.n3ds=true`: PASS (2026-11-21).
 - Galaxy S25 Ultra Dev package updated with `adb install -r` and launched. No uninstall or app-data clearing was performed.
 - Official-to-Dev preference transfer was not possible: official package is not debuggable (`run-as` denied) and app manifest disables Android backup (`allowBackup=false`).
+
+## 3DS single-screen portrait follow-up
+
+- `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.DsStagePolicyTest`: PASS (3 tests). 3DS stages are enabled in portrait and landscape; portrait DS remains unchanged; second-screen, debug-mirror, companion-over-game and fold cases remain excluded.
+- `:app:assembleDev -Ppokedaisy.n3ds=true`: PASS (2026-11-22), APK packaged at `app/build/outputs/apk/dev/app-dev.apk` (84,293,811 bytes).
+- The APK is not yet installed on the Galaxy S25 Ultra. The active Ultra Moon session remains at the player-profile prompt, and the device is locked; no app data was cleared or app uninstalled. Device visual verification remains pending.

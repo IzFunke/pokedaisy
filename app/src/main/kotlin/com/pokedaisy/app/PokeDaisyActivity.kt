@@ -4140,10 +4140,17 @@ class PokeDaisyActivity : Activity() {
         syncDsStage(aspect)
     }
 
-    /** The DS layouts are on: a DS game on one screen (or SINGLE SCREEN), held sideways, the game in this activity. */
+    /** DS layouts are on for DS in landscape and for 3DS in either orientation, unless another screen is available. */
     private val dsStageOn: Boolean
-        get() = (romIsNds || romIs3ds) && secondScreen() == null && !debugMirror && !companionOverGame.value && foldActive == null &&
-            resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_PORTRAIT
+        get() = dsStageEnabled(
+            isNds = romIsNds,
+            is3ds = romIs3ds,
+            portrait = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT,
+            hasSecondScreen = secondScreen() != null,
+            debugMirror = debugMirror,
+            companionOverGame = companionOverGame.value,
+            folded = foldActive != null,
+        )
 
     /**
      * SETTINGS > DS LAYOUT onto the stage ([GameScreenView.dsArrange]): where the game and its touch screen go, the
