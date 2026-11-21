@@ -25,4 +25,4 @@ No Pokémon Y ROM was found in the designated directory during the initial inven
 
 ## Git state
 
-Checkpoint `64e20368` is pushed to `origin/feature/azahar-3ds-single-screen`; current smoke-test changes are not committed yet. No upstream PR has been opened. Keep the goal active until game/runtime behavior, compatibility, and release evidence are established.
+Checkpoints `64e20368` (setup and project docs) and `34eec0a6` (ARM64 JNI smoke test) are pushed to `origin/feature/azahar-3ds-single-screen`. No upstream PR has been opened. Keep the goal active until game/runtime behavior, compatibility, and release evidence are established.
