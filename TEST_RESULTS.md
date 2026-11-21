@@ -37,8 +37,8 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 ## Current save-folder and title-routing changes
 
 - `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests "com.pokedaisy.app.SavesLocationTest" --tests "com.pokedaisy.app.n3ds.N3dsCartTest" --tests "com.pokedaisy.app.n3ds.OrasSmCartTest"`: PASS (2026-11-21). Includes DS shared-folder precedence and USUM recognized-but-not-companion-supported checks.
-- `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.n3ds.N3dsCartTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest`: PASS (2026-11-21; rerun after Ultra Moon hardware boot). Confirms title-ID identity, launch/playable routing, Sun/Moon family layout, and deliberate lack of USUM companion memory configs.
-- Same focused command with `--rerun-tasks`: PASS (2026-11-21); rebuilt all selected JVM test dependencies and reran the routing/cart tests successfully.
+- `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.n3ds.N3dsCartTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest --rerun-tasks`: PASS (2026-11-21). It rebuilt selected JVM dependencies; `N3dsCartTest` had 4 pass / 1 ROM-dependent skip, and `OrasSmCartTest` had 2 pass / 6 ROM-dependent skips. The passing cases verify synthetic NCSD/NoCrypto routing for both Ultra IDs, Sun/Moon family classification/layout, and deliberate absence of USUM companion configs. The skipped cases require retail X/ORAS/Sun/Moon ROM files that are not present in this checkout's test directory.
+- `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.n3ds.SmReaderTest`: PASS (2026-11-21), all 6 synthetic-memory tests passed for Sun/Moon scene, bag, battle, camera and pointer-chain reads. These exercise reader logic with constructed bytes, not live Sun/Moon RAM.
 - `:app:assembleDev -Ppokedaisy.n3ds=true`: PASS (2026-11-21).
 - Galaxy S25 Ultra Dev package updated with `adb install -r` and launched. No uninstall or app-data clearing was performed.
 - Official-to-Dev preference transfer was not possible: official package is not debuggable (`run-as` denied) and app manifest disables Android backup (`allowBackup=false`).
