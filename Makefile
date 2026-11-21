@@ -34,9 +34,9 @@ help: ## Show this help
 
 ##@ App
 
-submodules: ## Fetch the mGBA, rcheevos and melonDS submodules, and BananaDS's two (first build only)
+submodules: ## Fetch the Android app's core and license submodules (first build only)
 	git submodule update --init third_party/mgba third_party/rcheevos third_party/melonds
-	git submodule update --init third_party/bananads third_party/melonds-bananads
+	git submodule update --init third_party/dsperate third_party/bananads third_party/melonds-bananads
 
 apk: ## Build the debug APK
 	./gradlew :app:assembleDebug

@@ -3937,7 +3937,7 @@ what the threaded renderer gave, for more moving parts. Both stay 3DS only.
 ## Build
 
 ```bash
-git submodule update --init third_party/mgba third_party/rcheevos third_party/melonds   # first time only (or: make submodules)
+make submodules                                                     # first time only
 ./gradlew :app:assembleDebug                                        # or: make apk
 ```
 
