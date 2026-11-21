@@ -86,6 +86,7 @@ android {
     namespace = "com.pokedaisy.app"
     compileSdk = 34
     ndkVersion = "28.2.13676358"
+    testBuildType = "dev"
 
     defaultConfig {
         applicationId = "com.pokedaisy.app"
@@ -95,6 +96,7 @@ android {
         // against the release tag (v<versionName>), Android needs versionCode to grow.
         versionCode = 23
         versionName = "1.6.2-beta.1"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Whether this build can send crash reports at all (CrashReports.available).
         buildConfigField("boolean", "CRASHLYTICS", crashlytics.toString())
         buildConfigField("String", "SCREENSCRAPER_DEV_ID", "\"${buildSecret("screenscraper.devId", "SCREENSCRAPER_DEV_ID")}\"")
@@ -382,6 +384,8 @@ dependencies {
     // Co-op transport crypto: X25519 (rfc7748) for keys and the Noise IK handshake is Bouncy Castle's own code, copied
     // into companion/coop/x25519/ (MIT); the whole library stays a test dependency, which X25519Test checks the copy against.
     testImplementation("org.bouncycastle:bcprov-jdk18on:1.87")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     // The relay WebSocket (Apache 2.0, with Okio).
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     // Byte buffers, files and hashes in the data code shared with the iPad app (okio is Kotlin Multiplatform).

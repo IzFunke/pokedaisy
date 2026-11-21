@@ -3937,9 +3937,21 @@ what the threaded renderer gave, for more moving parts. Both stay 3DS only.
 ## Build
 
 ```bash
-make submodules                                                     # first time only
+git submodule update --init third_party/mgba third_party/rcheevos third_party/melonds third_party/dsperate third_party/bananads third_party/melonds-bananads  # first time only (or: make submodules)
 ./gradlew :app:assembleDebug                                        # or: make apk
 ```
+
+With the optional Azahar module enabled and one ARM64 Android device connected,
+run:
+
+```bash
+./gradlew :app:connectedDevAndroidTest -Ppokedaisy.n3ds=true \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.pokedaisy.app.n3ds.N3dsNativeInitTest
+```
+
+This installs the separate dev test APK and checks that `libpk_n3ds.so` loads
+and its Android/JNI setup initializes without game content. It does not boot a
+game. The x86_64 translation AVD is not compatible with the ARM64 core.
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`. Requires the Android SDK with
 NDK `28.2.13676358` and CMake `3.22.1` (both installable via `sdkmanager`).

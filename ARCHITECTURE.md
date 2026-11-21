@@ -7,3 +7,5 @@ The app already includes Pokémon X/Y support, game detection and a single-scree
 Azahar Libretro is not the selected Android route: the current app has no generic Libretro Android frontend, and the Azahar core expects renderer context integration. JNI is appropriate for the existing native core and companion memory-read path.
 
 The app targets ARM64 for Azahar. Use physical ARM64 hardware for core runtime checks; the available x86_64 translation AVD produced SIGILL and is not suitable evidence. The app keeps the 3DS feature optional so standard builds do not require the added native core.
+
+`N3dsNativeInitTest` is a dev-build instrumentation smoke check. It verifies the optional JNI library loads and initializes the Android callback/storage setup on an ARM64 device without needing game content. It does not boot `Core::System` with a title; game-loader and renderer validation remain separate requirements.
