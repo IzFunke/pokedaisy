@@ -40,7 +40,9 @@ object N3dsSaves {
 
     /** Azahar's user folder: its SD card, NAND, config and shader caches. On the shared storage, so a save can be put
      * in or copied out over USB. */
-    fun root(context: Context): File = File(context.getExternalFilesDir(null) ?: context.filesDir, "n3ds")
+    fun root(context: Context, prefs: com.pokedaisy.app.Prefs = com.pokedaisy.app.Prefs(context)): File =
+        prefs.n3dsUserDirOverride?.takeIf { it.isNotBlank() }?.let(::File)
+            ?: File(context.getExternalFilesDir(null) ?: context.filesDir, "n3ds")
 
     fun saveFolder(context: Context, titleId: Long): File {
         val high = String.format(Locale.US, "%08x", (titleId ushr 32).toInt())

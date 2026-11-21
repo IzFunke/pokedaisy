@@ -59,4 +59,14 @@ class SavesLocationTest {
         // A GBA game is unchanged.
         assertEquals(listOf(saves), SavesLocation.dirsFor(rom, false, listOf(saves)))
     }
+
+    @Test fun aSharedDsFolderWinsAndDoesNotFallBackToTheRomFolder() {
+        val roms = dir("nds-shared-test")
+        val ds = File(roms, "Platinum.nds")
+        val shared = dir("all-ds-saves")
+        val generic = dir("generic-saves")
+        File(roms, "Platinum.sav").writeText("old sibling")
+        assertEquals(listOf(shared, generic), SavesLocation.dirsFor(ds, true, listOf(generic), shared))
+        assertEquals(File(shared, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(generic), shared), ds))
+    }
 }

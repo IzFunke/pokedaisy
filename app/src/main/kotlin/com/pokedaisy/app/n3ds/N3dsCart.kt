@@ -25,7 +25,11 @@ object N3dsCart {
     const val POKEMON_SUN_USA = 0x0004000000164800L
     const val POKEMON_MOON_USA = 0x0004000000175E00L
 
-    /** The carts the app plays so far (docs/3DS_GAMES_PLAN.md) and the game each one is. */
+    /** Pokemon Ultra Sun / Ultra Moon (USA): recognized for launch; Gen 7 companion memory is not mapped yet. */
+    const val POKEMON_ULTRA_SUN_USA = 0x00040000001B5000L
+    const val POKEMON_ULTRA_MOON_USA = 0x00040000001B5100L
+
+    /** Recognized retail title IDs and their version-specific companion/game identity. */
     val KINDS = mapOf(
         POKEMON_X_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_X,
         POKEMON_Y_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_Y,
@@ -33,9 +37,15 @@ object N3dsCart {
         POKEMON_AS_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_ALPHA_SAPPHIRE,
         POKEMON_SUN_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_SUN,
         POKEMON_MOON_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_MOON,
+        POKEMON_ULTRA_SUN_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_ULTRA_SUN,
+        POKEMON_ULTRA_MOON_USA to com.pokedaisy.app.companion.data.GameKind.POKEMON_ULTRA_MOON,
     )
 
-    val SUPPORTED: Set<Long> get() = KINDS.keys
+    /** Titles with a verified companion memory map. Ultra Sun / Moon are bootable but are not in this set yet. */
+    val SUPPORTED: Set<Long> get() = KINDS.keys - setOf(POKEMON_ULTRA_SUN_USA, POKEMON_ULTRA_MOON_USA)
+
+    /** Decrypted title images that can be launched by the 3DS core. */
+    val PLAYABLE: Set<Long> get() = KINDS.keys
 
     /** The game a cart's title id is; X for one the app doesn't know (never reached: only [SUPPORTED] carts boot). */
     fun kindOf(titleId: Long) = KINDS[titleId] ?: com.pokedaisy.app.companion.data.GameKind.POKEMON_X
@@ -64,6 +74,8 @@ object N3dsCart {
     }.getOrNull()
 
     fun supported(f: File): Boolean = header(f)?.let { it.decrypted && it.titleId in SUPPORTED } == true
+
+    fun playable(f: File): Boolean = header(f)?.let { it.decrypted && it.titleId in PLAYABLE } == true
 
     private fun le32(b: ByteArray, o: Int) =
         (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or

@@ -33,7 +33,7 @@ enum class GameKind { FIRERED, EMERALD, UNBOUND, GAIA, RADICAL_RED, ODYSSEY, HEA
     /** A 3DS game (docs/3DS_GAMES_PLAN.md): its companion reads Azahar's memory, PARTY and BAG so far. Y is X's code
      * with its own version's Pokemon ([isXy]: everything else the same). Omega Ruby / Alpha Sapphire run X's engine
      * at their own addresses ([isOras]); Sun / Moon are Gen 7's ([isSm]). */
-    POKEMON_X, POKEMON_Y, POKEMON_OMEGA_RUBY, POKEMON_ALPHA_SAPPHIRE, POKEMON_SUN, POKEMON_MOON }
+    POKEMON_X, POKEMON_Y, POKEMON_OMEGA_RUBY, POKEMON_ALPHA_SAPPHIRE, POKEMON_SUN, POKEMON_MOON, POKEMON_ULTRA_SUN, POKEMON_ULTRA_MOON }
 
 /** Pokemon X or Y: one engine, one companion, one look (2026-11-15: Y's addresses all X's, headless). */
 val GameKind?.isXy: Boolean get() = this == GameKind.POKEMON_X || this == GameKind.POKEMON_Y
@@ -42,7 +42,7 @@ val GameKind?.isXy: Boolean get() = this == GameKind.POKEMON_X || this == GameKi
 val GameKind?.isOras: Boolean get() = this == GameKind.POKEMON_OMEGA_RUBY || this == GameKind.POKEMON_ALPHA_SAPPHIRE
 
 /** Sun or Moon (Gen 7). */
-val GameKind?.isSm: Boolean get() = this == GameKind.POKEMON_SUN || this == GameKind.POKEMON_MOON
+val GameKind?.isSm: Boolean get() = this == GameKind.POKEMON_SUN || this == GameKind.POKEMON_MOON || this == GameKind.POKEMON_ULTRA_SUN || this == GameKind.POKEMON_ULTRA_MOON
 
 /** A 3DS game (any of them): the companion's 3DS tabs, the smooth look, the battle corner. */
 val GameKind?.isN3ds: Boolean get() = isXy || isOras || isSm
@@ -918,4 +918,6 @@ fun GameKind.displayName(): String = when (this) {
     GameKind.POKEMON_ALPHA_SAPPHIRE -> "Pokémon Alpha Sapphire"
     GameKind.POKEMON_SUN -> "Pokémon Sun"
     GameKind.POKEMON_MOON -> "Pokémon Moon"
+    GameKind.POKEMON_ULTRA_SUN -> "Pokémon Ultra Sun"
+    GameKind.POKEMON_ULTRA_MOON -> "Pokémon Ultra Moon"
 }

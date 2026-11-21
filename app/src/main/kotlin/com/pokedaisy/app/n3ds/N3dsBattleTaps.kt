@@ -108,7 +108,8 @@ class N3dsBattleTaps(
         )
 
         fun forTitle(titleId: Long): Layout = when (titleId) {
-            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA -> SM
+            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA,
+            N3dsCart.POKEMON_ULTRA_SUN_USA, N3dsCart.POKEMON_ULTRA_MOON_USA -> SM
             N3dsCart.POKEMON_OR_USA, N3dsCart.POKEMON_AS_USA -> ORAS
             else -> XY
         }

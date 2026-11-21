@@ -432,3 +432,15 @@ Sun boots that Moon save too and reads it at every address below (party, bag, My
 
 - Shader cache and pipeline compiles on first play (stutter): Azahar's disk cache under our files dir.
 - Which devices: Azahar wants 64-bit Android 10+; the Thor / RP6 (Snapdragon 8 Gen 2) are the targets.
+
+## Ultra Sun / Ultra Moon
+
+- US retail title IDs are recognized for decrypted launch routing and the shared Gen 7 / Sun-Moon presentation: `0x00040000001B5000` (Ultra Sun) and `0x00040000001B5100` (Ultra Moon).
+- This is not companion support yet. `Gen6Reader.configFor()` deliberately returns no config for either title, and neither is listed as memory-supported. USUM uses different RAM addresses from Sun/Moon; do not reuse the SM reader until title-specific maps are verified against live game memory.
+- No USUM save archive format has been verified. A new title can create its own save in Azahar's user-data tree; an existing save missing its metadata is refused rather than booted into a game that might reformat it.
+- Routing/unit tests confirm recognition only. No USUM ROM was available for an actual boot test.
+
+## Save-folder settings
+
+- Settings > FOLDERS now includes a shared `DS GAME SAVES` directory. Changing it copies existing saves found for listed DS games into the selected directory when the destination filename is free; originals remain in place and explicit per-game folders still win. With no shared directory, the historical beside-ROM behavior remains.
+- `3DS GAME SAVES` selects Azahar's user-data root, which includes its SD card tree and other Azahar data. Choosing an empty folder copies the existing tree first; old files are never deleted. Resetting the setting leaves the previous custom tree in place.

@@ -818,7 +818,7 @@ private fun lightBagFor(game: GameKind, hgssPocket: Int = 0): BagPalette = when 
     GameKind.MONOMYTH -> MonomythBag
     GameKind.POKEMON_X, GameKind.POKEMON_Y -> XyBag
     GameKind.POKEMON_OMEGA_RUBY, GameKind.POKEMON_ALPHA_SAPPHIRE -> OrasBag
-    GameKind.POKEMON_SUN, GameKind.POKEMON_MOON -> SmBag
+    GameKind.POKEMON_SUN, GameKind.POKEMON_MOON, GameKind.POKEMON_ULTRA_SUN, GameKind.POKEMON_ULTRA_MOON -> SmBag
     GameKind.HEARTGOLD, GameKind.SOULSILVER -> hgssBags.getOrElse(hgssPocket) { HeartGoldBag }
     GameKind.PLATINUM -> PlatinumBag
     GameKind.BLACK, GameKind.WHITE, GameKind.BLACK2, GameKind.WHITE2 -> BlackBag

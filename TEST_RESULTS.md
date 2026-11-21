@@ -31,3 +31,10 @@ Gradle completed after 11m42s: 4,194 tests completed, 17 failed, 59 skipped. Fai
 ## Game checks
 
 No 3DS game was launched. Pokémon Y was not found in the expected directory during inventory. No ROM was downloaded or touched. Azahar core initialization with a game, graphics/audio/input/save behavior, performance, and long-session stability remain unverified.
+
+## Current save-folder and title-routing changes
+
+- `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests "com.pokedaisy.app.SavesLocationTest" --tests "com.pokedaisy.app.n3ds.N3dsCartTest" --tests "com.pokedaisy.app.n3ds.OrasSmCartTest"`: PASS (2026-11-21). Includes DS shared-folder precedence and USUM recognized-but-not-companion-supported checks.
+- `:app:assembleDev -Ppokedaisy.n3ds=true`: PASS (2026-11-21).
+- Galaxy S25 Ultra Dev package updated with `adb install -r` and launched. No uninstall or app-data clearing was performed.
+- Official-to-Dev preference transfer was not possible: official package is not debuggable (`run-as` denied) and app manifest disables Android backup (`allowBackup=false`).

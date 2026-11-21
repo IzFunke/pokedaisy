@@ -38,6 +38,16 @@ class N3dsCartTest {
         assertFalse(N3dsCart.supported(cart(0x0004000000033500L, noCrypto = true, "other.3ds")))
     }
 
+    @Test fun ultraGamesAreLaunchableButDoNotClaimCompanionMemorySupport() {
+        val us = cart(N3dsCart.POKEMON_ULTRA_SUN_USA, noCrypto = true, "ultra-sun.3ds")
+        val um = cart(N3dsCart.POKEMON_ULTRA_MOON_USA, noCrypto = true, "ultra-moon.3ds")
+        assertTrue(N3dsCart.playable(us))
+        assertTrue(N3dsCart.playable(um))
+        assertFalse(N3dsCart.supported(us))
+        assertFalse(N3dsCart.supported(um))
+        assertFalse(N3dsCart.playable(cart(N3dsCart.POKEMON_ULTRA_SUN_USA, noCrypto = false, "ultra-enc.3ds")))
+    }
+
     @Test fun refusesWhatIsNoCart() {
         assertNull(N3dsCart.header(tmp.newFile("x.3ds").apply { writeBytes(ByteArray(0x4200)) }))
         assertNull(N3dsCart.header(tmp.newFile("short.3ds").apply { writeBytes(ByteArray(0x10)) }))

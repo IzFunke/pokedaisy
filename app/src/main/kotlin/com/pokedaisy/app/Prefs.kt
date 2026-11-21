@@ -868,6 +868,16 @@ class Prefs(
         get() = p.getString("saves_dir_override", null)
         set(v) = p.edit().putString("saves_dir_override", v).apply()
 
+    /** Settings > FOLDERS > DS GAME SAVES: shared destination for DS saves. Null keeps the legacy beside-ROM rule. */
+    var dsSavesDirOverride: String?
+        get() = p.getString("ds_saves_dir_override", null)
+        set(v) = p.edit().putString("ds_saves_dir_override", v).apply()
+
+    /** Root of Azahar's user data tree (`sdmc/`, NAND, config); null keeps the app-private default. */
+    var n3dsUserDirOverride: String?
+        get() = p.getString("n3ds_user_dir_override", null)
+        set(v) = p.edit().putString("n3ds_user_dir_override", v).apply()
+
     /** More folders to look for a game's save in, after [savesDirOverride] (Settings > FOLDERS >
      * ALSO LOOK IN; see [SavesLocation.saveFor]). New saves still go to the saves folder. */
     var extraSaveDirs: List<String>

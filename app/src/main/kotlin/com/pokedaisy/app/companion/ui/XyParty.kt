@@ -147,8 +147,10 @@ class XyTint(
             com.pokedaisy.app.companion.data.GameKind.POKEMON_Y -> RED
             com.pokedaisy.app.companion.data.GameKind.POKEMON_OMEGA_RUBY -> RUBY
             com.pokedaisy.app.companion.data.GameKind.POKEMON_ALPHA_SAPPHIRE -> SAPPHIRE
-            com.pokedaisy.app.companion.data.GameKind.POKEMON_SUN -> SUN
-            com.pokedaisy.app.companion.data.GameKind.POKEMON_MOON -> MOON
+            com.pokedaisy.app.companion.data.GameKind.POKEMON_SUN,
+            com.pokedaisy.app.companion.data.GameKind.POKEMON_ULTRA_SUN -> SUN
+            com.pokedaisy.app.companion.data.GameKind.POKEMON_MOON,
+            com.pokedaisy.app.companion.data.GameKind.POKEMON_ULTRA_MOON -> MOON
             else -> GREEN
         }
 

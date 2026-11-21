@@ -28,13 +28,19 @@ object SavesLocation {
      * new save in the saves folder. Only the folders themselves are looked in, never below. A DS game looks beside its
      * ROM first, and starts a new save there ([dirsFor]).
      */
-    fun saveFor(context: Context, prefs: Prefs, rom: File): File =
-        saveIn(prefs.romSaveDir(rom)?.let { File(it).apply { mkdirs() } }, dirsFor(rom, RomIdentity.isNds(rom), searchDirs(context, prefs)), rom)
+    fun saveFor(context: Context, prefs: Prefs, rom: File): File {
+        val nds = RomIdentity.isNds(rom)
+        val dirs = searchDirs(context, prefs)
+        val dsFolder = prefs.dsSavesDirOverride?.takeIf { nds && it.isNotBlank() }?.let(::File)
+        val search = dirsFor(rom, nds, dirs, dsFolder)
+        return saveIn(prefs.romSaveDir(rom)?.let { File(it).apply { mkdirs() } }, search, rom)
+    }
 
     /** [dirs] for [rom]: a DS game's own folder first - melonDS keeps a game's save beside it (`<rom name>.sav`), so
      * that's the save the player has, and where a new one goes - while it can be written there (or already holds the
      * save); then the rest, so a save made elsewhere before still loads. */
-    fun dirsFor(rom: File, nds: Boolean, dirs: List<File>): List<File> {
+    fun dirsFor(rom: File, nds: Boolean, dirs: List<File>, sharedDsFolder: File? = null): List<File> {
+        if (nds && sharedDsFolder != null) return (listOf(sharedDsFolder) + dirs).distinctBy { it.absolutePath }
         val beside = rom.absoluteFile.parentFile ?: return dirs
         if (!nds || !(beside.canWrite() || resolve(beside, rom).exists())) return dirs
         return (listOf(beside) + dirs).distinctBy { it.absolutePath }

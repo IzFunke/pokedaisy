@@ -7,3 +7,5 @@
 - The full app unit suite completes with 4,194 tests, 17 failures and 59 skips; focused 3DS logic and single-screen screenshot suites pass. See `TEST_RESULTS.md` for exact failure classes.
 - Azahar's native binary makes the optional APK large. Review size/performance before release.
 - Existing source documentation notes Pokémon Y lacks device validation. Update that only after actual gameplay checks.
+- Ultra Sun / Ultra Moon are recognized for decrypted launch routing and Gen 7 presentation, but their distinct RAM maps are not implemented; companion data is intentionally disabled for those titles. No live USUM boot has been tested.
+- Importing private preferences from the installed official package is blocked: it is a non-debuggable app with `allowBackup=false`. Dev's own preferences are preserved by `adb install -r`; Android does not permit reading the official package's private SharedPreferences on this unrooted device.

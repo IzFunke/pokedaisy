@@ -489,7 +489,7 @@ object CompanionSkins {
     fun forGame(game: GameKind?, headerCode: String = romHeaderCode): CompanionSkin = when (game) {
         GameKind.POKEMON_X, GameKind.POKEMON_Y -> POKEMON_XY
         GameKind.POKEMON_OMEGA_RUBY, GameKind.POKEMON_ALPHA_SAPPHIRE -> POKEMON_ORAS
-        GameKind.POKEMON_SUN, GameKind.POKEMON_MOON -> POKEMON_SM
+        GameKind.POKEMON_SUN, GameKind.POKEMON_MOON, GameKind.POKEMON_ULTRA_SUN, GameKind.POKEMON_ULTRA_MOON -> POKEMON_SM
         GameKind.HEARTGOLD, GameKind.SOULSILVER -> HEARTGOLD
         GameKind.PLATINUM -> PLATINUM
         GameKind.BLACK, GameKind.WHITE -> UNOVA

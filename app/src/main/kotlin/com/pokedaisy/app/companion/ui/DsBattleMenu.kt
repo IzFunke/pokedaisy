@@ -147,7 +147,8 @@ enum class DsLook(val bandTop: Int, val textTop: Int) {
             GameKind.PLATINUM -> PLATINUM
             GameKind.BLACK, GameKind.WHITE -> UNOVA
             GameKind.BLACK2, GameKind.WHITE2 -> UNOVA2
-            GameKind.POKEMON_X, GameKind.POKEMON_Y, GameKind.POKEMON_OMEGA_RUBY, GameKind.POKEMON_ALPHA_SAPPHIRE, GameKind.POKEMON_SUN, GameKind.POKEMON_MOON -> XY
+            GameKind.POKEMON_X, GameKind.POKEMON_Y, GameKind.POKEMON_OMEGA_RUBY, GameKind.POKEMON_ALPHA_SAPPHIRE,
+            GameKind.POKEMON_SUN, GameKind.POKEMON_MOON, GameKind.POKEMON_ULTRA_SUN, GameKind.POKEMON_ULTRA_MOON -> XY
             else -> HEARTGOLD
         }
     }

@@ -98,7 +98,8 @@ class N3dsLayout(
 
         fun forTitle(titleId: Long): N3dsLayout = when (titleId) {
             N3dsCart.POKEMON_OR_USA, N3dsCart.POKEMON_AS_USA -> ORAS
-            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA -> SM
+            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA,
+            N3dsCart.POKEMON_ULTRA_SUN_USA, N3dsCart.POKEMON_ULTRA_MOON_USA -> SM
             else -> XY
         }
     }

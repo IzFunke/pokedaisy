@@ -2,8 +2,11 @@ package com.pokedaisy.app.n3ds
 
 import com.pokedaisy.app.companion.data.GameKind
 import com.pokedaisy.app.companion.data.RETAIL_ROM_DIR
+import com.pokedaisy.app.companion.data.isSm
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -20,6 +23,19 @@ class OrasSmCartTest {
     private val asCart = File(dir, "Pokemon Alpha Sapphire (USA) (En,Ja,Fr,De,Es,It,Ko) (Rev 2).3ds")
     private val sun = File(dir, "Pokemon Sun (USA) (En,Ja,Fr,De,Es,It,Zh,Ko).3ds")
     private val moon = File(dir, "Pokemon Moon (USA) (En,Ja,Fr,De,Es,It,Zh,Ko).3ds")
+
+    @Test fun ultraGamesAreRecognizedForGen7LaunchButNotCompanionReadsYet() {
+        assertEquals(GameKind.POKEMON_ULTRA_SUN, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(GameKind.POKEMON_ULTRA_MOON, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertTrue(GameKind.POKEMON_ULTRA_SUN.isSm)
+        assertTrue(GameKind.POKEMON_ULTRA_MOON.isSm)
+        assertEquals(N3dsLayout.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(N3dsLayout.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertNull(Gen6Reader.configFor(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertNull(Gen6Reader.configFor(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertFalse(N3dsCart.POKEMON_ULTRA_SUN_USA in N3dsCart.SUPPORTED)
+        assertFalse(N3dsCart.POKEMON_ULTRA_MOON_USA in N3dsCart.SUPPORTED)
+    }
 
     @Test fun cartsAreKnown() {
         assertEquals(GameKind.POKEMON_OMEGA_RUBY, N3dsCart.kindOf(N3dsCart.POKEMON_OR_USA))

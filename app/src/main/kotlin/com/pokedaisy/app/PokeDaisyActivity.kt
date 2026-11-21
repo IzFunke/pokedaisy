@@ -4273,7 +4273,8 @@ class PokeDaisyActivity : Activity() {
      */
     private fun load3ds(romFile: File) {
         val header = com.pokedaisy.app.n3ds.N3dsCart.header(romFile)
-        if (header == null || !header.decrypted || !com.pokedaisy.app.n3ds.N3dsNative.available) {
+        if (header == null || !header.decrypted || header.titleId !in com.pokedaisy.app.n3ds.N3dsCart.PLAYABLE ||
+            !com.pokedaisy.app.n3ds.N3dsNative.available) {
             showHud(com.pokedaisy.app.companion.i18n.tr("This 3DS game can't start here."))
             return
         }

@@ -133,7 +133,7 @@ import okio.source
  */
 class SettingsActivity : ComponentActivity() {
 
-    private enum class Screen { HOME, SPEED, DISPLAY, HOTKEYS, CONTROLS, SHADERS, FIELD_HUD, QUICK_MENU, TOUCH, OVERLAYS, FOLDERS, ROMS_FOLDERS, SAVES_FOLDER, SAVE_SEARCH, STATES_FOLDER, BACKUPS, COVER_ART, SCREENSCRAPER, HIDDEN, ACHIEVEMENTS, CHEATS, CHEAT_ADD, LICENSES, HELP, COOP_PAIR, COOP_JOIN, COOP_PARTNERS, COOP_RELAY }
+    private enum class Screen { HOME, SPEED, DISPLAY, HOTKEYS, CONTROLS, SHADERS, FIELD_HUD, QUICK_MENU, TOUCH, OVERLAYS, FOLDERS, ROMS_FOLDERS, SAVES_FOLDER, DS_SAVES_FOLDER, N3DS_SAVES_FOLDER, SAVE_SEARCH, STATES_FOLDER, BACKUPS, COVER_ART, SCREENSCRAPER, HIDDEN, ACHIEVEMENTS, CHEATS, CHEAT_ADD, LICENSES, HELP, COOP_PAIR, COOP_JOIN, COOP_PARTNERS, COOP_RELAY }
 
     private lateinit var prefs: Prefs
     private var screen by mutableStateOf(Screen.HOME)
@@ -347,6 +347,8 @@ class SettingsActivity : ComponentActivity() {
                         Screen.FOLDERS -> tk("FOLDERS")
                         Screen.ROMS_FOLDERS -> tk("ROMS FOLDERS")
                         Screen.SAVES_FOLDER -> tk("GAME SAVES")
+                        Screen.DS_SAVES_FOLDER -> "DS GAME SAVES"
+                        Screen.N3DS_SAVES_FOLDER -> "3DS GAME SAVES"
                         Screen.SAVE_SEARCH -> tk("ALSO LOOK IN")
                         Screen.STATES_FOLDER -> tk("SAVE STATES")
                         Screen.BACKUPS -> tk("SAVE BACKUPS")
@@ -383,6 +385,15 @@ class SettingsActivity : ComponentActivity() {
                     Screen.FOLDERS -> SubRowsScreen(m) { folderRows() }
                     Screen.ROMS_FOLDERS -> RomsFoldersScreen(m, small)
                     Screen.SAVES_FOLDER -> SavesFolderScreen(m, small)
+                    Screen.DS_SAVES_FOLDER -> PlatformSavesFolderScreen(m, small, "DS GAME SAVES", prefs.dsSavesDirOverride,
+                        onPick = { changeDsSavesFolder(it); folderTick++ },
+                        onReset = { prefs.dsSavesDirOverride = null; folderTick++ },
+                        defaultPath = "Beside each DS game unless a shared folder is selected")
+                    Screen.N3DS_SAVES_FOLDER -> PlatformSavesFolderScreen(m, small, "3DS GAME SAVES", prefs.n3dsUserDirOverride,
+                        onPick = ::changeN3dsUserFolder,
+                        onReset = { changeN3dsUserFolder(null) },
+                        defaultPath = com.pokedaisy.app.n3ds.N3dsSaves.root(this@SettingsActivity, Prefs(this@SettingsActivity)).absolutePath,
+                        detail = "Azahar uses this folder as its 3DS user-data root, including the SD card save tree.")
                     Screen.SAVE_SEARCH -> AlsoLookInScreen(m, small)
                     Screen.STATES_FOLDER -> StatesFolderScreen(m, small)
                     Screen.BACKUPS -> SaveBackupsScreen(m, small)
@@ -1952,6 +1963,10 @@ class SettingsActivity : ComponentActivity() {
             SettingRow(tk("GAME SAVES"), if (prefs.savesDirOverride == null) tk("DEFAULT") else tk("CUSTOM"), opensPage = true, subtitle = "Where new saves go") {
                 screen = Screen.SAVES_FOLDER
             },
+            SettingRow("DS GAME SAVES", if (prefs.dsSavesDirOverride == null) tk("DEFAULT") else tk("CUSTOM"), opensPage = true,
+                subtitle = "One shared folder for all DS games") { screen = Screen.DS_SAVES_FOLDER },
+            SettingRow("3DS GAME SAVES", if (prefs.n3dsUserDirOverride == null) tk("DEFAULT") else tk("CUSTOM"), opensPage = true,
+                subtitle = "Azahar save data folder") { screen = Screen.N3DS_SAVES_FOLDER },
             SettingRow(tk("ALSO LOOK IN"), if (extra.isEmpty()) tk("NONE") else extra.size.toString(), opensPage = true, subtitle = "More folders to find a game's save in") {
                 screen = Screen.SAVE_SEARCH
             },
@@ -2048,6 +2063,71 @@ class SettingsActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun PlatformSavesFolderScreen(
+        m: GbaTextMetrics, small: GbaTextMetrics, title: String, selected: String?,
+        onPick: (String) -> Unit, onReset: () -> Unit, defaultPath: String, detail: String? = null,
+    ) {
+        val pick = rememberLauncherForActivityResult(StorageAccess.PickFolder()) { uri ->
+            pickedFolder(uri)?.let(onPick)
+        }
+        val path = selected ?: defaultPath
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            OptionListWindow(m, Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = m.u * 4)) {
+                    GbaText(title, OptionColors.label, OptionColors.labelShadow, m)
+                    GbaText(path, OptionColors.muted, OptionColors.mutedShadow, small, maxLines = 3)
+                    detail?.let { GbaText(it, OptionColors.muted, OptionColors.mutedShadow, small, maxLines = Int.MAX_VALUE,
+                        modifier = Modifier.padding(top = m.u * 3)) }
+                    Row(Modifier.padding(vertical = m.u * 4), horizontalArrangement = Arrangement.spacedBy(m.u * 4)) {
+                        OptionButton(tk("CHANGE FOLDER"), small, onClick = { pickFolder(pick) })
+                        if (selected != null) OptionButton(tk("USE DEFAULT"), small, onClick = onReset)
+                    }
+                }
+            }
+        }
+    }
+
+    /** Copy existing DS saves into the newly selected shared folder so the change takes effect without losing progress. */
+    private fun changeDsSavesFolder(path: String) {
+        val games = RomFolder.allRomFiles(this, prefs).filter { RomIdentity.isNds(it) }
+        val oldSaves = games.map { it to SavesLocation.saveFor(this, prefs, it) }
+        prefs.dsSavesDirOverride = path
+        var copied = 0
+        oldSaves.forEach { (rom, old) ->
+            if (prefs.romSaveDir(rom) != null) return@forEach
+            val target = File(path, old.name)
+            if (old.isFile && old.absolutePath != target.absolutePath && !target.exists()) {
+                runCatching { old.copyTo(target) }.onSuccess { copied++ }
+            }
+        }
+        if (copied > 0) Toast.makeText(this, tr("Copied {0} DS save(s) into the shared folder", copied), Toast.LENGTH_LONG).show()
+    }
+
+    /** Preserve Azahar's existing user data when the 3DS root changes; never delete the old root. */
+    private fun changeN3dsUserFolder(path: String?) {
+        if (path == prefs.n3dsUserDirOverride) return
+        Thread({
+            val oldRoot = com.pokedaisy.app.n3ds.N3dsSaves.root(this, prefs)
+            val target = path?.let(::File)
+            val copied = runCatching {
+                if (target != null && target.absolutePath != oldRoot.absolutePath &&
+                    target.listFiles().isNullOrEmpty() && oldRoot.isDirectory) {
+                    oldRoot.copyRecursively(target, overwrite = false)
+                }
+                true
+            }.getOrDefault(false)
+            runOnUiThread {
+                if (copied) {
+                    prefs.n3dsUserDirOverride = path
+                    folderTick++
+                } else {
+                    Toast.makeText(this, tr("Couldn't copy the existing 3DS data folder. The setting was left unchanged."), Toast.LENGTH_LONG).show()
+                }
+            }
+        }, "pokedaisy-3ds-folder").apply { isDaemon = true; start() }
     }
 
     /** ALSO LOOK IN's page. */
@@ -2280,7 +2360,7 @@ class SettingsActivity : ComponentActivity() {
     }
 
     companion object {
-        private val FOLDER_PAGES = setOf(Screen.ROMS_FOLDERS, Screen.SAVES_FOLDER, Screen.SAVE_SEARCH, Screen.STATES_FOLDER, Screen.BACKUPS)
+        private val FOLDER_PAGES = setOf(Screen.ROMS_FOLDERS, Screen.SAVES_FOLDER, Screen.DS_SAVES_FOLDER, Screen.N3DS_SAVES_FOLDER, Screen.SAVE_SEARCH, Screen.STATES_FOLDER, Screen.BACKUPS)
         val RATES = floatArrayOf(0f, 1.5f, 2f, 3f, 4f, 5f, 6f, 8f, 10f)
         const val REPO_URL = com.pokedaisy.app.companion.ui.AppLinks.REPO_URL
         /** A ROM path: open straight on that game's CHEATS (its library menu). */
