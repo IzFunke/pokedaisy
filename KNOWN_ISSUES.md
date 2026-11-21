@@ -1,6 +1,6 @@
 # Known Issues and Limitations
 
-- Pokémon Y now boots on the Galaxy S25 Ultra to the first language prompt (about 59.8 FPS / 100% in the observed session). The selected language is German and awaits confirmation. Gameplay compatibility, audio, save persistence, broader controls, and stability remain unverified.
+- Pokémon Y now boots on the Galaxy S25 Ultra to its logo/intro after the user selected and confirmed German (about 59.8 FPS / 100% in the observed session). A process restart before the game reached save setup returned to language selection, so the language choice has not been proven persistent. Gameplay compatibility, audio, save persistence, broader controls, and stability remain unverified.
 - Physical hardware app startup, JNI/Android setup, Pokémon Y title boot, rendering, and D-pad navigation are verified. Audio, save handling, broader controls, and stability are not yet verified.
 - The Azahar loader recognizes 3DSX homebrew, but PokeDaisy's current game entry path accepts only decrypted supported retail NCSD carts. No homebrew test harness or content is currently wired through the app.
 - The x86_64 AVD with ARM64 translation crashes with SIGILL on startup. Do not retry ARM64 Azahar runtime there; use it only if a separate x86_64 native build becomes available and tested.
