@@ -40,4 +40,4 @@ Copying settings from the installed official package requires an official settin
 
 ## Git state
 
-Checkpoints `64e20368` (setup and project docs), `34eec0a6` (ARM64 JNI smoke test), `89c80ab2` (USUM routing and shared handheld save settings), and `5d7d4069` (Pokémon Y device findings) are pushed to `origin/feature/azahar-3ds-single-screen`. The new x86_64 runtime/layout fix is being validated before its next checkpoint. No upstream PR has been opened. Keep the goal active until game/runtime behavior, compatibility, and release evidence are established.
+Checkpoints `64e20368` (setup and project docs), `34eec0a6` (ARM64 JNI smoke test), `89c80ab2` (USUM routing and shared handheld save settings), `5d7d4069` (Pokémon Y device findings), and `7be978ba` (x86_64 runtime, true single-screen boot, and dynamic touch-screen window) are pushed to `origin/feature/azahar-3ds-single-screen`. No upstream PR has been opened. Keep the goal active until game/runtime behavior, compatibility, and release evidence are established.
