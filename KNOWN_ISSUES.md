@@ -4,6 +4,7 @@
 - Physical hardware app startup, JNI/Android setup, Pokémon Y title boot, rendering, and D-pad navigation are verified. Audio, save handling, broader controls, and stability are not yet verified.
 - The Azahar loader recognizes 3DSX homebrew, but PokeDaisy's current game entry path accepts only decrypted supported retail NCSD carts. No homebrew test harness or content is currently wired through the app.
 - Production/device builds package Azahar for `arm64-v8a`. An opt-in `-Ppokedaisy.n3dsX86_64=true` build now runs 3DS games on the x86_64 API 36 AVD for runtime checks; this is an emulator-only build path, not the default Dev/release ABI set. The old translation AVD still crashed with SIGILL.
+- `SCREEN > 3DS CORE` is present but currently has one usable backend (Azahar), plus `AUTO` as an alias. The Windows v1.6.2-beta.1 reference adds DS HUD/zoom behavior on Windows; it does not supply another 3DS core. Azahar Libretro is excluded from the Android build, and there is no general Android Libretro host in this app yet.
 - Full app unit suite passes: 4,207 tests, 0 failures, 60 skips across 191 classes. ROM-dependent skips and the Windows symlink limitation are documented in `TEST_RESULTS.md`.
 - Azahar's native binary makes the optional APK large. Review size/performance before release.
 - Some historical notes in `docs/3DS_GAMES_PLAN.md` describe earlier device-validation status; they are dated and remain as historical context. Current device evidence is summarized in `PROJECT_STATUS.md` and `TEST_RESULTS.md`.
