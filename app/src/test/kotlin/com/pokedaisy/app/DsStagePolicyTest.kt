@@ -66,6 +66,7 @@ class DsStagePolicyTest {
         val party = com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU, 0))
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, 0))
+        assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, 0))
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, bag))
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, party))
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, bag))
@@ -79,6 +80,7 @@ class DsStagePolicyTest {
         val bag = com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN
         val party = com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
         assertTrue(n3dsAutoTouchCanDismiss(menu, 0))
+        assertTrue(n3dsAutoTouchCanDismiss(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, 0))
         assertTrue(n3dsAutoTouchCanDismiss(battle, bag))
         assertTrue(n3dsAutoTouchCanDismiss(battle, party))
         assertFalse(n3dsAutoTouchCanDismiss(battle, 0))

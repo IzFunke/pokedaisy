@@ -30,15 +30,18 @@ internal fun n3dsTouchVisibleForLayout(layout: DsLayout, manuallyOpened: Boolean
 internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
     scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD ||
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
+        // Pages rendered by the game on both screens (party, bag, main menu) also need the lower display in ONE SCREEN.
+        scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN ||
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE &&
         battleInput in setOf(
             com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,
             com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN,
         )
 
-/** The dimmed-area close gesture exits only a game-opened menu page; a hand-opened window simply closes locally. */
+/** The dimmed-area close gesture exits a field menu; a hand-opened or other automatically presented window closes locally. */
 internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
     scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
+        scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN ||
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE &&
         battleInput in setOf(
             com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,

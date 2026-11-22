@@ -4511,7 +4511,10 @@ class PokeDaisyActivity : Activity() {
         if (n3dsFloating.value == open) return
         if (open) {
             n3dsTouchAutoDismissed = false
-        } else if (n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD && n3dsTouchAutoWanted) {
+        } else if (n3ds?.scene in setOf(
+                com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD,
+                com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN,
+            ) && n3dsTouchAutoWanted) {
             n3dsTouchAutoDismissed = true
         }
         n3dsFloating.value = open
@@ -4519,7 +4522,7 @@ class PokeDaisyActivity : Activity() {
         syncGameScreen()
     }
 
-    /** Like DS LAYOUT's touch-wanted state: field play, field menus, and battle bag/party request the lower display. */
+    /** Field play, menus, full-screen pages, and battle bag/party request the lower display. */
     private val n3dsTouchAutoWanted: Boolean
         get() = n3ds?.scene?.let { scene ->
             !n3dsTouchAutoDismissed && n3dsTouchWanted(scene, telemetry.snapshot.value.battleInputState)
@@ -4529,17 +4532,19 @@ class PokeDaisyActivity : Activity() {
     private var n3dsTouchPolicyScene: com.pokedaisy.app.n3ds.Gen6Reader.Scene? = null
     private var n3dsTouchAutoDismissed = false
 
-    /** Like the DS touch window: a hand-opened window closes; a game-opened menu receives B to leave its page. */
+    /** A hand-opened window closes locally; field menus receive B, while other auto pages can be hidden locally. */
     private fun dismissN3dsTouch() {
-        if (n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD && n3dsTouchAutoWanted) {
-            if (n3dsFloating.value) setN3dsFloating(false) else {
-                n3dsTouchAutoDismissed = true
-                syncGameScreen()
-            }
+        if (n3dsFloating.value) { setN3dsFloating(false); return }
+        val scene = n3ds?.scene ?: return
+        if (scene in setOf(
+                com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD,
+                com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN,
+            ) && n3dsTouchAutoWanted) {
+            n3dsTouchAutoDismissed = true
+            syncGameScreen()
             return
         }
-        if (n3dsFloating.value) { setN3dsFloating(false); return }
-        if (!n3dsAutoTouchCanDismiss(n3ds?.scene ?: return, telemetry.snapshot.value.battleInputState)) return
+        if (!n3dsAutoTouchCanDismiss(scene, telemetry.snapshot.value.battleInputState)) return
         input.setPress(CoreKey.B)
         window.decorView.postDelayed({ input.setPress(0) }, DS_B_PRESS_MS)
     }
