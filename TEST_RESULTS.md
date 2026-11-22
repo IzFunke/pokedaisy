@@ -14,6 +14,7 @@ Date: 2026-11-21
 ## Device startup
 
 - Galaxy S25 Ultra, ARM64 Android 17: dev package installed without replacing `com.pokedaisy.app`; `LibraryActivity` resumed; captured startup logs showed no fatal exception, SIGSEGV, or `UnsatisfiedLinkError`.
+- 2026-11-22: rebuilt `:app:assembleDev -Ppokedaisy.n3ds=true` and updated the existing S25 Ultra Dev package with `adb install -r`. Android retained `/data/user/0/com.pokedaisy.app.dev`; the SHA-256 of `shared_prefs/pokedaisy.xml` was identical before and after, and `setup_done` / `last_rom` remained present. No uninstall, clear-data, or app relaunch/game progression was performed during this update.
 - x86_64/API 30 translation AVD: package installation succeeded but startup aborted with SIGILL. FAIL / incompatible runtime. This does not validate Azahar on x86.
 
 ## Focused 3DS tests
