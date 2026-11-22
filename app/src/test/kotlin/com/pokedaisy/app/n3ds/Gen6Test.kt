@@ -294,6 +294,14 @@ class Gen6Test {
         // Between two screens and on the title: can't tell.
         // START's PSS menu (and a page of it) waits on the touch screen: MENU, as the X menu; its notes don't.
         assertEquals(Gen6Reader.Scene.MENU, scene("DllField\nDllPssMainMenu", fieldMenu(0, 0)))
+        // Captured in the live Y save after START: the lower screen showed the PSS main menu and must auto-present.
+        val yPssMenu = Gen6Reader.sceneOf(
+            "DllField\nDllUSMirror\nDllPssMainMenu",
+            fieldMenu(0, 0),
+            Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!,
+        )
+        assertEquals(Gen6Reader.Scene.MENU, yPssMenu)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssMenu!!, 0))
         assertEquals(Gen6Reader.Scene.MENU, scene("DllField\nDllUSC02\nDllPssCharaMenu", fieldMenu(0, 0)))
         assertEquals(Gen6Reader.Scene.FIELD, scene("DllField\nDllUSC02\nDllPssMessageWindow", fieldMenu(0, 0)))
         assertNull(scene("", null))
