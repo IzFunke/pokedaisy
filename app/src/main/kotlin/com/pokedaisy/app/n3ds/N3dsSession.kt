@@ -105,55 +105,62 @@ class N3dsSession(
 
     /** Asked for by the activity once the game should play; it starts when both surfaces are there. */
     @Volatile private var wanted = false
+    private val lifecycleLock = Any()
+    private var stopped = false
     private var lastReadiness: String? = null
     private val snapshotGate = N3dsSnapshotGate()
     @Volatile private var snapshotGeneration = 0L
 
     fun start() {
-        wanted = true
-        Log.i(TAG, "start requested: ${readiness()}")
-        // A pause before the game thread started (the activity paused while it booted) must not outlive the start:
-        // the sampler and the scene reader skip their work while [paused].
-        if (started) setPaused(false) else { paused = false; maybeStart() }
+        synchronized(lifecycleLock) {
+            if (stopped) return
+            wanted = true
+            Log.i(TAG, "start requested: ${readiness()}")
+            // A pause before the game thread started (the activity paused while it booted) must not outlive the start:
+            // the sampler and the scene reader skip their work while [paused].
+            if (started) setPaused(false) else { paused = false; maybeStart() }
+        }
     }
 
     /** The stage placed or dropped [touchView]: a game waiting on its surfaces may start now. */
     fun surfacesChanged() = maybeStart()
 
     private fun maybeStart() {
-        val state = readiness()
-        if (state != lastReadiness) {
-            Log.i(TAG, "surface readiness: $state")
-            lastReadiness = state
-        }
-        if (!wanted || thread != null || !topReady || (wantsTouchSurface() && !touchReady)) return
-        Log.i(TAG, "starting Azahar for ${rom.name}")
-        running = true
-        snapshotGeneration = snapshotGate.begin()
-        val generation = snapshotGeneration
-        thread = Thread({
-            N3dsNative.init(userDir)
-            N3dsNative.setResolution(RESOLUTION)
-            val result = N3dsNative.run(rom.absolutePath, ONE_SURFACE_LAYOUT)
-            running = false
-            Log.i(TAG, "game ended: $result")
-            ui.post {
-                snapshotGate.finishIfCurrent(generation) {
-                    onSnapshot(
-                        SnapshotView(
-                            connected = false,
-                            error = "3DS game stopped",
-                            game = N3dsCart.kindOf(titleId),
-                        ),
-                    )
-                }
-                onEnded(result)
+        synchronized(lifecycleLock) {
+            val state = readiness()
+            if (state != lastReadiness) {
+                Log.i(TAG, "surface readiness: $state")
+                lastReadiness = state
             }
-        }, "pokedaisy-n3ds").also { it.start() }
-        pump.start()
-        sampler.start()
-        scenes.start()
-        camera.start()
+            if (!wanted || thread != null || !topReady || (wantsTouchSurface() && !touchReady)) return
+            Log.i(TAG, "starting Azahar for ${rom.name}")
+            running = true
+            snapshotGeneration = snapshotGate.begin()
+            val generation = snapshotGeneration
+            thread = Thread({
+                N3dsNative.init(userDir)
+                N3dsNative.setResolution(RESOLUTION)
+                val result = N3dsNative.run(rom.absolutePath, ONE_SURFACE_LAYOUT)
+                running = false
+                Log.i(TAG, "game ended: $result")
+                ui.post {
+                    snapshotGate.finishIfCurrent(generation) {
+                        onSnapshot(
+                            SnapshotView(
+                                connected = false,
+                                error = "3DS game stopped",
+                                game = N3dsCart.kindOf(titleId),
+                            ),
+                        )
+                    }
+                    onEnded(result)
+                }
+            }, "pokedaisy-n3ds").also { it.start() }
+            pump.start()
+            sampler.start()
+            scenes.start()
+            camera.start()
+        }
     }
 
     private fun readiness() = "wanted=$wanted started=${thread != null} top=$topReady touch=$touchReady touchRequired=${wantsTouchSurface()}"
@@ -163,16 +170,44 @@ class N3dsSession(
         if (started) N3dsNative.setPaused(p)
     }
 
-    /** Stops the game for good (the activity leaves it); blocks until Azahar has shut down, a few seconds at most. */
+    /** Stops the game for good (the activity leaves it); joins Azahar and its workers before returning. */
     fun stop() {
-        wanted = false
-        running = false
-        snapshotGate.end()
-        OwnItemNames.lookup = null
-        if (thread == null) return
-        N3dsNative.stop()
-        runCatching { thread?.join(5000) }
-        thread = null
+        synchronized(lifecycleLock) {
+            stopped = true
+            wanted = false
+            running = false
+            snapshotGate.end()
+            OwnItemNames.lookup = null
+
+            val core = thread
+            // Stop Azahar first: its run loop releases any worker blocked on a queued memory read before returning.
+            if (core != null) N3dsNative.stop()
+
+            val current = Thread.currentThread()
+            val toJoin = listOfNotNull(core, pump, scenes, camera, sampler)
+            toJoin.filter { it !== current }.forEach(Thread::interrupt)
+
+            var interrupted = false
+            val deadline = System.nanoTime() + STOP_JOIN_TIMEOUT_NS
+            for (worker in toJoin) {
+                if (worker === current) continue
+                while (worker.isAlive) {
+                    val remaining = deadline - System.nanoTime()
+                    if (remaining <= 0L) break
+                    try {
+                        worker.join(remaining / 1_000_000L, (remaining % 1_000_000L).toInt())
+                    } catch (_: InterruptedException) {
+                        interrupted = true
+                    }
+                }
+            }
+            val alive = toJoin.filter { it !== current && it.isAlive }
+            if (alive.isNotEmpty()) {
+                Log.w(TAG, "threads still alive after stop timeout: ${alive.joinToString { it.name }}")
+            }
+            if (core?.isAlive != true) thread = null
+            if (interrupted) current.interrupt()
+        }
     }
 
     // ---- input ---------------------------------------------------------------------------------------------------
@@ -897,6 +932,7 @@ class N3dsSession(
 
     companion object {
         private const val TAG = "pokedaisy/n3ds"
+        private const val STOP_JOIN_TIMEOUT_NS = 5_000_000_000L
         /** Free reads (100 ms each) before the HUD's bottom row comes back. */
         private const val FIELD_FREE_READS = 3
         /** The camera's ease: this much of the factor a frame (about a quarter second from 1x to the farthest step). */

@@ -15,6 +15,8 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdio>
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -222,6 +224,36 @@ void runReads(Core::System& system) {
         readJob.pending = false;
         requestDone.notify_all();
         return;
+    }
+    if (!process) {
+        readJob.pending = false;
+        requestDone.notify_all();
+        return;
+    }
+    // Validate the complete virtual range before asking Azahar to copy it. A check of
+    // only the first and last byte would miss an unmapped page in the middle.
+    for (const auto& [addr, len] : readJob.ranges) {
+        const u64 end = static_cast<u64>(addr) + len;
+        if (len == 0 || end > static_cast<u64>(std::numeric_limits<u32>::max()) + 1) {
+            readJob.ok = false;
+            readJob.pending = false;
+            requestDone.notify_all();
+            return;
+        }
+        for (u64 page = addr; page < end; page = (page & ~u64{0xFFF}) + 0x1000) {
+            if (!system.Memory().IsValidVirtualAddress(*process, static_cast<u32>(page))) {
+                readJob.ok = false;
+                readJob.pending = false;
+                requestDone.notify_all();
+                return;
+            }
+        }
+        if (!system.Memory().IsValidVirtualAddress(*process, static_cast<u32>(end - 1))) {
+            readJob.ok = false;
+            readJob.pending = false;
+            requestDone.notify_all();
+            return;
+        }
     }
     for (const auto& [addr, len] : readJob.ranges) {
         const size_t at = readJob.out.size();
@@ -495,8 +527,22 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setResolution(JNIE
 // Blocks until the game thread has done it (a frame at most), so never from the UI thread.
 JNIEXPORT jbyteArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_readMemory(JNIEnv* env, jclass, jintArray jranges) {
     const jsize n = env->GetArrayLength(jranges);
+    // Bound JNI allocations and frame-boundary read time even if a caller passes a
+    // malformed range list. Normal telemetry requests use only a handful of ranges.
+    constexpr jsize maxRanges = 256;
+    constexpr u64 maxBytes = 32ull * 1024 * 1024;
+    if (n <= 0 || (n & 1) != 0 || n / 2 > maxRanges) return nullptr;
     std::vector<jint> r(n);
     env->GetIntArrayRegion(jranges, 0, n, r.data());
+    u64 totalBytes = 0;
+    for (jsize i = 0; i < n; i += 2) {
+        const u64 len = static_cast<u32>(r[i + 1]);
+        const u64 end = static_cast<u64>(static_cast<u32>(r[i])) + len;
+        if (r[i + 1] <= 0 || len > (1u << 20) || end > static_cast<u64>(std::numeric_limits<u32>::max()) + 1)
+            return nullptr;
+        totalBytes += len;
+        if (totalBytes > maxBytes) return nullptr;
+    }
     std::vector<u8> out;
     {
         std::scoped_lock caller(readCallers);
