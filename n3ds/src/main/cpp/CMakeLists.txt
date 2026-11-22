@@ -38,6 +38,7 @@ if(ENABLE_BUILTIN_KEYBLOB)
 endif()
 
 add_library(pk_n3ds SHARED pk_n3ds_jni.cpp)
+target_compile_features(pk_n3ds PRIVATE cxx_std_20)
 target_include_directories(pk_n3ds PRIVATE "${AZAHAR_DIR}/src")
 target_link_libraries(pk_n3ds PRIVATE citra_core citra_common audio_core video_core input_common android log)
 # Azahar sets its renderer switches for its own directories only (src/CMakeLists.txt); its headers read them.

@@ -60,7 +60,9 @@ class GameViewportView(context: Context, private val game: View, private val bar
         val originX = lp.leftMargin
         val originY = lp.topMargin
         val oldBar = barHeight
-        val arranger = dsArrange.takeUnless { topAligned }
+        // A 3DS phone layout can be top-aligned and still needs its floating touch window arranged over the game.
+        // NDS portrait never sets dsArrange (dsStageOn is false there), so this also leaves its portrait panel intact.
+        val arranger = dsArrange
         val skin = if (arranger == null && !topAligned && skinHost?.visibility != GONE) controlsArea?.let { area ->
             skinGame?.invoke(area.width.toInt(), area.height.toInt())?.translate(area.left, area.top)
         } else null

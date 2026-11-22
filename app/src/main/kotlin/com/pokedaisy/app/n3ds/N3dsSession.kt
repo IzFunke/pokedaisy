@@ -772,8 +772,10 @@ class N3dsSession(
         private const val STICK_TURN_SIGN = -1f
         /** The 3D picture at 3x the 3DS's (the Thor / RP6 show the top screen at about 4x); a setting later. */
         private const val RESOLUTION = 3
-        /** Azahar's Default layout: only used if the touch screen's surface were missing at boot (it never is here). */
-        private const val ONE_SURFACE_LAYOUT = 0
+        /** Azahar's SingleScreen layout: the app shows the top surface alone until TOUCH SCREEN opens the second one. */
+        // Azahar's LayoutOption::SingleScreen. The app owns the layout of its top and touch SurfaceViews; using
+        // LayoutOption::Default here draws both screens into the top view and defeats ONE SCREEN on phones.
+        private const val ONE_SURFACE_LAYOUT = 1
         private const val STICK_DEAD = 0.12f
         private const val SAMPLE_MS = 1000L
         private const val SCENE_MS = 100L

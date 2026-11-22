@@ -22,5 +22,13 @@ internal fun dsStageLayout(is3ds: Boolean, dsMenuUp: Boolean, chosen: DsLayout):
 internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): Boolean =
     layout != DsLayout.ONE_SCREEN || manuallyOpened
 
+/** A 3DS boot waits for the touch surface only when that surface is meant to be visible at boot. */
+internal fun n3dsTouchSurfaceRequired(
+    stageOn: Boolean,
+    layout: DsLayout,
+    manuallyOpened: Boolean,
+    onSecondDisplay: Boolean,
+): Boolean = onSecondDisplay || stageOn && n3dsTouchScreenVisible(layout, manuallyOpened)
+
 /** The TOUCH SCREEN quick action, hotkey, and hint are available for either DS or 3DS floating layouts. */
 internal fun touchScreenToggleAvailable(dsFloats: Boolean, n3dsFloats: Boolean): Boolean = dsFloats || n3dsFloats

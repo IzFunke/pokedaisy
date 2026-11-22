@@ -2,8 +2,8 @@
 // surfaces, and take buttons, the circle pad and touches. The JNI functions belong to com.pokedaisy.app.n3ds.N3dsNative.
 //
 // Screens: with two surfaces, the main one shows the top screen alone and the second one the touch screen alone (the
-// Thor's two displays, or ONE SCREEN's floating touch window); with one, the main surface shows both in the layout the
-// app asks for. Which it is is decided at boot, from the surfaces there are.
+// Thor's two displays, or ONE SCREEN's floating touch window); with one, Azahar uses the selected app layout, which is
+// SingleScreen for ONE SCREEN. The app can create the second window later when the player opens TOUCH SCREEN.
 #include <android/log.h>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
@@ -107,6 +107,7 @@ std::mutex surfaceMutex;
 std::condition_variable surfaceCv;         // a surface came (setSurface)
 ANativeWindow* surfaces[2] = {};           // [0] main, [1] second
 std::unique_ptr<PkWindow> windows[2];     // live while a game runs
+std::atomic_bool makeSecondaryWindow{false};
 
 // ---- Input: our own devices, read by the HID service every frame -------------------------------------------------
 
@@ -331,7 +332,11 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSurface(JNIEnv*
     if (surfaces[which]) ANativeWindow_release(surfaces[which]);
     surfaces[which] = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
     surfaceCv.notify_all();
-    if (windows[which] && windows[which]->SetSurface(surfaces[which])) {
+    // The ONE SCREEN touch view is hidden at boot, so Azahar starts with only the main PkWindow. When the player opens
+    // TOUCH SCREEN, create the secondary window and renderer on the game thread at a frame boundary (not here, on UI).
+    if (which == 1 && surfaces[which] && !windows[which] && Core::System::GetInstance().IsPoweredOn()) {
+        makeSecondaryWindow = true;
+    } else if (windows[which] && windows[which]->SetSurface(surfaces[which])) {
         auto& system = Core::System::GetInstance();
         if (system.IsPoweredOn() && surfaces[which]) system.GPU().Renderer().NotifySurfaceChanged(which == 1);
     }
@@ -349,14 +354,15 @@ JNIEXPORT jint JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_run(JNIEnv* env, j
     // screen waking, a lock screen closing) would leave Vulkan making its swapchain from a window that's gone. Vulkan
     // can't make one from no window either: wait for the main one, up to a few seconds.
     std::unique_lock surfaceLock(surfaceMutex);
+    makeSecondaryWindow = false;
     if (!surfaceCv.wait_for(surfaceLock, std::chrono::seconds(5), [] { return surfaces[0] != nullptr || stopRun; }) ||
         stopRun) {
         PKLOG("no surface to draw on: not started");
         return static_cast<jint>(Core::System::ResultStatus::ErrorNotInitialized);
     }
     const bool two = surfaces[1] != nullptr;
-    // Two surfaces: the top screen alone on the main one, the touch screen alone on the second. One: both, the way the
-    // app asks (DS LAYOUT's SIDE BY SIDE / LARGE + SMALL / STACKED as Azahar's SideScreen / LargeScreen / Default).
+    // Two surfaces: the top screen alone on the main one, the touch screen alone on the second. With one surface use
+    // the requested Azahar layout; ONE SCREEN passes SingleScreen and adds the touch window only when opened.
     Settings::values.layout_option = two ? Settings::LayoutOption::SingleScreen
                                          : static_cast<Settings::LayoutOption>(std::clamp(oneSurfaceLayout, 0, 3));
     Settings::values.secondary_display_layout = Settings::SecondaryDisplayLayout::BottomScreenOnly;
@@ -384,6 +390,13 @@ JNIEXPORT jint JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_run(JNIEnv* env, j
     jint result = 0;
     auto lastPerf = std::chrono::steady_clock::now();
     while (!stopRun) {
+        if (makeSecondaryWindow.exchange(false)) {
+            std::scoped_lock lock(surfaceMutex);
+            if (surfaces[1] && !windows[1]) {
+                windows[1] = std::make_unique<PkWindow>(surfaces[1], true);
+                system.GPU().RecreateRenderer(*windows[0], windows[1].get());
+            }
+        }
         runRequests(system);
         runReads(system);
         if (paused) {
@@ -421,6 +434,7 @@ JNIEXPORT jint JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_run(JNIEnv* env, j
     system.Shutdown();
     std::scoped_lock lock(surfaceMutex);
     windows[0].reset(), windows[1].reset();
+    makeSecondaryWindow = false;
     PKLOG("stopped");
     return result;
 }

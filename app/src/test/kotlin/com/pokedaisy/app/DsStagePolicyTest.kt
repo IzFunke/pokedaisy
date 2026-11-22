@@ -42,6 +42,24 @@ class DsStagePolicyTest {
         }
     }
 
+    @Test fun threeDsBootDoesNotWaitForHiddenOneScreenTouchSurface() {
+        assertFalse(n3dsTouchSurfaceRequired(
+            stageOn = true, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = false,
+        ))
+        assertTrue(n3dsTouchSurfaceRequired(
+            stageOn = true, layout = DsLayout.ONE_SCREEN, manuallyOpened = true, onSecondDisplay = false,
+        ))
+        assertTrue(n3dsTouchSurfaceRequired(
+            stageOn = true, layout = DsLayout.SIDE_BY_SIDE, manuallyOpened = false, onSecondDisplay = false,
+        ))
+        assertTrue(n3dsTouchSurfaceRequired(
+            stageOn = false, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = true,
+        ))
+        assertFalse(n3dsTouchSurfaceRequired(
+            stageOn = false, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = false,
+        ))
+    }
+
     @Test fun ndsMenuTrackingNeverTurnsAThreeDsLayoutIntoDualScreen() {
         for (layout in DsLayout.entries) {
             assertEquals("3DS keeps $layout when NDS menu tracking is active", layout, dsStageLayout(is3ds = true, dsMenuUp = true, chosen = layout))
