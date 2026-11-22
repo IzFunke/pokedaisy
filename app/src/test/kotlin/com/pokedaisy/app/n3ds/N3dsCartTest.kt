@@ -1,5 +1,6 @@
 package com.pokedaisy.app.n3ds
 
+import com.pokedaisy.app.companion.data.GameKind
 import com.pokedaisy.app.companion.data.RETAIL_ROM_DIR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,6 +39,19 @@ class N3dsCartTest {
         assertFalse(N3dsCart.supported(cart(0x0004000000033500L, noCrypto = true, "other.3ds")))
     }
 
+    @Test fun sunAndMoonUseTheSupportedGen7Route() {
+        for ((titleId, kind) in listOf(
+            N3dsCart.POKEMON_SUN_USA to GameKind.POKEMON_SUN,
+            N3dsCart.POKEMON_MOON_USA to GameKind.POKEMON_MOON,
+        )) {
+            val rom = cart(titleId, noCrypto = true, name = "$titleId.3ds")
+            assertTrue(N3dsCart.playable(rom))
+            assertTrue(N3dsCart.supported(rom))
+            assertEquals(kind, N3dsCart.kindOf(titleId))
+            assertEquals(N3dsLayout.Family.SM, N3dsLayout.forTitle(titleId).family)
+        }
+    }
+
     @Test fun ultraGamesAreLaunchableButDoNotClaimCompanionMemorySupport() {
         val us = cart(N3dsCart.POKEMON_ULTRA_SUN_USA, noCrypto = true, "ultra-sun.3ds")
         val um = cart(N3dsCart.POKEMON_ULTRA_MOON_USA, noCrypto = true, "ultra-moon.3ds")
@@ -45,6 +59,10 @@ class N3dsCartTest {
         assertTrue(N3dsCart.playable(um))
         assertFalse(N3dsCart.supported(us))
         assertFalse(N3dsCart.supported(um))
+        assertEquals(GameKind.POKEMON_ULTRA_SUN, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(GameKind.POKEMON_ULTRA_MOON, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertEquals(N3dsLayout.Family.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA).family)
+        assertEquals(N3dsLayout.Family.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA).family)
         assertFalse(N3dsCart.playable(cart(N3dsCart.POKEMON_ULTRA_SUN_USA, noCrypto = false, "ultra-enc.3ds")))
     }
 
