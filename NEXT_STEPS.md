@@ -1,7 +1,7 @@
 # Next Steps
 
 1. Build a legal 3DSX homebrew smoke path. The Azahar loader has 3DSX support, but PokeDaisy currently routes only recognized decrypted retail carts to `N3dsSession`. Keep the smoke harness dev/test-only unless general homebrew support is intentionally designed.
-2. Keep the current Ultra Moon session at Kukui's photo question; the user explicitly asked to stop there. Preserve the live Dev installation and its data during updates, and do not make profile/photo selections.
+2. Do not advance Ultra Moon past Kukui's photo question or make profile/photo selections. The S25 was at the PokeDaisy library during the last update; preserve Dev app data and do not assume a live game session is resumable.
 3. Extend physical-device validation to audio, broader controls, pause/resume, save lifecycle, and stability without changing the original ROM.
 4. Validate X/Y single-screen UI on ARM64 hardware when the user has the S25 available, including the API 36 touch-surface hide path, transitions, battle controls, overlays, touch, audio, saves, memory, and stability. Capture screenshots/logs and record device conditions. The ARM64 AVD cannot run on the current x86_64 host; also determine a verified hide/show fallback for Android API 35 and below.
 5. Keep the full unit suite green after follow-up changes. The 2026-11-22 run passed 4,213 tests with 0 failures and 60 skips across 191 suites; rerun it after the next broad change.

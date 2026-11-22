@@ -107,4 +107,6 @@ module root only. Ultra Moon field/battle/party offsets, automatic 3DS lower-scr
 remain incomplete. The production S25 app and its data were not touched during this headless capture.
 
 The full Dev UnitTest suite subsequently passed: 4,213 tests, 0 failures, 0 errors, 60 skipped across 191 suites. The
-ARM64 Dev native library and APK also built successfully. No install was performed on the S25, preserving its live setup.
+ARM64 Dev native library and APK also built successfully. The S25 Dev app was updated with `adb install -r` while the
+device was at the library; `setup_done=true` and the existing `last_rom` preference remained. No uninstall, data clear,
+or game-input action was used, and the app was not forced to the foreground.

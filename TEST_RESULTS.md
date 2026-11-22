@@ -148,6 +148,8 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
 
 - `:app:testDevUnitTest :app:assembleDev -Ppokedaisy.n3ds=true` — PASS (`BUILD SUCCESSFUL`, 9m30s).
 - JUnit XML confirms 4,213 tests across 191 suites, 0 failures, 0 errors, and 60 skipped.
-- The ARM64 Dev native library and Dev APK were built. The APK was not installed on the S25 so the live Ultra Moon
-  setup session would not be interrupted. The device remains connected, and existing package data was left intact.
+- The ARM64 Dev native library and Dev APK were built, then updated on the S25 with `adb install -r` while PokeDaisy
+  was in the library. Package data was retained: `setup_done=true` and the existing `last_rom` preference are present.
+  The installed package still reports versionCode 23/versionName 1.6.2-beta.1; its update time advanced. The screen was
+  not brought to the foreground for this check.
 - `git diff --check` reports no whitespace errors; Git only reports line-ending normalization warnings for edited files.
