@@ -18,7 +18,7 @@ Development is on `feature/azahar-3ds-single-screen` in the personal fork `IzFun
 - Official v1.6.2-beta.1 APK used for reference was checksum-verified against its published GitHub release digest; the original file was preserved.
 - Synthetic N3DS reader/routing tests and X/Y single-screen Paparazzi screenshot tests pass. On the latest focused rerun, 6 ROM-dependent ORAS/Sun/Moon cart tests were skipped because those images are absent from this checkout; the synthetic Sun/Moon reader tests passed. Ultra Moon has separate S25 Ultra launch evidence below. A new `N3dsNativeInitTest` instrumentation smoke check also passes on physical ARM64 hardware and is repeatable with `make n3ds-smoke`.
 - The user's European Pokémon Y and Ultra Moon images have the same title IDs used by routing. `N3dsCart` constants keep their historical `_USA` suffix; European Sun/Moon and Ultra Sun dumps are not available here for equivalent ROM-header verification.
-- Full app unit suite completed with 4,194 tests, 17 failures and 59 skipped; failure names are recorded in `TEST_RESULTS.md`.
+- The earlier full app suite had 4,194 tests, 17 failures and 59 skipped. All eight affected classes now pass in a targeted rerun (46 tests, 1 host-limited symlink skip); the full suite has not been rerun. See `TEST_RESULTS.md`.
 - `git diff --check` passes for the current changes.
 
 ## Current change

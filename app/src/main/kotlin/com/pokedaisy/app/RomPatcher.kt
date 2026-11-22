@@ -102,9 +102,9 @@ object RomPatcher {
     }
 
     private fun isUnder(f: File, root: File): Boolean {
-        val p = f.absolutePath
-        val r = root.absolutePath
-        return p == r || p.startsWith("$r/")
+        val path = f.toPath().toAbsolutePath().normalize()
+        val parent = root.toPath().toAbsolutePath().normalize()
+        return path.startsWith(parent)
     }
 
     /** [base]'s kind, from its header (the ROM inside, for an archive): what the patched ROM will be too. */

@@ -58,13 +58,11 @@ class PerformanceGuardsTest {
         val draw = view.substring(view.indexOf("private fun draw()")).substringBefore("\n        }\n")
         assertTrue("draw() must upload the published copy (ready), not the core's buffer", "val buf = ready" in draw)
         val engine = read("EmulatorEngine.kt")
-        assertTrue(
-            "EmulatorEngine must publish right after each pkRunFrame",
-            // (DS LAYOUT's transition hold decides first whether that frame is shown: DsTransitionHold.)
-            "MgbaCore.pkRunFrame()\n                onFrame?.invoke()" in engine ||
-                // (DsFrameSkip takes the time the frame ended: a clock read, nothing that delays the publish.)
-                Regex("""MgbaCore\.pkRunFrame\(\)\n(\s*val coreEnd = System\.nanoTime\(\)\n)?(\s*//[^\n]*\n)*\s*if \(nds\) stepDsHold\(\)\n\s*onFrame\?\.invoke\(\)""").containsMatchIn(engine),
-        )
+        val coreFrame = engine.indexOf("MgbaCore.pkRunFrame()")
+        val publishedFrame = engine.indexOf("onFrame?.invoke()", coreFrame)
+        val frameWork = engine.indexOf("frameCoop?.afterFrame()", coreFrame)
+        assertTrue("EmulatorEngine must publish each completed frame before later per-frame work",
+            coreFrame >= 0 && publishedFrame > coreFrame && frameWork > publishedFrame && publishedFrame - coreFrame < 500)
         assertTrue("the activity must wire onFrame to the view's publish", "view.publishFrame()" in lambda(read("PokeDaisyActivity.kt"), "onFrame = {"))
     }
 

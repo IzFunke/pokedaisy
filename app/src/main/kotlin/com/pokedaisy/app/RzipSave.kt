@@ -139,7 +139,7 @@ object RzipSave {
             is Result.Unpacked -> {
                 if (!backedUp(save, bytes)) return tr("Couldn't back up {0}, so it was left as it is", save.name)
                 val tmp = File(save.parentFile, "${save.name}.unpack.tmp")
-                val ok = runCatching { tmp.writeBytes(r.bytes); tmp.renameTo(save) }.getOrDefault(false)
+                val ok = runCatching { tmp.writeBytes(r.bytes); moveReplacing(tmp, save); true }.getOrDefault(false)
                 if (!ok) {
                     tmp.delete()
                     return tr("Can't write the save to {0}", save.parentFile?.absolutePath ?: save.name)

@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
+import org.junit.Assume.assumeNoException
 import org.junit.Test
 import java.nio.file.Files
 
@@ -39,7 +40,11 @@ class RomFolderTest {
         val root = Files.createTempDirectory("roms").toFile()
         val real = java.io.File(root, "emulated/ROMs/gba").apply { mkdirs() }
         val alias = java.io.File(root, "sdcard")
-        Files.createSymbolicLink(alias.toPath(), java.io.File(root, "emulated").toPath())
+        try {
+            Files.createSymbolicLink(alias.toPath(), java.io.File(root, "emulated").toPath())
+        } catch (e: Exception) {
+            assumeNoException("Symbolic links aren't available on this host", e)
+        }
         val viaAlias = java.io.File(alias, "ROMs/gba").path
         assertEquals(real.path, RomFolder.coveredBy(listOf(real.path), viaAlias))
         assertEquals(real.path, RomFolder.coveredBy(listOf(real.path), "$viaAlias/Retail"))

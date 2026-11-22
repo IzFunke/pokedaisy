@@ -214,7 +214,7 @@ internal fun writeWav(file: File, pcm: ShortArray, len: Int, sampleRate: Int, fr
         }
         raf.write(bytes)
     }
-    tmp.renameTo(file)   // atomic-ish swap
+    moveReplacing(tmp, file)
 }
 
 private fun RandomAccessFile.writeAsciiLE(s: String) = write(s.toByteArray(Charsets.US_ASCII))

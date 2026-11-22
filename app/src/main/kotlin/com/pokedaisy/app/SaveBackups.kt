@@ -72,11 +72,14 @@ object SaveBackups {
             return null
         }
         dir.mkdirs()
-        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(now))
-        val out = File(dir, "${save.nameWithoutExtension}.backup-$stamp.${save.extension}")
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date(now))
+        val stem = "${save.nameWithoutExtension}.backup-$stamp"
+        var out = File(dir, "$stem.${save.extension}")
+        var suffix = 2
+        while (out.exists()) out = File(dir, "$stem-$suffix.${save.extension}").also { suffix++ }
         val tmp = File(dir, "${out.name}.tmp")
         tmp.writeBytes(bytes)
-        if (!tmp.renameTo(out)) { tmp.delete(); return null }
+        if (runCatching { moveReplacing(tmp, out) }.isFailure) { tmp.delete(); return null }
         (listOf(out) + existing.filter { it != out }).drop(keep).forEach { it.delete() }
         out
     }.onFailure { Log.w("pokedaisy", "save backup failed: $it") }.getOrNull()

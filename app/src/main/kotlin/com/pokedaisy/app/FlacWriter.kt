@@ -79,9 +79,9 @@ internal object FlacWriter {
         }
         check(header.pos == headerSize)
         RandomAccessFile(tmp, "rw").use { it.write(header.buf, 0, headerSize) }
-        if (!tmp.renameTo(file)) {
+        runCatching { moveReplacing(tmp, file) }.onFailure {
             tmp.delete()
-            error("couldn't move ${tmp.name} into place")
+            throw IllegalStateException("couldn't move ${tmp.name} into place", it)
         }
     }
 

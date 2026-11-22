@@ -116,22 +116,34 @@ object RomFolder {
     fun isLinked(prefs: Prefs, rom: File): Boolean =
         prefs.romsFolders.any { under(rom.absolutePath, it) }
 
-    private fun under(path: String, root: String) = path.startsWith("$root/")
+    private fun under(path: String, root: String): Boolean {
+        val p = path.normalizedPath()
+        val r = root.normalizedPath()
+        return p == r || p.startsWith("${r.trimEnd('/')}/")
+    }
 
     /** The linked folder [path] is already part of (itself, or one it sits in), else null: linking it again
      * would only look through the same files twice. */
     fun coveredBy(folders: List<String>, path: String): String? {
-        val p = File(path).absolutePath
-        val c = canonical(p)
-        return folders.firstOrNull { p == it || under(p, it) || canonical(it).let { f -> c == f || under(c, f) } }
+        val p = path.normalizedPath()
+        val c = canonical(path).normalizedPath()
+        return folders.firstOrNull { folder ->
+            val f = folder.normalizedPath()
+            val cf = canonical(folder).normalizedPath()
+            p == f || under(p, f) || c == cf || under(c, cf)
+        }
     }
 
     /** [folders] with [path] linked too (not [coveredBy] one of them): the folders inside it go, it covers them now. */
     fun withFolder(folders: List<String>, path: String): List<String> {
-        val p = File(path).absolutePath
-        val c = canonical(p)
-        return folders.filterNot { under(it, p) || under(canonical(it), c) } + p
+        val p = path.normalizedPath()
+        val c = canonical(path).normalizedPath()
+        return folders.filterNot { folder ->
+            under(folder.normalizedPath(), p) || under(canonical(folder).normalizedPath(), c)
+        } + path
     }
+
+    private fun String.normalizedPath(): String = replace('\\', '/').trimEnd('/').ifEmpty { "/" }
 
     /** [path] with links resolved (/sdcard is /storage/emulated/0): two linked folders that are one folder under two names
      * listed every ROM twice (a player's report after updating from 1.3, Discord 2026-11-14). */

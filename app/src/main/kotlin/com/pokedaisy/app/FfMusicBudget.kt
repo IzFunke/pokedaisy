@@ -135,8 +135,8 @@ internal object FfMusicBudget {
         val tmp = File(root, "$PLAYED.tmp")
         runCatching {
             tmp.writeText(played.entries.sortedBy { it.value }.joinToString("") { (k, at) -> "${k.replace('/', ' ')} $at\n" })
-            if (!tmp.renameTo(f)) tmp.delete()
-        }
+            moveReplacing(tmp, f)
+        }.onFailure { tmp.delete() }
     }
 
     /** The song a cache file belongs to: `<key>.flac` / `<key>.intro.flac` (or a WAV from before FLAC). */
