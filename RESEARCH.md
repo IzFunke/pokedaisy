@@ -63,3 +63,7 @@ The x86_64 Azahar session at the Kukui photo/profile setup prompt reported `AppD
 ## AppDemo signal rejected after cross-scene check (2026-11-22)
 
 The `AppDemo`, `SequencePlayer`, `Object` trio appears during ordinary narration as well as the photo/profile setup. It cannot distinguish a touch-dependent screen from a top-screen dialogue. A temporary automatic paired-screen mapping was removed, and regression coverage now requires this group to remain `UNMAPPED`. The 16 MiB heap diff remains too broad for a memory address claim. Continue with a state marker observed across multiple stable samples or a verified game-owned structure.
+
+## Ultra Moon lower-screen capture path (2026-11-22)
+
+The pinned Azahar Vulkan renderer can service `RendererBase::RequestScreenshot` using a temporary `SingleFrameLayout` that enables only the lower screen, then copies the rendered framebuffer to host memory. This path is independent of the secondary Android surface. A read-only 320x240 capture from the current live German narration state was fully black while the top display continued to show Kukui's narration. This is evidence for that one scene, not a general scene classifier: no title input or personal setup choice was made. The existing scene policy should remain unchanged until a lower-screen sample and module/state marker are correlated at a safe gameplay checkpoint.

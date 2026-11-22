@@ -148,3 +148,9 @@ A further read-only 16 MiB heap snapshot was captured from the same running emul
 ## Companion unmapped status display (2026-11-22)
 
 A read-only emulator capture during German Ultra Moon narration still showed an animated `LOADING` label even though the Companion already had the definitive `3DS companion data is not mapped yet` message. The data-tab placeholder now shows a static `NOT AVAILABLE` heading and that explanation for concrete reader errors; the rocking Poké Ball and animated loading label remain for the actual startup state. The emulator and S25 were not updated. The feature-enabled Dev APK builds; the focused unit-test task compiled the test class but did not complete on this host, so its result is unverified.
+
+## Ultra Moon lower-screen capture check (2026-11-22)
+
+The existing read-only `shot` debug command captured Azahar's lower framebuffer from the running API 36 x86_64 emulator while Ultra Moon was in German Kukui narration. The returned 320x240 image was completely black; a simultaneous Android screen capture showed the game continuing to render the narration on the upper display. The capture used no game input and left the session at the same point. Therefore, this observation does not justify opening the lower screen during this narration scene, and it does not identify behavior at the photo prompt, field, menus, or battle.
+
+Azahar source inspection confirms that `N3dsSession.screenshot(..., bottom = true)` requests an offscreen `SingleFrameLayout` rendering of the lower framebuffer; this screenshot path does not require a visible secondary Android `SurfaceView`. A black result is distinct from a failed/null screenshot request. The emulator and S25 received no game input or app update.
