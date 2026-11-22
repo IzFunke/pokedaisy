@@ -13,7 +13,8 @@
 11. Once Ultra Moon behavior is verified, extend the same adapter architecture to Ultra Sun, Sun/Moon and X/Y/ORAS only where each title's addresses are separately validated. Keep the S25 Ultra's package data intact and use `adb install -r` for any authorized Dev update.
 # Next: finish measured USUM runtime mapping
 
-Use the isolated headless harness and its language-select savestate to inspect Ultra Moon EU modules while preserving the
-explicit stop before the Kukui photo selection. Continue only with inputs already authorized for the intro; do not make
-the photo/profile choice. The next required evidence is a verified field module/root and game-owned live structures for
-scene, party, and battle before adding a USUM `Gen6Reader.Config` or enabling automatic stage changes.
+The isolated language-select savestate now verifies the Ultra Moon EU root `0x008b2000` and `LangSelect` module, and the
+Dev app opens both displays automatically for that one scene. All other USUM modules still use `UNMAPPED` and the manual
+touch-screen fallback. Next, obtain a verified field module/root and game-owned live structures for field menu, party,
+and battle before adding a USUM `Gen6Reader.Config` or enabling further automatic stage changes. Preserve the stop before
+Kukui's photo selection; do not make the photo/profile choice.

@@ -37,6 +37,15 @@ class OrasSmCartTest {
         assertFalse(N3dsCart.POKEMON_ULTRA_MOON_USA in N3dsCart.SUPPORTED)
     }
 
+    @Test fun ultraMoonOnlyRecognizesItsObservedLanguageStartupScene() {
+        assertEquals(0x008B2000, Gen6Reader.startupSceneModuleRoot(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertEquals(0, Gen6Reader.startupSceneModuleRoot(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "LangSelect"))
+        assertEquals(Gen6Reader.Scene.UNMAPPED, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "HeroSelect"))
+        assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, ""))
+        assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_SUN_USA, "LangSelect"))
+    }
+
     @Test fun cartsAreKnown() {
         assertEquals(GameKind.POKEMON_OMEGA_RUBY, N3dsCart.kindOf(N3dsCart.POKEMON_OR_USA))
         assertEquals(GameKind.POKEMON_MOON, N3dsCart.kindOf(N3dsCart.POKEMON_MOON_USA))

@@ -153,3 +153,13 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
   The installed package still reports versionCode 23/versionName 1.6.2-beta.1; its update time advanced. The screen was
   not brought to the foreground for this check.
 - `git diff --check` reports no whitespace errors; Git only reports line-ending normalization warnings for edited files.
+
+## Ultra Moon startup module polling (2026-11-22)
+
+- A separate `n3ds_dump` process loaded the existing language-selector savestate and queried module root `0x008b2000`;
+  output: `modules LangSelect`. No game input was sent and the ROM remained mounted read-only.
+- `:app:testDevUnitTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest -Ppokedaisy.n3ds=true` — PASS.
+- `:app:assembleDev -Ppokedaisy.n3ds=true` — PASS; ARM64 Dev APK built.
+- S25 update used `adb install -r`. `setup_done=true`, the `last_rom` preference remains present (currently Pokémon Y),
+  and the shared save directory preference is still set. No game was launched and no save was written. Screen-level
+  confirmation is pending.

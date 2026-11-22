@@ -293,10 +293,15 @@ class N3dsSession(
 
     /** What the game's screens show now ([Gen6Reader.sceneOf]), read ten times a second; [onScene] hears a change. */
     private val sceneConfig = Gen6Reader.configFor(titleId)
+    private val sceneModuleRoot = sceneConfig?.staticModule?.takeIf { it != 0 }
+        ?: Gen6Reader.startupSceneModuleRoot(titleId)
     // A mapped game starts with both displays until the scene reader identifies the field (setup screens need touch).
-    // Where this build has no scene map, keep the user's ONE SCREEN choice from the start.
-    @Volatile var scene: Gen6Reader.Scene = if (sceneConfig?.staticModule?.let { it != 0 } == true)
-        Gen6Reader.Scene.SCREEN else Gen6Reader.Scene.FIELD
+    // USUM's one observed startup scene is polled separately; all other unmapped titles keep a neutral/manual fallback.
+    @Volatile var scene: Gen6Reader.Scene = when {
+        sceneConfig?.staticModule?.let { it != 0 } == true -> Gen6Reader.Scene.SCREEN
+        sceneModuleRoot != 0 -> Gen6Reader.Scene.UNMAPPED
+        else -> Gen6Reader.Scene.FIELD
+    }
         private set
     private var sceneTold = false
 
@@ -319,44 +324,59 @@ class N3dsSession(
         var seen: Gen6Reader.Scene? = null
         var streak = 0
         var pass = 0
-        while (running && config != null && config.staticModule != 0) {
+        while (running && sceneModuleRoot != 0) {
             if (!paused) {
-                val modules = N3dsNative.modules(config.staticModule)
+                val modules = N3dsNative.modules(sceneModuleRoot)
                 if (modules != null) {
                     if (modules != lastModules) { Log.d(TAG, "modules: ${modules.replace('\n', ',')}"); lastModules = modules }
-                    val onField = modules.split('\n').contains(config.fieldModule)
-                    val menu = if (onField) fieldMenu(config) else null
-                    val now = Gen6Reader.sceneOf(modules, menu, config)
-                    streak = if (now == seen) streak + 1 else 1
-                    val needed = when {
-                        scene == Gen6Reader.Scene.SCREEN && now == Gen6Reader.Scene.FIELD -> SCREEN_TO_FIELD_READS
-                        // Save's question going (back to the menu) leaves the menu unset for a read or two.
-                        scene == Gen6Reader.Scene.MENU && now == Gen6Reader.Scene.FIELD -> 3
-                        else -> 2
+                    if (config == null) {
+                        // USUM: only LangSelect has been verified. Unknown modules return to the neutral/manual policy.
+                        val now = Gen6Reader.startupSceneOf(titleId, modules)
+                        streak = if (now == seen) streak + 1 else 1
+                        if (now != null && (now != scene || !sceneTold) && streak >= 2) {
+                            scene = now
+                            sceneTold = true
+                            Log.i(TAG, "startup scene: $now")
+                            ui.post { onScene(now) }
+                        }
+                        seen = now
+                    } else {
+                        val onField = modules.split('\n').contains(config.fieldModule)
+                        val menu = if (onField) fieldMenu(config) else null
+                        val now = Gen6Reader.sceneOf(modules, menu, config)
+                        streak = if (now == seen) streak + 1 else 1
+                        val needed = when {
+                            scene == Gen6Reader.Scene.SCREEN && now == Gen6Reader.Scene.FIELD -> SCREEN_TO_FIELD_READS
+                            // Save's question going (back to the menu) leaves the menu unset for a read or two.
+                            scene == Gen6Reader.Scene.MENU && now == Gen6Reader.Scene.FIELD -> 3
+                            else -> 2
+                        }
+                        // (The first scene read is told too: the field is the default, so it wouldn't be a change.)
+                        if (now != null && (now != scene || !sceneTold) && streak >= needed) {
+                            scene = now
+                            sceneTold = true
+                            Log.i(TAG, "scene: $now")
+                            ui.post { onScene(now) }
+                        }
+                        seen = now
+                        // The game holding the player (talking, a scene, a door): the HUD's bottom row steps away at
+                        // once and comes back after a few free reads (no blink between two lines or through a door).
+                        val holdAt = if (onField && config.fieldHold != 0)
+                            Gen6Reader.chained(config.fieldHold, config.fieldHoldPath, ::readInt) else null
+                        val heldNow = holdAt != null &&
+                            (N3dsNative.readMemory(intArrayOf(holdAt, 4))?.takeIf { it.size == 4 }
+                                ?.let { it[0].toInt() and config.fieldHoldMask != 0 } == true)
+                        freeReads = if (heldNow) 0 else freeReads + 1
+                        val held = heldNow || freeReads < FIELD_FREE_READS
+                        if (held != fieldHeld) { fieldHeld = held; ui.post { onFieldHeld(held) } }
+                        // ZOOM's say: the field's module up and the scene the field (or the X menu over it).
+                        val canZoom = onField &&
+                            (scene == Gen6Reader.Scene.FIELD || scene == Gen6Reader.Scene.MENU)
+                        zoomable = canZoom
+                        readBattle(config, if (modules.split('\n').contains(config.battleModule)) modules else null)
                     }
-                    // (The first scene read is told too: the field is the default, so it wouldn't be a change.)
-                    if (now != null && (now != scene || !sceneTold) && streak >= needed) {
-                        scene = now
-                        sceneTold = true
-                        Log.i(TAG, "scene: $now")
-                        ui.post { onScene(now) }
-                    }
-                    seen = now
-                    // The game holding the player (talking, a scene, a door): the HUD's bottom row steps away at once and
-                    // comes back after a few free reads (no blink between two lines or through a door).
-                    val holdAt = if (onField && config.fieldHold != 0) Gen6Reader.chained(config.fieldHold, config.fieldHoldPath, ::readInt) else null
-                    val heldNow = holdAt != null &&
-                        (N3dsNative.readMemory(intArrayOf(holdAt, 4))?.takeIf { it.size == 4 }?.let { it[0].toInt() and config.fieldHoldMask != 0 } == true)
-                    freeReads = if (heldNow) 0 else freeReads + 1
-                    val held = heldNow || freeReads < FIELD_FREE_READS
-                    if (held != fieldHeld) { fieldHeld = held; ui.post { onFieldHeld(held) } }
-                    // ZOOM's say: the field's module up and the scene the field (or the X menu over it).
-                    val canZoom = onField &&
-                        (scene == Gen6Reader.Scene.FIELD || scene == Gen6Reader.Scene.MENU)
-                    zoomable = canZoom
-                    readBattle(config, if (modules.split('\n').contains(config.battleModule)) modules else null)
                 }
-                if (pass++ % FIELD_SHOT_EVERY == 0 && scene == Gen6Reader.Scene.FIELD) fieldShot()
+                if (config != null && pass++ % FIELD_SHOT_EVERY == 0 && scene == Gen6Reader.Scene.FIELD) fieldShot()
                 if (com.pokedaisy.app.BuildConfig.DEBUG) debugCommands(pass % FIELD_SHOT_EVERY == 1)
             }
             try { Thread.sleep(SCENE_MS) } catch (_: InterruptedException) { break }

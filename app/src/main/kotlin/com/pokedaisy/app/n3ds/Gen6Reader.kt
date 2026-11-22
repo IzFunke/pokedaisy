@@ -261,6 +261,8 @@ object Gen6Reader {
 
     /** What the game's two screens show, for where the touch screen goes ([sceneOf]). */
     enum class Scene {
+        /** A recognized title whose current module has no verified screen behavior yet. */
+        UNMAPPED,
         /** The field, the touch screen its own (PSS): nothing to touch there that buttons can't do. */
         FIELD,
         /** The field's X menu: on the touch screen alone, the top screen still the field. */
@@ -391,6 +393,18 @@ object Gen6Reader {
         // Moon's addresses: Sun reads the Moon save at every one of them (headless, 2026-11-17).
         N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA -> POKEMON_SM_USA
         else -> null
+    }
+
+    /** The only verified USUM module root so far: the EU Ultra Moon language selector (headless Azahar, 2026-11-22). */
+    fun startupSceneModuleRoot(titleId: Long): Int = when (titleId) {
+        N3dsCart.POKEMON_ULTRA_MOON_USA -> 0x008B2000
+        else -> 0
+    }
+
+    /** Recognize only Ultra Moon's observed language selector; every other module remains explicitly unmapped. */
+    fun startupSceneOf(titleId: Long, modules: String?): Scene? {
+        if (startupSceneModuleRoot(titleId) == 0 || modules.isNullOrBlank()) return null
+        return if ("LangSelect" in modules.lineSequence()) Scene.SCREEN else Scene.UNMAPPED
     }
 
     /** One party Pokemon, decoded. [species] 0 = an empty slot (never returned). */

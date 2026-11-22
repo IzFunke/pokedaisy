@@ -110,3 +110,13 @@ The full Dev UnitTest suite subsequently passed: 4,213 tests, 0 failures, 0 erro
 ARM64 Dev native library and APK also built successfully. The S25 Dev app was updated with `adb install -r` while the
 device was at the library; `setup_done=true` and the existing `last_rom` preference remained. No uninstall, data clear,
 or game-input action was used, and the app was not forced to the foreground.
+
+## 2026-11-22: Ultra Moon language-selector screen detection
+
+The headless Ultra Moon savestate was reloaded in a fresh diagnostic process; a module query at `0x008b2000` returned
+`LangSelect`. `N3dsSession` now polls that observed root for Ultra Moon and automatically selects the paired screen layout
+only while `LangSelect` is present. Other modules are `UNMAPPED`, preserving the selected layout and manual touch-screen
+fallback. No USUM field, battle, party, or Companion mapping is inferred from Sun/Moon. The focused `OrasSmCartTest`
+passed and `:app:assembleDev -Ppokedaisy.n3ds=true` passed. The resulting Dev APK was installed on the S25 with
+`adb install -r`; `setup_done`, the existing `last_rom` entry, and the shared save-folder preference were retained.
+The phone was locked during install, so this automatic transition has not yet been visually verified on hardware.
