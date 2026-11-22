@@ -164,3 +164,7 @@ Azahar source inspection confirms that `N3dsSession.screenshot(..., bottom = tru
 ## 2026-11-22 live sparse-capture follow-up
 
 The newly built feature-enabled Dev APK was installed on `emulator-5556` with `adb install -r`; the preference SHA-256 stayed identical. A read-only sparse capture succeeded. At `0x33F7FA44`, the six candidate party slots are empty. At `0x330128E4`, populated-looking bytes fail PK7 checksum validation. Neither candidate is validated for production use. The emulator screenshot now shows “Die Einstellungen wurden gespeichert.” rather than clearly identifying Kukui's photo prompt, so no more game input was sent. S25 remains untouched.
+
+## 2026-11-22 effective 3DS scene-layout startup fix
+
+`wantsTouchSurface` now checks the effective N3DS stage layout, after applying a verified scene's temporary paired-screen policy, instead of checking only the stored DS layout. A known setup/SCREEN scene with stored ONE SCREEN therefore waits for the lower Android surface at startup; a field scene still starts with only the top screen unless touch is manual or auto-requested. The policy test and feature-enabled Dev APK build pass. The APK remains uninstalled to preserve the active Ultra Moon emulator session; real renderer behavior is still pending.

@@ -22,6 +22,10 @@ internal fun dsStageLayout(is3ds: Boolean, dsMenuUp: Boolean, chosen: DsLayout):
 internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): Boolean =
     layout != DsLayout.ONE_SCREEN || manuallyOpened
 
+/** Whether this screen's 4:3 output is visible after both the selected layout and a game-requested presentation apply. */
+internal fun n3dsTouchVisibleForLayout(layout: DsLayout, manuallyOpened: Boolean, autoWanted: Boolean): Boolean =
+    n3dsTouchScreenVisible(layout, manuallyOpened) || autoWanted
+
 /** 3DS scenes that need Azahar's lower screen, matching the DS auto-window triggers. */
 internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
     scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||

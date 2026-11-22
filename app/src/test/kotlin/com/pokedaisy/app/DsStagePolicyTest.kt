@@ -42,6 +42,18 @@ class DsStagePolicyTest {
         }
     }
 
+    @Test fun startupWaitUsesTheEffectiveSceneLayoutForOneScreenGames() {
+        val setupLayout = n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.ONE_SCREEN)
+        assertEquals(DsLayout.SIDE_BY_SIDE, setupLayout)
+        assertTrue(n3dsTouchVisibleForLayout(setupLayout, manuallyOpened = false, autoWanted = false))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false, touchVisible = true))
+
+        val fieldLayout = n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, DsLayout.ONE_SCREEN)
+        assertEquals(DsLayout.ONE_SCREEN, fieldLayout)
+        assertFalse(n3dsTouchVisibleForLayout(fieldLayout, manuallyOpened = false, autoWanted = false))
+        assertTrue(n3dsTouchVisibleForLayout(fieldLayout, manuallyOpened = false, autoWanted = true))
+    }
+
     @Test fun threeDsTouchWindowFrameTracksTheDsLikeOpenState() {
         assertFalse(n3dsTouchWindowFramed(DsLayout.ONE_SCREEN, windowOpen = false))
         assertTrue(n3dsTouchWindowFramed(DsLayout.ONE_SCREEN, windowOpen = true))

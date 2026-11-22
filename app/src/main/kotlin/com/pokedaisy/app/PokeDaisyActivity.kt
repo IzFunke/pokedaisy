@@ -4317,8 +4317,10 @@ class PokeDaisyActivity : Activity() {
                 onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
                 // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
                 wantsTouchSurface = {
+                    val chosen = Prefs(this).dsLayout.forGame(followed = true)
+                    val effective = n3ds?.scene?.let { n3dsStageLayout(it, chosen) } ?: chosen
                     val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
-                        (n3dsTouchScreenVisible(Prefs(this).dsLayout, n3dsFloating.value) || n3dsTouchAutoWanted)
+                        n3dsTouchVisibleForLayout(effective, n3dsFloating.value, n3dsTouchAutoWanted)
                     n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
                 },
                 onScene = { onN3dsScene(it) },
