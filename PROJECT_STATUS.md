@@ -132,3 +132,9 @@ The debug capture path now lives in app-private `files/n3ds-debug`, which makes 
 ## 2026-11-22 Ultra Moon static data follow-up
 
 Using the user's local Ultra Moon EU image read-only, corrected USUM's German text-table indices and its island-map archive location (`a/2/3/8`). The layout-aware static readers now pass against the ROM for labels, moves, species types, zones, wild encounters, icons, and island map extraction. Focused USUM tests and the ARM64+x86_64 feature-enabled Dev build pass. The photo/profile prompt remains untouched. Live USUM party/battle/scene mapping and DS-level automatic second-screen/Companion parity are still open.
+
+## Ultra Moon intro screen routing (2026-11-22)
+
+A live x86_64 Azahar module snapshot at Kukui's photo/profile setup contained exactly `AppDemo`, `SequencePlayer`, and `Object` (also seen during the intro). These modules were previously treated as unknown, leaving the lower display manual in ONE SCREEN. `Gen6Reader.startupSceneOf` now recognizes that complete observed group as a screen scene alongside `LangSelect`; partial/unrelated groups remain `UNMAPPED`. Existing stage policy then temporarily arranges the top and lower displays side by side for these setup screens, following the DS menu behavior. The setup choice itself was not confirmed or changed.
+
+The focused startup-scene and stage-policy tests pass, and the feature-enabled ARM64+x86_64 Dev APK builds successfully with the Ultra Moon observed setup-module mapping. The running emulator was not updated or sent input, preserving the photo/profile checkpoint.

@@ -173,3 +173,9 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
 ## 2026-11-22 Ultra Moon EU ROM-backed test
 
 With `POKEDAISY_USUM_ROM` set to the local read-only Ultra Moon Europe `.3ds` image, the focused USUM layout and routing tests passed. Coverage confirms German text tables, move/personal records, named Route 1 zones, wild encounter records, icon extraction, and map extraction from the USUM-specific `a/2/3/8` archive. The same focused run passed in 24 seconds. A feature-enabled `assembleDev` build for ARM64 and x86_64 also succeeded in 19 seconds. ROM contents were not modified or included in outputs.
+
+## 2026-11-22 Ultra Moon setup screen routing
+
+Focused tests passed for the known language and profile/intro module groups, unknown/partial groups remaining unmapped, and the paired-screen stage policy. This verifies classifier and layout-policy behavior; no game input was sent and no device visual check was performed.
+
+The classifier/layout change builds in the feature-enabled Dev APK (`:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true`; successful, 2026-11-22). The APK was not installed during this check, so the emulator remains at the existing photo/profile prompt.
