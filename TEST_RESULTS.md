@@ -24,14 +24,14 @@ Date: 2026-11-21
 
 ## Full app test suite
 
-Command: `:app:testDebugUnitTest -Ppokedaisy.n3ds=true`.
+Command: `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --offline --no-daemon --console=plain`.
 
-Gradle completed after 11m42s: 4,194 tests completed, 17 failed, 59 skipped. Failures were in `BpsPatchTest`, `FfMusicBudgetTest`, `FlacWriterTest` (7 cases), `PerformanceGuardsTest`, `RomFolderTest` (4 cases), `RzipSaveTest`, `SaveFileEditsTest`, and `SiteDataExportTest`. Several failures report Windows path/rename behavior, and the compatibility data fixture is stale. The focused N3DS and single-screen suites passed. These broader failures remain in the baseline tree and should be triaged separately; this run does not establish a clean full-suite baseline.
+2026-11-22: Gradle completed after 13m03s: 4,207 tests, 0 failures, 60 skipped across 191 test classes. This rerun includes the earlier Windows path/rename, atomic replacement, save, and frame-publication fixes. `SiteDataExportTest` now normalizes CRLF to LF before comparing generated JSON, so the fixture check works with Windows checkout line endings. The focused N3DS and single-screen results above remain separate from this full JVM suite; ROM-dependent skips remain expected.
 
 ## Recheck of the formerly failing baseline classes
 
-- 2026-11-22: re-ran the eight classes named by the 17-failure run (46 tests, 1 skipped): PASS after fixing atomic replacement of existing FLAC/WAV/cache/save files, making backup names collision-safe, normalizing path comparisons across host separators, and updating the frame-publication source guard to assert ordering rather than exact formatting. The symlink alias test was skipped when Windows denied symlink creation. `SiteDataExportTest` passes after a clean targeted test run; `website/src/data/compat.json` required no content update.
-- The full 4,194-test suite has not been rerun since these fixes, so this result only closes the previously failing test classes, not the complete suite.
+- 2026-11-22: re-ran the eight classes named by the 17-failure run (46 tests, 1 skipped): PASS after fixing atomic replacement of existing FLAC/WAV/cache/save files, making backup names collision-safe, normalizing path comparisons across host separators, and updating the frame-publication source guard to assert ordering rather than exact formatting. The symlink alias test was skipped when Windows denied symlink creation. The full suite subsequently passed after normalizing generated website JSON line endings; `website/src/data/compat.json` required no content update.
+- Full-suite verification now covers 4,207 tests across 191 classes: 0 failures, 60 skips.
 - After the file/path fixes, the focused 3DS regression set (`DsStagePolicyTest`, `N3dsCartTest`, `N3dsSavesTest`, `OrasSmCartTest`, `N3dsBattleTapsTest`) passed: 26 tests, 0 failures, 7 ROM-dependent skips. `:app:assembleDev` with ARM64 and x86_64 Azahar flags passed. The API 36 x86_64 emulator was updated with `adb install -r`; `setup_done=true`, `last_rom=UltraMoon.3ds`, and `ds_layout=0` remained. The S25 Ultra was not touched.
 
 ## Game checks
