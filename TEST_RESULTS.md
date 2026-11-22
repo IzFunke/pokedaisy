@@ -92,3 +92,10 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 - On the API 36 x86_64 AVD, Ultra Moon was visible from the linked folder, tagged `NOT SUPPORTED`, and booted through the direct launch route. Azahar logged title ID `00040000001b5100`, then about 29.9 game FPS / 59.8 system FPS after warm-up. No crash or ANR was observed.
 - The closed ONE SCREEN screenshot still showed a second 4:3 surface. On-screen D-pad input did not move the language cursor. No language choice or player-profile choice was made. These are unverified/failed behaviors, not a successful single-screen or controls result.
 - The S25 Ultra was not updated. No helper script matching the timeout task was present in its Download, Documents or `/data/local/tmp` locations. Its seven-hour Windows restore task remains scheduled for 2026-11-22 08:42:31 +01:00; on successful restore it unregisters itself and removes its local PowerShell script and log.
+
+## 2026-11-22 touch-surface composition follow-up
+
+- Replaced the 3DS touch `SurfaceView` with a `TextureView`, which Android composites as part of the app window. The top surface remains a `SurfaceView`; the Azahar second window remains available for the touch display.
+- `:app:assembleDev :app:testDevUnitTest --tests com.pokedaisy.app.DsStagePolicyTest --tests com.pokedaisy.app.n3ds.N3dsCartTest --tests com.pokedaisy.app.n3ds.N3dsSavesTest` with N3DS and x86_64 flags: PASS. The x86_64 API 36 AVD was updated only with `adb install -r`.
+- Ultra Moon booted to the German `Begin game` / `Select language` screen; the accepted German setting persisted through this session. Azahar logged title ID `00040000001b5100` and ran at about 29.9 game FPS / 59.8 system FPS. No crash or ANR was observed. No character or profile choice was made.
+- SurfaceFlinger showed only the top native `SurfaceView`; the touch surface is now a TextureView inside the app layer. The TOUCH SCREEN hotkey opened and closed its framed window without a crash, but its content was black on the settings-saved dialog. Normal in-game touch-screen output remains to be verified. The S25 package and data were untouched.

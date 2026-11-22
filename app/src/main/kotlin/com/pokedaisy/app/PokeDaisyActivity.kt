@@ -4036,8 +4036,6 @@ class PokeDaisyActivity : Activity() {
     private fun dsBottomHost(ctx: Context, companion: () -> View): NdsBottomHost {
         val screen = n3ds?.touchView?.also { v ->
             (v.parent as? android.view.ViewGroup)?.removeView(v)
-            // Alone on its display: under the window's views (the FILL tab over it), not over them as when it floats.
-            v.setZOrderMediaOverlay(false)
             n3dsTouchOnSecond = true
             v.post { n3ds?.surfacesChanged() }
         }
@@ -4309,9 +4307,7 @@ class PokeDaisyActivity : Activity() {
             onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
             // Keep Azahar's touch window attached so its renderer can route the 4:3 display separately from the main one.
             wantsTouchSurface = {
-                n3dsTouchSurfaceRequired(
-                    dsStageOn, n3dsTouchOnSecond,
-                )
+                n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond)
             },
             onScene = { onN3dsScene(it) },
             onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },
@@ -4457,13 +4453,13 @@ class PokeDaisyActivity : Activity() {
         n3ds?.touchView?.let { v ->
             if (on && v.parent !== dsTouchView) {
                 (v.parent as? android.view.ViewGroup)?.removeView(v)
-                v.setZOrderMediaOverlay(true)
                 dsTouchView.addView(v, FrameLayout.LayoutParams(-1, -1))
                 n3dsTouchOnSecond = false
             }
         }
         val touchVisible = on && n3dsTouchScreenVisible(layout, n3dsFloating.value)
-        // Keep the native touch window attached in ONE SCREEN; composition order lets alpha hide it until opened.
+        // TextureView is composed by the app window, so its alpha hides the native surface on API levels where
+        // SurfaceView content is independently composited from its parent.
         dsTouchView.visibility = if (on) View.VISIBLE else View.GONE
         dsTouchView.alpha = if (touchVisible) 1f else 0f
         n3ds?.touchView?.alpha = if (touchVisible) 1f else 0f
