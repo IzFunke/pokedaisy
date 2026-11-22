@@ -24,13 +24,13 @@ class OrasSmCartTest {
     private val sun = File(dir, "Pokemon Sun (USA) (En,Ja,Fr,De,Es,It,Zh,Ko).3ds")
     private val moon = File(dir, "Pokemon Moon (USA) (En,Ja,Fr,De,Es,It,Zh,Ko).3ds")
 
-    @Test fun ultraGamesAreRecognizedForGen7LaunchButNotCompanionReadsYet() {
+    @Test fun ultraGamesHaveTheirOwnStaticLayoutButNoRuntimeMapYet() {
         assertEquals(GameKind.POKEMON_ULTRA_SUN, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_SUN_USA))
         assertEquals(GameKind.POKEMON_ULTRA_MOON, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertTrue(GameKind.POKEMON_ULTRA_SUN.isSm)
         assertTrue(GameKind.POKEMON_ULTRA_MOON.isSm)
-        assertEquals(N3dsLayout.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA))
-        assertEquals(N3dsLayout.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA))
+        assertEquals(N3dsLayout.USUM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(N3dsLayout.USUM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertNull(Gen6Reader.configFor(N3dsCart.POKEMON_ULTRA_SUN_USA))
         assertNull(Gen6Reader.configFor(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertFalse(N3dsCart.POKEMON_ULTRA_SUN_USA in N3dsCart.SUPPORTED)

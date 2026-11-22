@@ -441,6 +441,29 @@ class N3dsSession(
             val bytes = N3dsNative.readMemory(ranges) ?: continue
             File(dir, "n3ds-$stamp-%08x.bin".format(base)).writeBytes(bytes)
         }
+        if (titleId == N3dsCart.POKEMON_ULTRA_SUN_USA || titleId == N3dsCart.POKEMON_ULTRA_MOON_USA) {
+            // PKMN-NTR's published USUM candidates, deliberately diagnostic-only until each range is validated on this
+            // cart/build. Keep this supplementary capture sparse: trainer, bag, and both published party candidates.
+            val candidates = listOf(
+                "trainer" to (0x33012818 to 0x100),
+                "bag" to (0x33011934 to 0xE00),
+                "money" to (0x33015210 to 4),
+                "party" to (0x33F7FA44 to 0xB58),
+                "party-alternate" to (0x330128E4 to 0xB58),
+            )
+            val ranges = candidates.flatMap { listOf(it.second.first, it.second.second) }.toIntArray()
+            val bytes = N3dsNative.readMemory(ranges)
+            if (bytes != null) {
+                File(dir, "usum-candidates-$stamp.bin").writeBytes(bytes)
+                File(dir, "usum-candidates-$stamp.tsv").writeText(
+                    candidates.joinToString(separator = "\n", postfix = "\n") { (name, range) ->
+                        "$name\t0x%08x\t0x%x".format(range.first, range.second)
+                    },
+                )
+            } else {
+                Log.w(TAG, "USUM candidate memory read failed")
+            }
+        }
         Log.i(TAG, "dumped $stamp")
     }
 

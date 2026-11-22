@@ -187,3 +187,9 @@ The feature-enabled Dev build succeeded with ARM64 and x86_64 Azahar libraries (
 ## 2026-11-22 classifier correction
 
 Removed the temporary rule that treated `AppDemo + SequencePlayer + Object` as a known screen: the same module group spans ordinary narration and photo/profile setup. Focused tests now assert the group remains unmapped, while `LangSelect` remains recognized. The feature-enabled ARM64+x86_64 Dev build passes after this correction; no game input or APK installation is part of this check.
+
+## 2026-11-22 USUM candidate-memory diagnostic
+
+- `:app:compileDevKotlin -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true` — PASS. Alongside the existing Gen 7 heap dump, the debug path now captures the published USUM trainer, bag, money, and two party-candidate ranges with a TSV address manifest. It does not activate those offsets in Companion or screen policy.
+- The full `:app:testDevUnitTest` run completed 4,220 tests with 1 failure and 61 skipped. The failure was an outdated USUM layout assertion expecting `N3dsLayout.SM` after USUM received its own static layout. The assertion and test name were updated; `:app:testDevUnitTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest` then passed all 9 class cases (6 ROM-dependent skips).
+- The full suite was not rerun after that test-only correction. No APK was installed, so the active emulator session was preserved; the sparse candidate capture has not yet been run on-device. The S25 was not accessed.
