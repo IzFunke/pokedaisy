@@ -217,3 +217,10 @@ During an attempted app hotkey check, a tap aimed at the shoulder control labele
 - `:app:testDevUnitTest --tests=com.pokedaisy.app.DsStagePolicyTest --offline --no-daemon --console=plain` — PASS, 12 tests, 0 failures, 0 skipped.
 - `:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true --offline --no-daemon --console=plain` — PASS; APK `app/build/outputs/apk/dev/app-dev.apk`, 135,398,409 bytes.
 - Not installed on the emulator, so the live lower-screen black-box observation is not yet resolved or rechecked. Ultra Moon's startup is initially UNMAPPED, so this change specifically fixes mapped startup SCREEN scenes (including X/Y) and does not claim a complete USUM fix. S25 was not touched.
+
+## 2026-11-22 shared DS and 3DS save-folder routing
+
+Audited the existing folder settings and launch path. `PokeDaisyActivity` resolves a ROM save with `SavesLocation.saveFor` before `EmulatorEngine.start`; the engine passes that exact file path to the native DS/GBA core. A configured shared `DS GAME SAVES` folder is searched first and therefore prevents a DS save from falling back beside the ROM; changing the setting copies existing listed DS saves where the target name is free and keeps the originals. `3DS GAME SAVES` selects Azahar's complete user-data root; switching roots copies the existing tree only when the destination is empty and never deletes the old root.
+
+- `:app:testDevUnitTest --tests=com.pokedaisy.app.SavesLocationTest --tests=com.pokedaisy.app.n3ds.N3dsSavesTest --offline --no-daemon --console=plain` — PASS, 9 tests total (7 DS save-location rules, 2 3DS save-format checks).
+- This verifies path-selection logic and known metadata formats, not an end-to-end save write/reload on the physical S25. No device settings or saves were changed in this check.
