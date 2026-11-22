@@ -71,3 +71,9 @@ The pinned Azahar Vulkan renderer can service `RendererBase::RequestScreenshot` 
 ## 3DS core-selection runtime wiring (2026-11-22)
 
 The persisted `N3dsCore` choice previously had no launch-time consumer: the activity always constructed `N3dsSession` directly. The launch path now resolves `AUTO` or explicit `AZAHAR` against the bundled backend list and dispatches through the resolved backend. The focused `N3dsCoreTest` covers auto resolution, explicit selection, and missing-backend behavior. Azahar remains the sole bundled 3DS backend; no alternative core is claimed.
+
+## Repeated Ultra Moon dialog heap comparison (2026-11-22)
+
+A fresh read-only 16 MiB capture from the running API 36 x86_64 emulator was compared with the earlier Kukui dialog and photo-view snapshots. The two dialog captures differ at 7,132 bytes (34 of 4,096 pages), while the earlier AppDemo/dialog pair differs from the photo-view capture at 86,455 bytes. Across three dialog captures, 516 aligned 32-bit words were identical and different in the photo-view capture; these cluster at heap offsets `0x00E3B43C` through `0x00E3BB00`, where the bytes resemble render/geometry values rather than a stable state enum or pointer. The rest of the candidate fields did not remain stable across repeated dialogs. No address or scene rule is adopted from this diff.
+
+The new snapshot was pulled to the ignored local `work/` analysis directory, and its temporary device copy was removed. The game received no input; the S25 was not accessed.
