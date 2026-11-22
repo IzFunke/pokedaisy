@@ -154,3 +154,7 @@ A read-only emulator capture during German Ultra Moon narration still showed an 
 The existing read-only `shot` debug command captured Azahar's lower framebuffer from the running API 36 x86_64 emulator while Ultra Moon was in German Kukui narration. The returned 320x240 image was completely black; a simultaneous Android screen capture showed the game continuing to render the narration on the upper display. The capture used no game input and left the session at the same point. Therefore, this observation does not justify opening the lower screen during this narration scene, and it does not identify behavior at the photo prompt, field, menus, or battle.
 
 Azahar source inspection confirms that `N3dsSession.screenshot(..., bottom = true)` requests an offscreen `SingleFrameLayout` rendering of the lower framebuffer; this screenshot path does not require a visible secondary Android `SurfaceView`. A black result is distinct from a failed/null screenshot request. The emulator and S25 received no game input or app update.
+
+## 3DS core preference now reaches the launch path (2026-11-22)
+
+`Prefs.n3dsCore` is now resolved before save preparation and session construction. `AUTO` selects the first bundled backend; an explicit backend is accepted only when available. The session factory currently has one real branch, native Azahar. An unavailable choice reports that the 3DS title cannot start instead of silently starting a different backend. This wires the existing setting into runtime selection but does not add a second core.

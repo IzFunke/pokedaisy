@@ -67,3 +67,7 @@ The `AppDemo`, `SequencePlayer`, `Object` trio appears during ordinary narration
 ## Ultra Moon lower-screen capture path (2026-11-22)
 
 The pinned Azahar Vulkan renderer can service `RendererBase::RequestScreenshot` using a temporary `SingleFrameLayout` that enables only the lower screen, then copies the rendered framebuffer to host memory. This path is independent of the secondary Android surface. A read-only 320x240 capture from the current live German narration state was fully black while the top display continued to show Kukui's narration. This is evidence for that one scene, not a general scene classifier: no title input or personal setup choice was made. The existing scene policy should remain unchanged until a lower-screen sample and module/state marker are correlated at a safe gameplay checkpoint.
+
+## 3DS core-selection runtime wiring (2026-11-22)
+
+The persisted `N3dsCore` choice previously had no launch-time consumer: the activity always constructed `N3dsSession` directly. The launch path now resolves `AUTO` or explicit `AZAHAR` against the bundled backend list and dispatches through the resolved backend. The focused `N3dsCoreTest` covers auto resolution, explicit selection, and missing-backend behavior. Azahar remains the sole bundled 3DS backend; no alternative core is claimed.

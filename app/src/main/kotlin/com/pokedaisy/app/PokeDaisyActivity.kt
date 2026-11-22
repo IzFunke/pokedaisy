@@ -4287,6 +4287,11 @@ class PokeDaisyActivity : Activity() {
             showHud(com.pokedaisy.app.companion.i18n.tr("This 3DS game can't start here."))
             return
         }
+        val n3dsBackend = Prefs(this).n3dsCore.resolve()
+        if (n3dsBackend == null) {
+            showHud(com.pokedaisy.app.companion.i18n.tr("This 3DS game can't start here."))
+            return
+        }
         when (val ready = com.pokedaisy.app.n3ds.N3dsSaves.prepare(this, header.titleId)) {
             is com.pokedaisy.app.n3ds.N3dsSaves.Ready.Refused -> { showHud(ready.reason); return }
             com.pokedaisy.app.n3ds.N3dsSaves.Ready.Ok -> Unit
@@ -4305,20 +4310,22 @@ class PokeDaisyActivity : Activity() {
         com.pokedaisy.app.companion.i18n.L10n.apply(Prefs(this).appLanguage, key)
         states = SaveStates(getExternalFilesDir(null) ?: filesDir, key)
         engine = EmulatorEngine(input, states!!, FfMusicCache(getExternalFilesDir(null) ?: filesDir, key), com.pokedaisy.app.companion.GameBattleInput(telemetry, null, 0, input = input), Prefs(this), telemetry)
-        val session = com.pokedaisy.app.n3ds.N3dsSession(
-            this, romFile, header.titleId, input,
-            onSnapshot = { telemetry.publish(it) },
-            onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
-            // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
-            wantsTouchSurface = {
-                val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
-                    (n3dsTouchScreenVisible(Prefs(this).dsLayout, n3dsFloating.value) || n3dsTouchAutoWanted)
-                n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
-            },
-            onScene = { onN3dsScene(it) },
-            onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },
-            onFieldHeld = { n3dsFieldHeld.value = it },
-        )
+        val session = when (n3dsBackend) {
+            com.pokedaisy.app.companion.N3dsBackend.AZAHAR -> com.pokedaisy.app.n3ds.N3dsSession(
+                this, romFile, header.titleId, input,
+                onSnapshot = { telemetry.publish(it) },
+                onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
+                // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
+                wantsTouchSurface = {
+                    val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
+                        (n3dsTouchScreenVisible(Prefs(this).dsLayout, n3dsFloating.value) || n3dsTouchAutoWanted)
+                    n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
+                },
+                onScene = { onN3dsScene(it) },
+                onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },
+                onFieldHeld = { n3dsFieldHeld.value = it },
+            )
+        }
         n3ds = session
         // The idle engine's GL view stays laid out (the stage measures it) but draws nothing: its surface goes.
         view.visibility = View.INVISIBLE
