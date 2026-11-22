@@ -1,5 +1,6 @@
 package com.pokedaisy.app
 
+import com.pokedaisy.app.companion.DsLayout
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,5 +31,13 @@ class DsStagePolicyTest {
         assertFalse(enabled(is3ds = true, portrait = true, debugMirror = true))
         assertFalse(enabled(is3ds = true, portrait = true, companionOverGame = true))
         assertFalse(enabled(is3ds = true, portrait = true, folded = true))
+    }
+
+    @Test fun threeDsOneScreenShowsTouchOnlyOnManualRequest() {
+        assertFalse(n3dsTouchScreenVisible(DsLayout.ONE_SCREEN, manuallyOpened = false))
+        assertTrue(n3dsTouchScreenVisible(DsLayout.ONE_SCREEN, manuallyOpened = true))
+        for (layout in DsLayout.entries.filter { it != DsLayout.ONE_SCREEN }) {
+            assertTrue("$layout remains explicit", n3dsTouchScreenVisible(layout, manuallyOpened = false))
+        }
     }
 }

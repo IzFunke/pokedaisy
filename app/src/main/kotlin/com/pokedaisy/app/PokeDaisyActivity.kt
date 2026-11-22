@@ -2527,7 +2527,7 @@ class PokeDaisyActivity : Activity() {
         n3dsDim = View(this).apply {
             setBackgroundColor(0x99000000.toInt())
             visibility = View.GONE
-            setOnClickListener { if (!n3dsBattleScreenUp) setN3dsFloating(false) }
+            setOnClickListener { setN3dsFloating(false) }
         }
         val root = GameScreenView(this, view, statusBar).apply {
             setBackgroundColor(Color.BLACK)
@@ -4265,7 +4265,7 @@ class PokeDaisyActivity : Activity() {
 
     /** The TOUCH SCREEN hotkey and the HUD's TOUCH: the floating touch screen opened by hand, or closed again. */
     private fun toggleDsTouch() {
-        if (romIs3ds) { if (!(n3dsFloating.value && n3dsBattleScreenUp)) setN3dsFloating(!n3dsFloating.value); return }
+        if (romIs3ds) { setN3dsFloating(!n3dsFloating.value); return }
         if (!dsFloats.value) return
         dsWindowManual.value = !dsWindowManual.value
     }
@@ -4311,7 +4311,6 @@ class PokeDaisyActivity : Activity() {
             // (upright phones, for now) Azahar draws both screens on the one surface.
             wantsTouchSurface = { dsStageOn || n3dsTouchOnSecond },
             onScene = { onN3dsScene(it) },
-            onBattle = { onN3dsBattle(it) },
             onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },
             onFieldHeld = { n3dsFieldHeld.value = it },
         )
@@ -4347,7 +4346,6 @@ class PokeDaisyActivity : Activity() {
         romIs3ds = false
         n3dsTouchOnSecond = false
         n3dsFloating.value = false
-        n3dsAutoFloat = false
         n3dsFieldShot.value = null
         n3dsBattle.value = false
         n3dsOnField.value = false
@@ -4372,27 +4370,10 @@ class PokeDaisyActivity : Activity() {
     /** The 3DS game's field a moment ago: behind the native screen and app overlays. */
     private val n3dsFieldShot = androidx.compose.runtime.mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
 
-    /** The floating touch screen came in for the game's X menu ([onN3dsScene]), so it goes when the menu does; one the
-     * player opened stays until they close it. */
-    private var n3dsAutoFloat = false
-
-    /** Where the game is ([com.pokedaisy.app.n3ds.N3dsSession.scene]) controls app overlays. ONE SCREEN keeps the touch
-     * surface off the display unless the player opens it. */
+    /** The game scene controls app overlays only. The lower render stays hidden until the player opens TOUCH SCREEN. */
     private fun onN3dsScene(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene) {
         if (n3ds == null) return
         n3dsOnField.value = scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD
-        when (scene) {
-            com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU -> if (!n3dsFloating.value && n3dsFloats) {
-                setN3dsFloating(true)
-                n3dsAutoFloat = true
-                return
-            }
-            com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN,
-            com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE -> if (n3dsAutoFloat || scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN) {
-                n3dsAutoFloat = false
-                if (n3dsFloating.value) { n3dsFloating.value = false; n3ds?.releaseTouch() }
-            }
-        }
         // A battle on ONE SCREEN: full size, with the app's buttons for its commands (DsBattleMenu) where the touch
         // screen would float. Not in PICTURE IN PICTURE: the touch screen is in that corner already (as for a DS game).
         n3dsBattle.value = scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE && n3dsFloats &&
@@ -4425,28 +4406,6 @@ class PokeDaisyActivity : Activity() {
 
     /** The 3DS top screen's box in the HUD's coordinates: the battle strip's picture. */
     private val n3dsTopRect = androidx.compose.runtime.mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
-
-    /** A 3DS battle's bag or party is open: those are on the touch screen alone, so its window stays until the game
-     * closes them (its return arrow, B) - closed by itself (a tap beside it: a second tap on POKéMON before it was up),
-     * the game sat on its party with neither the window nor the battle's buttons to get back (the user's report). */
-    private val n3dsBattleScreenUp: Boolean
-        get() = n3dsBattle.value && n3ds?.battle?.input.let {
-            it == com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN || it == com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
-        }
-
-    /** The battle's menu changed ([com.pokedaisy.app.n3ds.N3dsSession.battle]): its bag and party are the game's own
-     * screens, so the touch screen floats in for them (and goes once they close); the strip stands for the rest. */
-    private fun onN3dsBattle(battle: com.pokedaisy.app.n3ds.Gen6Reader.Battle?) {
-        if (n3ds == null || !n3dsBattle.value) return
-        val input = battle?.input ?: com.pokedaisy.app.companion.data.BATTLE_INPUT_NONE
-        val screen = input == com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN || input == com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
-        if (screen && !n3dsFloating.value) {
-            setN3dsFloating(true)
-            n3dsAutoFloat = true
-        } else if (!screen && n3dsAutoFloat && n3dsFloating.value) {
-            setN3dsFloating(false)
-        }
-    }
 
     /**
      * DS LAYOUT for a 3DS game's two screens (a 5:3 top one, a 4:3 touch screen). ONE SCREEN keeps the touch screen's
@@ -4512,7 +4471,7 @@ class PokeDaisyActivity : Activity() {
         n3dsBattle.value = on && layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN &&
             n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE
         n3dsDim.visibility = if (on && n3dsFloating.value) View.VISIBLE else View.GONE
-        val hidden = on && layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN && !n3dsFloating.value
+        val hidden = on && !n3dsTouchScreenVisible(layout, n3dsFloating.value)
         dsTouchView.translationX = if (hidden) (stage.width.coerceAtLeast(resources.displayMetrics.widthPixels) * 2).toFloat() else 0f
         stage.requestLayout()
     }
@@ -4521,7 +4480,6 @@ class PokeDaisyActivity : Activity() {
         if (open && !n3dsFloats) return
         if (n3dsFloating.value == open) return
         n3dsFloating.value = open
-        n3dsAutoFloat = false
         if (!open) n3ds?.releaseTouch()
         syncGameScreen()
     }
