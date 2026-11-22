@@ -14,7 +14,13 @@ This comparison uses PokeDaisy's existing DS behavior (`docs/manual/devices.md`,
 
 ## S25 comparison status
 
-The source/manual comparison is documented above. The feature-enabled Dev build is now installed on the Galaxy S25 Ultra, and `LibraryActivity` opened successfully with the existing setup/last-game keys present. A same-build Black 2 versus Ultra Moon interaction comparison remains pending; this update did not launch a ROM or send game input.
+The feature-enabled Dev APK (`versionCode=23`, `versionName=1.6.2-beta.1`) was rebuilt and updated on the Galaxy S25 Ultra with `adb install -r`; Android returned `Success`. No uninstall or data clear was used.
+
+- **Pokémon Y Europe:** Azahar booted the cart on the S25 and sustained about 29.8–30 FPS at normal speed. Its German save was visible at the title menu. A live memory capture read the configured language byte as `5` (German), but the party and bag regions did not decode valid data while the title/start-menu modules were active. Logs showed `DllTitle`, `DllBackGround`, `DllSequence`, and `DllStartMenu`; the runtime never reached a verified field/menu/battle scene in this capture. This is a launch/render check, not proof of Companion or automatic single-screen parity.
+- **Ultra Moon Europe:** Azahar reached the German intro on the S25 at about 30 FPS. The app reported `UNMAPPED` for `AppDemo`, `SequencePlayer`, and `Object`, then saw `StrInput` / `HeroSelect`. Those observations do not identify gameplay, battle, or photo-selection behavior. No further input was sent at the setup prompt, following the player's instruction to stop before choosing a profile photo.
+- **Save preservation:** The Y and Ultra Moon `main` files and their metadata were copied to `work/s25-validation-saves-20261122/` before testing. Their SHA-256 values matched a second device copy afterward; neither save changed. The Y memory captures are retained under `work/s25-y-live-dump-20261122/` for offline inspection.
+
+The existing DS manual remains the interaction contract. Automatic 3DS state changes, touch-screen presentation, live Companion data, and an S25 Black 2 comparison remain unverified. The APK currently on the phone is the existing Dev build; no source code changed in this update.
 
 ## Reference source
 

@@ -1,5 +1,13 @@
 # Test Results
 
+## 2026-11-22 S25 runtime follow-up
+
+- Rebuilt `:app:assembleDev -Ppokedaisy.n3ds=true --offline --no-daemon --console=plain` successfully and updated the S25 Ultra's existing `com.pokedaisy.app.dev` package using `adb install -r` (`Success`; versionCode 23 / versionName 1.6.2-beta.1). No uninstall, app-data clear, or settings reset was used. This was the current source build; no source code changed in this follow-up.
+- Pokémon Y Europe booted through Azahar at about 29.8–30 FPS. Runtime module logs reached the title/start-menu path only. A title-state memory capture read the configured MyStatus language byte as `5` (German), but no party or bag entries decoded at that state, so this does not validate the X/Y gameplay map or Companion telemetry.
+- Ultra Moon Europe rendered the German intro at about 30 FPS. Runtime modules included `AppDemo`, `SequencePlayer`, `Object`, then `StrInput` / `HeroSelect`; `N3dsSession` still reported `UNMAPPED`. No profile photo was selected; testing stopped at setup in accordance with the player's earlier instruction.
+- Before device testing, both 3DS save files and metadata were copied under `work/s25-validation-saves-20261122/`. A second pull afterward had matching SHA-256 hashes for all four files. No save changed. The Y memory captures remain under `work/s25-y-live-dump-20261122/`.
+- Result: both retail carts render on the S25. This does not pass the goal's field/menu/battle state detection, auto touch-screen, Companion, transition, or DS-parity criteria. See `docs/3DS_DS_PARITY.md` for the exact observed limits.
+
 Date: 2026-11-21
 
 ## Build checks
