@@ -445,3 +445,9 @@ Sun boots that Moon save too and reads it at every address below (party, bag, My
 
 - Settings > FOLDERS now includes a shared `DS GAME SAVES` directory. Changing it copies existing saves found for listed DS games into the selected directory when the destination filename is free; originals remain in place and explicit per-game folders still win. With no shared directory, the historical beside-ROM behavior remains.
 - `3DS GAME SAVES` selects Azahar's user-data root, which includes its SD card tree and other Azahar data. Choosing an empty folder copies the existing tree first; old files are never deleted. Resetting the setting leaves the previous custom tree in place.
+
+## x86_64 screen-routing regression check (2026-11-22)
+
+The opt-in Dev build (`pokedaisy.n3ds`, `pokedaisy.n3dsX86_64`, and `pokedaisy.x86_64`) boots the user's temporary Pokémon Y copy on an Android 36 x86_64 AVD. In `ONE SCREEN`, Azahar's top surface remains on screen while the lower surface is hidden; L2 creates and shows the second surface with the game's real language-help screen, and closing L2 returns to top-only output. This checks title boot and screen-surface routing only. The run was left at the irreversible language prompt without confirming a language or entering later setup.
+
+The same focused synthetic tests continue to recognize Sun and Moon as playable and companion-supported with the Gen VII reader layout. Ultra Sun and Ultra Moon are recognized for launch routing but remain deliberately unsupported by companion memory readers. The x86_64 AVD cannot validate ARM64 performance; the existing ARM64 AVD image cannot start under the x86_64 Windows QEMU host. S25 Ultra runtime evidence for Y and Ultra Moon is separately dated above; this follow-up did not install on or interact with the phone.

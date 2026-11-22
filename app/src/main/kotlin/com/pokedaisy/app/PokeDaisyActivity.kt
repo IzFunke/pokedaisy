@@ -4642,7 +4642,18 @@ class PokeDaisyActivity : Activity() {
         val open = wantedNow && !blank || loading
         androidx.compose.runtime.SideEffect { wasOpen[0] = open }
         // PICTURE IN PICTURE: its inset goes while the touch screen is up large (the same screen twice otherwise).
-        androidx.compose.runtime.SideEffect { dsTouchView.alpha = if (open) 0f else 1f }
+        // A DS game draws its touch screen through NdsTouchScreenView inside this container, so the floating
+        // Compose window replaces that view while it is open. A 3DS game draws Azahar's live bottom screen through
+        // its SurfaceView child in the same container; keep that screen hidden in single-screen mode and reveal it
+        // only while the touch-screen window is requested.
+        androidx.compose.runtime.SideEffect {
+            val alpha = if (romIs3ds) {
+                if (open) 1f else 0f
+            } else {
+                if (open) 0f else 1f
+            }
+            dsTouchView.alpha = alpha
+        }
         // A DS battle's menu (the HUD decides when: [dsStripShown]): kept on show behind the floating window - the
         // bag, the party - under its dim, the keys the window's meanwhile. In the HUD's coordinates (the stage's
         // area under the status bar).
@@ -4721,20 +4732,22 @@ class PokeDaisyActivity : Activity() {
             }
         }
         val frozenBehind = if (freezeBehind) sessionShot.value else null
-        com.pokedaisy.app.companion.ui.DsTouchWindow(
-            open = open,
-            onClose = if (manual && !wanted) ({ dsWindowManual.value = false }) else null,
-            onDismiss = ::dismissDsTouch,
-            behind = frozenBehind ?: if (menuApp) dsShots.field.value else null,
-            loading = loading,
-            // Over the cover: it's already the dimmed overworld.
-            backdrop = !cover,
-            held = holding,
-            frozen = frozen.value,
-            // (hudClear: re-read when the touch controls move.)
-            clearFor = { l, r -> hudClear.value.let { touchControls.clearAcross(l, r) } },
-        ) { modifier ->
-            androidx.compose.ui.viewinterop.AndroidView({ NdsTouchScreenView(it) }, modifier)
+        if (!romIs3ds) {
+            com.pokedaisy.app.companion.ui.DsTouchWindow(
+                open = open,
+                onClose = if (manual && !wanted) ({ dsWindowManual.value = false }) else null,
+                onDismiss = ::dismissDsTouch,
+                behind = frozenBehind ?: if (menuApp) dsShots.field.value else null,
+                loading = loading,
+                // Over the cover: it's already the dimmed overworld.
+                backdrop = !cover,
+                held = holding,
+                frozen = frozen.value,
+                // (hudClear: re-read when the touch controls move.)
+                clearFor = { l, r -> hudClear.value.let { touchControls.clearAcross(l, r) } },
+            ) { modifier ->
+                androidx.compose.ui.viewinterop.AndroidView({ NdsTouchScreenView(it) }, modifier)
+            }
         }
         // Held with no window up (a page side by side, on its way back to the field): the same shade and dots
         // over the stage's held pictures.

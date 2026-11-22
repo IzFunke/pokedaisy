@@ -10,6 +10,8 @@ Development is on `feature/azahar-3ds-single-screen` in the personal fork `IzFun
 - Production/device Dev APKs contain `lib/arm64-v8a/libpk_n3ds.so`. An opt-in x86_64 build (`-Ppokedaisy.n3dsX86_64=true`) now also packages Azahar for emulator runtime checks; the Galaxy S25 Ultra uses ARM64. The package remains isolated as `com.pokedaisy.app.dev`.
 - On the Galaxy S25 Ultra, `LibraryActivity` resumed and no fatal exception or native load error appeared in the captured startup log.
 - The x86_64 translation AVD aborts with SIGILL during startup; it is not a viable Azahar runtime target.
+- The opt-in API 36 x86_64 AVD boots the user's Pokémon Y test copy. The closed `ONE SCREEN` view shows the top surface; opening the touch window creates the lower Azahar surface and displays the actual in-game language help; closing it returns to top-only output. This follow-up leaves the irreversible language prompt unconfirmed and verifies no later game setup.
+- The API 36 ARM64 AVD image exists, but Android Emulator 37.2.13 refuses to launch it on this Windows x86_64 host (`arm64` guest architecture unsupported by QEMU2 here). ARM64 runtime evidence must come from compatible hardware; the S25 was not used or updated in this follow-up.
 - Official v1.6.2-beta.1 APK used for reference was checksum-verified against its published GitHub release digest; the original file was preserved.
 - Synthetic N3DS reader/routing tests and X/Y single-screen Paparazzi screenshot tests pass. On the latest focused rerun, 6 ROM-dependent ORAS/Sun/Moon cart tests were skipped because those images are absent from this checkout; the synthetic Sun/Moon reader tests passed. Ultra Moon has separate S25 Ultra launch evidence below. A new `N3dsNativeInitTest` instrumentation smoke check also passes on physical ARM64 hardware and is repeatable with `make n3ds-smoke`.
 - Full app unit suite completed with 4,194 tests, 17 failures and 59 skipped; failure names are recorded in `TEST_RESULTS.md`.
@@ -41,3 +43,5 @@ Copying settings from the installed official package requires an official settin
 ## Git state
 
 Checkpoints `64e20368` (setup and project docs), `34eec0a6` (ARM64 JNI smoke test), `89c80ab2` (USUM routing and shared handheld save settings), `5d7d4069` (Pokémon Y device findings), and `7be978ba` (x86_64 runtime, true single-screen boot, and dynamic touch-screen window) are pushed to `origin/feature/azahar-3ds-single-screen`. No upstream PR has been opened. Keep the goal active until game/runtime behavior, compatibility, and release evidence are established.
+
+On 2026-11-22, the final activity UI change built and passed focused `DsStagePolicyTest`, `N3dsCartTest`, `N3dsSavesTest`, and `OrasSmCartTest`; the opt-in Dev APK was installed on the x86_64 AVD with `adb install -r`. Setup preferences and the last ROM remained present. The worktree change and its evidence are not committed/pushed yet.
