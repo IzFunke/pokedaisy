@@ -85,6 +85,11 @@ object CompanionSupport {
         // its name: it was listed under GBA, NOT SUPPORTED.
         if (RomArchive.isArchive(rom) && RomArchive.romEntry(rom) == null) return false
         if (POKEMON_NAME.containsMatchIn(rom.name)) return true
+        // The NCSD title ID is the 3DS cart's game identity. Ultra Sun / Moon are launchable but intentionally have
+        // no companion RAM map yet, so recognize them here to keep them visible in a linked ROM folder.
+        if (rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS) {
+            return com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId in com.pokedaisy.app.n3ds.N3dsCart.PLAYABLE
+        }
         val title = when {
             RomIdentity.isGameBoy(rom) -> RomArchive.readAt(rom, 0x134L, 16)
             RomIdentity.isNds(rom) -> RomArchive.readAt(rom, 0x0L, 12)

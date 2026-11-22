@@ -30,6 +30,13 @@ Commit `89c80ab2` adds USUM retail title recognition and Sun/Moon-style presenta
 
 The official app's private settings have not been copied into Dev. The installed official package is non-debuggable and declares `allowBackup=false`, so Android blocks `run-as` and backup access to its preferences; its Settings screen and source expose no preferences export action. Dev's existing data remains preserved by in-place installation.
 
+## 2026-11-22 follow-up
+
+- Added NCSD title-ID detection to linked-folder scanning so Pokémon Sun, Moon, Ultra Sun and Ultra Moon appear in the library even without a companion RAM map. The ROM cache stamp changes to rescan entries written by earlier builds. Ultra Moon appeared with `NOT SUPPORTED` on the API 36 x86_64 emulator, and direct `LaunchActivity` launch booted title ID `00040000001b5100`.
+- The API 36 emulator ran Ultra Moon at about 29.9 game FPS / 59.8 system FPS after warm-up. No language was selected; this setup session is still at the first language prompt.
+- The same screenshot showed the 4:3 touch surface leaking into the supposedly closed ONE SCREEN layout despite composition ordering. Touching the on-screen D-pad did not move the language cursor. Single-screen hiding and input are therefore not verified as working in this build and remain open defects. The S25 APK was not updated during this follow-up.
+- Focused unit tests for companion library detection, linked-folder caching, 3DS cart routing and saves pass: 19 tests, 0 failures, 2 expected skips. Details in `TEST_RESULTS.md`.
+
 
 The user later reported that the 3DS view still appeared dual-screen and that 3DS ROMs no longer started on the S25 Ultra. The DS menu tracker override was restricted to DS games, and 3DS keeps its selected layout. Emulator runtime work then exposed two more causes: a hidden touch-screen `SurfaceView` could block Azahar from starting in ONE SCREEN, and the single-surface core layout was Azahar's `Default` (both screens), not `SingleScreen`. The boot now waits only for a touch surface that is visible at launch, and the one-surface mode selects Azahar's `SingleScreen` layout.
 

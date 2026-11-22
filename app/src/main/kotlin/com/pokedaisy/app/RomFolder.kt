@@ -279,7 +279,7 @@ object RomFolder {
      * linked before Black was supported stayed out of the library). */
     private val SUPPORTED = "#supported\t" + Integer.toHexString(
         // "pokemon": the cache from before unsupported Pokémon games were listed ([Entry.pokemon]) read again once.
-        (listOf("pokemon") + TelemetrySampler.SUPPORTED_HACK_SHA1S.sorted() + TelemetrySampler.SUPPORTED_GB_SHA1S.sorted() +
+        (listOf("pokemon", "3ds-pokemon-library") + TelemetrySampler.SUPPORTED_HACK_SHA1S.sorted() + TelemetrySampler.SUPPORTED_GB_SHA1S.sorted() +
             com.pokedaisy.app.companion.data.RETAIL_DUMPS.map { it.sha1 } +
             TelemetrySampler.NDS_GAMES.map { (code, rev) -> "$code:$rev" }.sorted() +
             com.pokedaisy.app.companion.data.OriginHeartGold.V4_0_3_EN_RC8_SHA1).hashCode(),

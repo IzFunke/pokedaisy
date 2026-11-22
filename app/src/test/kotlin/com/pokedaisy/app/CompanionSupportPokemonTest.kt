@@ -29,6 +29,14 @@ class CompanionSupportPokemonTest {
         b[0x15C] = 0x56; b[0x15D] = 0xCF.toByte()
     }
 
+    /** A 3DS cart: NCSD title ID at 0x108 and an NCCH in the first partition. */
+    private fun n3ds(name: String, titleId: Long) = rom(name, 0x4200) { b ->
+        put(b, 0x100, "NCSD")
+        for (i in 0 until 8) b[0x108 + i] = (titleId ushr (8 * i)).toByte()
+        b[0x120] = 0x20
+        put(b, 0x4100, "NCCH")
+    }
+
     /** A GBA header: [title] at 0xA0, 0x96 at 0xB2. */
     private fun gba(name: String, title: String) = rom(name, 0x1000) { b ->
         put(b, 0xA0, title)
@@ -47,6 +55,19 @@ class CompanionSupportPokemonTest {
         assertTrue(CompanionSupport.looksPokemon(gb("Pokemon Ambrosia.gbc", "AMBROSIA")))
         assertTrue(CompanionSupport.looksPokemon(nds("Pokémon Light Platinum.nds", "LIGHT PLAT")))
         assertTrue(CompanionSupport.looksPokemon(gb("Pocket Monsters - Midori.gb", "MIDORI")))
+    }
+
+    @Test fun byKnown3dsTitleIdEvenWhenCompanionMapIsUnavailable() {
+        val titles = listOf(
+            com.pokedaisy.app.n3ds.N3dsCart.POKEMON_SUN_USA,
+            com.pokedaisy.app.n3ds.N3dsCart.POKEMON_MOON_USA,
+            com.pokedaisy.app.n3ds.N3dsCart.POKEMON_ULTRA_SUN_USA,
+            com.pokedaisy.app.n3ds.N3dsCart.POKEMON_ULTRA_MOON_USA,
+        )
+        titles.forEachIndexed { i, titleId ->
+            assertTrue("title ${titleId.toString(16)}", CompanionSupport.looksPokemon(n3ds("cart-$i.3ds", titleId)))
+        }
+        assertFalse(CompanionSupport.looksPokemon(n3ds("mario.3ds", 0x0004000000033500L)))
     }
 
     /** A zip holding [entry] with [bytes]. */
