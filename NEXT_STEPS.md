@@ -1,7 +1,7 @@
 # Next Steps
 
 1. Build a legal 3DSX homebrew smoke path. The Azahar loader has 3DSX support, but PokeDaisy currently routes only recognized decrypted retail carts to `N3dsSession`. Keep the smoke harness dev/test-only unless general homebrew support is intentionally designed.
-2. On the x86_64 AVD, resume the current Pokémon Y copy at the first language prompt. The user requested German; confirm only that authorized choice, then stop before any further personal setup prompt. Do not claim the language is persistent until a later restart proves it.
+2. Keep the current Pokémon Y run at `Begin game` / `Select language` unless the user authorizes continuing into personal setup. The user-authorized German choice was confirmed. A later restart can verify persistence, but avoid entering or confirming a personal profile choice without user input.
 3. Extend physical-device validation to audio, broader controls, pause/resume, save lifecycle, and stability without changing the original ROM.
 4. Validate X/Y single-screen UI on ARM64 hardware when the user has the S25 available, including transitions, battle controls, overlays, touch, audio, saves, memory, and stability. Capture screenshots/logs and record device conditions. The ARM64 AVD cannot run on the current x86_64 host.
 5. Triage the 17 full-suite failures recorded in `TEST_RESULTS.md` separately; focused N3DS logic, single-screen screenshot, and ARM64 JNI initialization tests pass.
