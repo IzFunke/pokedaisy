@@ -165,6 +165,7 @@ constexpr SaveFormat SAVE_FORMATS[] = {
     {0x000400000011C500, 0x40000, 1, 1, 1}, // Pokemon Alpha Sapphire (USA): Omega Ruby's
     {0x0004000000164800, 0x40000, 1, 1, 1}, // Pokemon Sun (USA), seen when it formats a new save
     {0x0004000000175E00, 0x40000, 1, 1, 1}, // Pokemon Moon (USA): Sun's
+    {0x00040000001B5100, 0x40000, 1, 1, 1}, // Pokemon Ultra Moon (S25 metadata, 2026-11-21)
 };
 
 // Each game's static module (CRS) header, where `modules` starts (found with `findcrs`).
