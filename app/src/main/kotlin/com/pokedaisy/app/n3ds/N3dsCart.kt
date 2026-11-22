@@ -11,21 +11,21 @@ object N3dsCart {
     /** The file extensions a 3DS cart image goes by. */
     val EXTENSIONS = setOf("3ds", "cci")
 
-    /** Pokemon X (USA, every language on the cart). */
+    /** Pokémon X retail title ID; the _USA suffix is retained from the original constant naming. */
     const val POKEMON_X_USA = 0x0004000000055D00L
 
-    /** Pokemon Y (USA): X's code and memory, its own version's Pokemon (2026-11-15: every address X's, headless). */
+    /** Pokémon Y retail title ID (also used by the user's European dump): X's engine, Y's own Pokémon. */
     const val POKEMON_Y_USA = 0x0004000000055E00L
 
-    /** Pokemon Omega Ruby / Alpha Sapphire (USA, Rev 2 carts): X's engine, their own addresses. */
+    /** Pokémon Omega Ruby / Alpha Sapphire retail title IDs (Rev 2): X's engine, their own addresses. */
     const val POKEMON_OR_USA = 0x000400000011C400L
     const val POKEMON_AS_USA = 0x000400000011C500L
 
-    /** Pokemon Sun / Moon (USA): Gen 7. */
+    /** Pokémon Sun / Moon retail title IDs: Gen 7. */
     const val POKEMON_SUN_USA = 0x0004000000164800L
     const val POKEMON_MOON_USA = 0x0004000000175E00L
 
-    /** Pokemon Ultra Sun / Ultra Moon (USA): recognized for launch; Gen 7 companion memory is not mapped yet. */
+    /** Pokémon Ultra Sun / Ultra Moon retail title IDs: launch is recognized; companion memory is not mapped yet. */
     const val POKEMON_ULTRA_SUN_USA = 0x00040000001B5000L
     const val POKEMON_ULTRA_MOON_USA = 0x00040000001B5100L
 

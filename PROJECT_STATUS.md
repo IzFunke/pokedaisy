@@ -17,6 +17,7 @@ Development is on `feature/azahar-3ds-single-screen` in the personal fork `IzFun
 - The API 36 ARM64 AVD image exists, but Android Emulator 37.2.13 refuses to launch it on this Windows x86_64 host (`arm64` guest architecture unsupported by QEMU2 here). ARM64 runtime evidence must come from compatible hardware; the S25 was not used or updated in this follow-up.
 - Official v1.6.2-beta.1 APK used for reference was checksum-verified against its published GitHub release digest; the original file was preserved.
 - Synthetic N3DS reader/routing tests and X/Y single-screen Paparazzi screenshot tests pass. On the latest focused rerun, 6 ROM-dependent ORAS/Sun/Moon cart tests were skipped because those images are absent from this checkout; the synthetic Sun/Moon reader tests passed. Ultra Moon has separate S25 Ultra launch evidence below. A new `N3dsNativeInitTest` instrumentation smoke check also passes on physical ARM64 hardware and is repeatable with `make n3ds-smoke`.
+- The user's European Pokémon Y and Ultra Moon images have the same title IDs used by routing. `N3dsCart` constants keep their historical `_USA` suffix; European Sun/Moon and Ultra Sun dumps are not available here for equivalent ROM-header verification.
 - Full app unit suite completed with 4,194 tests, 17 failures and 59 skipped; failure names are recorded in `TEST_RESULTS.md`.
 - `git diff --check` passes for the current changes.
 
