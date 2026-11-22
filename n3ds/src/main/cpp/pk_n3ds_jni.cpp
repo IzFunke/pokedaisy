@@ -3,7 +3,7 @@
 //
 // Screens: with two surfaces, the main one shows the top screen alone and the second one the touch screen alone (the
 // Thor's two displays, or ONE SCREEN's floating touch window); with one, Azahar uses the selected app layout, which is
-// SingleScreen for ONE SCREEN. The app can create the second window later when the player opens TOUCH SCREEN.
+// SingleScreen for ONE SCREEN. The app keeps the second native window ready and hides its Android surface until asked.
 #include <android/log.h>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
@@ -332,8 +332,8 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSurface(JNIEnv*
     if (surfaces[which]) ANativeWindow_release(surfaces[which]);
     surfaces[which] = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
     surfaceCv.notify_all();
-    // The ONE SCREEN touch view is hidden at boot, so Azahar starts with only the main PkWindow. When the player opens
-    // TOUCH SCREEN, create the secondary window and renderer on the game thread at a frame boundary (not here, on UI).
+    // The second surface is attached from boot but remains composition-alpha hidden in ONE SCREEN until requested.
+    // Create its renderer on the game thread at a frame boundary (not here, on UI).
     if (which == 1 && surfaces[which] && !windows[which] && Core::System::GetInstance().IsPoweredOn()) {
         makeSecondaryWindow = true;
     } else if (windows[which] && windows[which]->SetSurface(surfaces[which])) {

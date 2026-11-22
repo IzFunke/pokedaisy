@@ -46,7 +46,12 @@ class N3dsSession(
 ) {
     val topView = SurfaceView(context)
     /** Over the top screen when it floats in (ONE SCREEN): drawn above the other surfaces. */
-    val touchView = SurfaceView(context).apply { setZOrderMediaOverlay(true) }
+    val touchView = SurfaceView(context).apply {
+        setZOrderMediaOverlay(true)
+        // Android 16 exposes an explicit order for SurfaceView composition. Without it, alpha may only
+        // affect the hole punch and the 4:3 touch surface leaks into the ONE SCREEN output.
+        setCompositionOrderIfAvailable(1)
+    }
 
     private val ui = Handler(Looper.getMainLooper())
     private val userDir = N3dsSaves.root(context).absolutePath
@@ -63,6 +68,14 @@ class N3dsSession(
         topView.holder.addCallback(surfaceCallback(0) { topReady = it })
         touchView.holder.addCallback(surfaceCallback(1) { touchReady = it })
         touchView.setOnTouchListener { _, e -> touch(e); true }
+    }
+
+    /** API 36 makes SurfaceView alpha apply to the Surface content when composition order is non-negative. */
+    private fun SurfaceView.setCompositionOrderIfAvailable(order: Int) {
+        if (android.os.Build.VERSION.SDK_INT < 36) return
+        runCatching {
+            javaClass.getMethod("setCompositionOrder", Int::class.javaPrimitiveType!!).invoke(this, order)
+        }.onFailure { Log.w(TAG, "Could not set touch SurfaceView composition order", it) }
     }
 
     private fun surfaceCallback(which: Int, ready: (Boolean) -> Unit) = object : SurfaceHolder.Callback {

@@ -42,22 +42,11 @@ class DsStagePolicyTest {
         }
     }
 
-    @Test fun threeDsBootDoesNotWaitForHiddenOneScreenTouchSurface() {
-        assertFalse(n3dsTouchSurfaceRequired(
-            stageOn = true, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = false,
-        ))
-        assertTrue(n3dsTouchSurfaceRequired(
-            stageOn = true, layout = DsLayout.ONE_SCREEN, manuallyOpened = true, onSecondDisplay = false,
-        ))
-        assertTrue(n3dsTouchSurfaceRequired(
-            stageOn = true, layout = DsLayout.SIDE_BY_SIDE, manuallyOpened = false, onSecondDisplay = false,
-        ))
-        assertTrue(n3dsTouchSurfaceRequired(
-            stageOn = false, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = true,
-        ))
-        assertFalse(n3dsTouchSurfaceRequired(
-            stageOn = false, layout = DsLayout.ONE_SCREEN, manuallyOpened = false, onSecondDisplay = false,
-        ))
+    @Test fun threeDsBootKeepsItsSecondWindowReadyOffscreen() {
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = true))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = true))
+        assertFalse(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = false))
     }
 
     @Test fun ndsMenuTrackingNeverTurnsAThreeDsLayoutIntoDualScreen() {

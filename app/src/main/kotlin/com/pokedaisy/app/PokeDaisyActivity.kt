@@ -4307,10 +4307,10 @@ class PokeDaisyActivity : Activity() {
             this, romFile, header.titleId, input,
             onSnapshot = { telemetry.publish(it) },
             onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
-            // ONE SCREEN keeps the touch SurfaceView absent until opened; other layouts and a second display need it at boot.
+            // Keep Azahar's touch window attached so its renderer can route the 4:3 display separately from the main one.
             wantsTouchSurface = {
                 n3dsTouchSurfaceRequired(
-                    dsStageOn, Prefs(this).dsLayout, n3dsFloating.value, n3dsTouchOnSecond,
+                    dsStageOn, n3dsTouchOnSecond,
                 )
             },
             onScene = { onN3dsScene(it) },
@@ -4329,8 +4329,7 @@ class PokeDaisyActivity : Activity() {
         }
         stage.viewport.gameCover = session.topView
         dsTouchView.getChildAt(0)?.visibility = View.GONE
-        // Prevent Android from creating a Surface for the hidden touch view before syncGameScreen applies ONE SCREEN.
-        // A Surface created during this window would make Azahar boot with a second renderer window.
+        // Keep the touch view gone until syncGameScreen applies ONE SCREEN's native two-window routing and transparency.
         dsTouchView.visibility = View.GONE
         dsTouchView.addView(session.touchView, FrameLayout.LayoutParams(-1, -1))
         stage.viewport.aspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
@@ -4414,9 +4413,8 @@ class PokeDaisyActivity : Activity() {
     private val n3dsTopRect = androidx.compose.runtime.mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
 
     /**
-     * DS LAYOUT for a 3DS game's two screens (a 5:3 top one, a 4:3 touch screen). ONE SCREEN creates the touch
-     * SurfaceView only while the player has opened it; Android can otherwise composite a hidden, translated SurfaceView
-     * as a second screen. On open, JNI adds Azahar's second window at a frame boundary.
+     * DS LAYOUT for a 3DS game's two screens (a 5:3 top one, a 4:3 touch screen). ONE SCREEN keeps the touch
+     * SurfaceView ready for Azahar and hides its output with composition alpha until the player opens it.
      */
     private fun n3dsArrange(layout: com.pokedaisy.app.companion.DsLayout, w: Int, h: Int, fill: Boolean): com.pokedaisy.app.companion.DsArrangement {
         val top = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
@@ -4435,7 +4433,7 @@ class PokeDaisyActivity : Activity() {
         return com.pokedaisy.app.companion.DsArrangement(alone, com.pokedaisy.app.companion.DsBox(x, y, x + tw, y + th))
     }
 
-    /** [syncDsStage]'s part for a 3DS game: no DS window; ONE SCREEN creates the touch view only while it is open. */
+    /** [syncDsStage]'s part for a 3DS game: ONE SCREEN keeps the native touch window ready but hidden until opened. */
     private fun syncN3dsStage(on: Boolean, layout: com.pokedaisy.app.companion.DsLayout) {
         // ONE SCREEN's floating touch screen in a frame of the game's smooth look (side by side and the other layouts: none).
         // ONE SCREEN always keeps the top game screen alone. Scene detection may offer controls, but must not turn
@@ -4465,7 +4463,10 @@ class PokeDaisyActivity : Activity() {
             }
         }
         val touchVisible = on && n3dsTouchScreenVisible(layout, n3dsFloating.value)
-        dsTouchView.visibility = if (touchVisible) View.VISIBLE else View.GONE
+        // Keep the native touch window attached in ONE SCREEN; composition order lets alpha hide it until opened.
+        dsTouchView.visibility = if (on) View.VISIBLE else View.GONE
+        dsTouchView.alpha = if (touchVisible) 1f else 0f
+        n3ds?.touchView?.alpha = if (touchVisible) 1f else 0f
         n3ds?.surfacesChanged()
         dsFloats.value = false
         dsPip.value = false
@@ -4477,8 +4478,7 @@ class PokeDaisyActivity : Activity() {
         n3dsBattle.value = on && layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN &&
             n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE
         n3dsDim.visibility = if (on && n3dsFloating.value) View.VISIBLE else View.GONE
-        val hidden = on && !n3dsTouchScreenVisible(layout, n3dsFloating.value)
-        dsTouchView.translationX = if (hidden) (stage.width.coerceAtLeast(resources.displayMetrics.widthPixels) * 2).toFloat() else 0f
+        dsTouchView.translationX = 0f
         dsTouchView.requestLayout()
         stage.viewport.requestLayout()
         stage.requestLayout()
@@ -4647,12 +4647,7 @@ class PokeDaisyActivity : Activity() {
         // its SurfaceView child in the same container; keep that screen hidden in single-screen mode and reveal it
         // only while the touch-screen window is requested.
         androidx.compose.runtime.SideEffect {
-            val alpha = if (romIs3ds) {
-                if (open) 1f else 0f
-            } else {
-                if (open) 0f else 1f
-            }
-            dsTouchView.alpha = alpha
+            if (!romIs3ds) dsTouchView.alpha = if (open) 0f else 1f
         }
         // A DS battle's menu (the HUD decides when: [dsStripShown]): kept on show behind the floating window - the
         // bag, the party - under its dim, the keys the window's meanwhile. In the HUD's coordinates (the stage's
