@@ -69,4 +69,19 @@ class SavesLocationTest {
         assertEquals(listOf(shared, generic), SavesLocation.dirsFor(ds, true, listOf(generic), shared))
         assertEquals(File(shared, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(generic), shared), ds))
     }
+
+    @Test fun aSharedDsFolderOverridesAStoredPerGameFolderUntilItIsReset() {
+        val roms = dir("nds-per-game-test")
+        val ds = File(roms, "Platinum.nds")
+        val perGame = dir("platinum-save-folder").also { File(it, "Platinum.sav").writeText("old") }
+        val shared = dir("all-ds-saves")
+        val generic = dir("generic-saves")
+        val selected = SavesLocation.dirsFor(ds, true, listOf(generic), shared)
+
+        val activeGlobal = SavesLocation.ownFolderFor(nds = true, sharedDsFolder = shared, own = perGame)
+        assertEquals(File(shared, "Platinum.sav"), SavesLocation.saveIn(activeGlobal, selected, ds))
+
+        val afterReset = SavesLocation.ownFolderFor(nds = true, sharedDsFolder = null, own = perGame)
+        assertEquals(File(perGame, "Platinum.sav"), SavesLocation.saveIn(afterReset, selected, ds))
+    }
 }

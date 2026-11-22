@@ -904,7 +904,8 @@ class Prefs(
         get() = p.getInt("save_backups_keep", 10)   // SaveBackups.KEEP
         set(v) = p.edit().putInt("save_backups_keep", v).apply()
 
-    /** [file]'s own save folder (the library menu's SAVE FOLDER); null = [SavesLocation.saveFor]'s search. */
+    /** [file]'s own save folder (the library menu's SAVE FOLDER); null = [SavesLocation.saveFor]'s search. A selected
+     * shared DS folder temporarily overrides this for DS games without deleting the per-game choice. */
     fun romSaveDir(fileName: String): String? = p.getString("romsavedir_${fileName}", null)
     fun setRomSaveDir(fileName: String, path: String?) = p.edit().apply {
         if (path.isNullOrBlank()) remove("romsavedir_${fileName}") else putString("romsavedir_${fileName}", path)

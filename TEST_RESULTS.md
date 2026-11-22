@@ -220,7 +220,14 @@ During an attempted app hotkey check, a tap aimed at the shoulder control labele
 
 ## 2026-11-22 shared DS and 3DS save-folder routing
 
-Audited the existing folder settings and launch path. `PokeDaisyActivity` resolves a ROM save with `SavesLocation.saveFor` before `EmulatorEngine.start`; the engine passes that exact file path to the native DS/GBA core. A configured shared `DS GAME SAVES` folder is searched first and therefore prevents a DS save from falling back beside the ROM; changing the setting copies existing listed DS saves where the target name is free and keeps the originals. `3DS GAME SAVES` selects Azahar's complete user-data root; switching roots copies the existing tree only when the destination is empty and never deletes the old root.
+Audited the existing folder settings and launch path. `PokeDaisyActivity` resolves a ROM save with `SavesLocation.saveFor` before `EmulatorEngine.start`; the engine passes that exact file path to the native DS/GBA core. A configured shared `DS GAME SAVES` folder is searched first and prevents fallback beside the ROM. `3DS GAME SAVES` selects Azahar's complete user-data root; switching roots copies the existing tree only when the destination is empty and never deletes the old root.
 
 - `:app:testDevUnitTest --tests=com.pokedaisy.app.SavesLocationTest --tests=com.pokedaisy.app.n3ds.N3dsSavesTest --offline --no-daemon --console=plain` — PASS, 9 tests total (7 DS save-location rules, 2 3DS save-format checks).
 - This verifies path-selection logic and known metadata formats, not an end-to-end save write/reload on the physical S25. No device settings or saves were changed in this check.
+
+## 2026-11-22 shared DS folder applies over prior per-game choices
+
+The all-DS folder must also cover games with a previously saved library `SAVE FOLDER` path. While `DS GAME SAVES` is selected, `SavesLocation.saveFor` now suppresses that per-ROM override and routes the DS game to the shared folder. Selecting the shared folder copies existing saves from those per-game paths when the target filename is free; resetting the global folder restores the original per-game choices. The settings page explains this precedence. This avoids requiring a folder pick for each DS game while preserving the user's earlier per-game paths and files.
+
+- `:app:testDevUnitTest --tests=com.pokedaisy.app.SavesLocationTest --offline --no-daemon --console=plain` — PASS, 8 tests, 0 failures/errors/skips, including global-over-per-game precedence and per-game restoration policy.
+- The tests cover path policy only; the app was not installed on the emulator or S25.

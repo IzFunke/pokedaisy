@@ -443,7 +443,7 @@ Sun boots that Moon save too and reads it at every address below (party, bag, My
 
 ## Save-folder settings
 
-- Settings > FOLDERS now includes a shared `DS GAME SAVES` directory. Changing it copies existing saves found for listed DS games into the selected directory when the destination filename is free; originals remain in place and explicit per-game folders still win. With no shared directory, the historical beside-ROM behavior remains.
+- Settings > FOLDERS now includes a shared `DS GAME SAVES` directory. While selected, it applies to every DS game and overrides stored per-game folders and the beside-ROM path; those per-game choices remain stored and resume if the shared folder is reset. Changing it copies existing saves found for listed DS games into the selected directory when the destination filename is free; originals remain in place. With no shared directory, the historical per-game / beside-ROM behavior remains.
 - `3DS GAME SAVES` selects Azahar's user-data root, which includes its SD card tree and other Azahar data. Choosing an empty folder copies the existing tree first; old files are never deleted. Resetting the setting leaves the previous custom tree in place.
 
 ## x86_64 screen-routing regression check (2026-11-22)

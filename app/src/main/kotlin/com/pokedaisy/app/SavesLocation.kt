@@ -26,14 +26,17 @@ object SavesLocation {
      * ([Prefs.extraSaveDirs], Settings > FOLDERS) that holds a save for it - so a save another
      * emulator keeps (RetroArch's per-core folders) is played and written where it is; else a
      * new save in the saves folder. Only the folders themselves are looked in, never below. A configured shared DS
-     * folder takes precedence over the ROM directory; without it, a writable DS ROM directory comes first ([dirsFor]).
+     * folder takes precedence over both a per-game SAVE FOLDER and the ROM directory while selected; without it, a
+     * per-game folder wins, then a writable DS ROM directory comes first ([dirsFor]).
      */
     fun saveFor(context: Context, prefs: Prefs, rom: File): File {
         val nds = RomIdentity.isNds(rom)
         val dirs = searchDirs(context, prefs)
         val dsFolder = prefs.dsSavesDirOverride?.takeIf { nds && it.isNotBlank() }?.let(::File)
         val search = dirsFor(rom, nds, dirs, dsFolder)
-        return saveIn(prefs.romSaveDir(rom)?.let { File(it).apply { mkdirs() } }, search, rom)
+        val configuredOwn = prefs.romSaveDir(rom)?.let(::File)
+        val own = ownFolderFor(nds, dsFolder, configuredOwn)?.apply { mkdirs() }
+        return saveIn(own, search, rom)
     }
 
     /** [dirs] for [rom]: a configured shared DS folder first, then the ordinary save/search folders. This deliberately
@@ -46,7 +49,11 @@ object SavesLocation {
         return (listOf(beside) + dirs).distinctBy { it.absolutePath }
     }
 
-    /** [saveFor]'s rule: [own] if set, else the first of [dirs] with a save for [rom], else a new one in [dirs]' first. */
+    /** A shared DS folder is an explicit all-games choice, so a stored per-ROM folder is dormant until it is reset. */
+    internal fun ownFolderFor(nds: Boolean, sharedDsFolder: File?, own: File?): File? =
+        if (nds && sharedDsFolder != null) null else own
+
+    /** [saveFor]'s rule: [own] if set and not overridden, else the first of [dirs] holding a save, else a new one. */
     fun saveIn(own: File?, dirs: List<File>, rom: File): File {
         own?.let { return resolve(it, rom) }
         return dirs.asSequence().map { resolve(it, rom) }.firstOrNull { it.exists() } ?: resolve(dirs.first(), rom)

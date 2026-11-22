@@ -388,7 +388,8 @@ class SettingsActivity : ComponentActivity() {
                     Screen.DS_SAVES_FOLDER -> PlatformSavesFolderScreen(m, small, "DS GAME SAVES", prefs.dsSavesDirOverride,
                         onPick = { changeDsSavesFolder(it); folderTick++ },
                         onReset = { prefs.dsSavesDirOverride = null; folderTick++ },
-                        defaultPath = "Beside each DS game unless a shared folder is selected")
+                        defaultPath = "Beside each DS game unless a shared folder is selected",
+                        detail = "While selected, this folder overrides DS per-game SAVE FOLDER choices. Those choices resume if you reset this setting; existing saves are copied, not moved.")
                     Screen.N3DS_SAVES_FOLDER -> PlatformSavesFolderScreen(m, small, "3DS GAME SAVES", prefs.n3dsUserDirOverride,
                         onPick = ::changeN3dsUserFolder,
                         onReset = { changeN3dsUserFolder(null) },
@@ -2106,7 +2107,6 @@ class SettingsActivity : ComponentActivity() {
         prefs.dsSavesDirOverride = path
         var copied = 0
         oldSaves.forEach { (rom, old) ->
-            if (prefs.romSaveDir(rom) != null) return@forEach
             val target = File(path, old.name)
             if (old.isFile && old.absolutePath != target.absolutePath && !target.exists()) {
                 runCatching { old.copyTo(target) }.onSuccess { copied++ }
