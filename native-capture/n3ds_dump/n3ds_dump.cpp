@@ -386,6 +386,12 @@ int main(int argc, char** argv) {
             for (; n < most && (moduleNames(mem, modRoot) + ' ').find(want) == std::string::npos; n++) {
                 setKeys(n % 60 < 2 ? a[0] : "NONE");
                 runFrames(1);
+                // Long software-rendered intro probes can take several minutes; make bounded progress observable
+                // without waiting for the final module/timeout line, and include the current module chain.
+                if ((n + 1) % 60 == 0) {
+                    std::printf("pressuntil progress %u/%u frames:%s\n", n + 1, most, moduleNames(mem, modRoot).c_str());
+                    std::fflush(stdout);
+                }
             }
             setKeys("NONE");
             std::printf("pressuntil %s %s after %u frames:%s\n", a[1].c_str(), n < most ? "ok" : "TIMED OUT", n,
