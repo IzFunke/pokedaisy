@@ -96,10 +96,26 @@ class N3dsLayout(
             maxSpecies = 807,
         )
 
+        /** Ultra Sun / Ultra Moon (Gen 7). The EU Ultra Moon text archive (language 5) was checked directly against the
+         * user's decrypted cart on 2026-11-22: USUM keeps the SM RomFS paths and record formats, but its text-file
+         * indices differ. USUM assets use their own output directory so they cannot reuse SM's extracted art. */
+        val USUM = N3dsLayout(
+            family = Family.SM,
+            artDir = "n3ds/usum",
+            textArchives = mapOf(1 to 1, 2 to 2, 3 to 3, 4 to 4, 5 to 5, 7 to 6, 8 to 7),
+            textPrefix = "a/0/3/",
+            speciesFile = 60, movesFile = 118, itemsFile = 40, abilitiesFile = 101, naturesFile = 92, typesFile = 112, placesFile = 72,
+            movesPath = "a/0/1/1", movesPacked = true,
+            personalPath = "a/0/1/7",
+            zonesPath = "a/0/7/7", zoneRecordsFile = 0, zoneRecord = 0x54, zonePlaceMask = 0xFFFF,
+            iconPath = "a/0/6/2", iconsGen7 = true,
+            maxSpecies = 807,
+        )
+
         fun forTitle(titleId: Long): N3dsLayout = when (titleId) {
             N3dsCart.POKEMON_OR_USA, N3dsCart.POKEMON_AS_USA -> ORAS
-            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA,
-            N3dsCart.POKEMON_ULTRA_SUN_USA, N3dsCart.POKEMON_ULTRA_MOON_USA -> SM
+            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA -> SM
+            N3dsCart.POKEMON_ULTRA_SUN_USA, N3dsCart.POKEMON_ULTRA_MOON_USA -> USUM
             else -> XY
         }
     }

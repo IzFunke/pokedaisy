@@ -24,7 +24,7 @@ object SmTownMap {
     private const val VERSION = 1
     private const val ISLANDS = 4
 
-    fun asset(island: Int) = "n3ds/sm/land_$island.png"
+    fun asset(island: Int, layout: N3dsLayout = N3dsLayout.SM) = "${layout.artDir}/land_$island.png"
 
     /** A world position on its island's picture. */
     fun spot(x: Float, z: Float): Pair<Float, Float> = (OFFSET_X + x * SCALE) to (OFFSET_Y + z * SCALE)
@@ -34,22 +34,22 @@ object SmTownMap {
 
     private val zoneCache = HashMap<String, Zones?>()
 
-    fun zones(cart: File): Zones? = synchronized(zoneCache) {
-        val key = "${cart.absolutePath}:${cart.length()}"
+    fun zones(cart: File, layout: N3dsLayout = N3dsLayout.SM): Zones? = synchronized(zoneCache) {
+        val key = "${cart.absolutePath}:${cart.length()}:${layout.artDir}"
         if (zoneCache.containsKey(key)) return zoneCache[key]
-        val z = runCatching { readZones(cart) }.getOrNull()
+        val z = runCatching { readZones(cart, layout) }.getOrNull()
         zoneCache[key] = z
         z
     }
 
-    private fun readZones(cart: File): Zones? = RomFs(cart).use { fs ->
-        val files = fs.read(N3dsLayout.SM.zonesPath)?.let { Gen6Text.garcFiles(it) } ?: return@use null
-        val recs = Gen6Text.unlz(files.getOrNull(0) ?: return@use null)
+    private fun readZones(cart: File, layout: N3dsLayout): Zones? = RomFs(cart).use { fs ->
+        val files = fs.read(layout.zonesPath)?.let { Gen6Text.garcFiles(it) } ?: return@use null
+        val recs = Gen6Text.unlz(files.getOrNull(layout.zoneRecordsFile) ?: return@use null)
         val worlds = Gen6Text.unlz(files.getOrNull(1) ?: return@use null)
-        val n = recs.size / N3dsLayout.SM.zoneRecord
+        val n = recs.size / layout.zoneRecord
         val rb = le(recs)
         val wb = le(worlds)
-        val island = IntArray(n) { rb.getShort(it * N3dsLayout.SM.zoneRecord + 0x4E).toInt() and 0xFFFF }
+        val island = IntArray(n) { rb.getShort(it * layout.zoneRecord + 0x4E).toInt() and 0xFFFF }
         val world = IntArray(n) { if (2 * it + 2 <= worlds.size) wb.getShort(2 * it).toInt() and 0xFFFF else -1 }
         val main = (1..ISLANDS).associateWith { isl ->
             (0 until n).filter { island[it] == isl }.groupingBy { world[it] }.eachCount().maxByOrNull { it.value }?.key ?: -1
@@ -58,14 +58,14 @@ object SmTownMap {
     }
 
     /** Writes the islands' pictures into [dir] once (a marker keeps the cart's size and [VERSION]); true when it wrote. */
-    fun extractTo(cart: File, dir: File): Boolean {
-        val marker = File(dir, "${asset(1)}-built")
+    fun extractTo(cart: File, dir: File, layout: N3dsLayout = N3dsLayout.SM): Boolean {
+        val marker = File(dir, "${asset(1, layout)}-built")
         val stamp = "v$VERSION ${cart.length()}"
         if (marker.isFile && runCatching { marker.readText() }.getOrNull() == stamp) return false
-        val pictures = runCatching { readPictures(cart) }.getOrNull() ?: return false
+        val pictures = runCatching { readPictures(cart, layout) }.getOrNull() ?: return false
         if (pictures.isEmpty()) return false
         for ((island, img) in pictures) {
-            val out = File(dir, asset(island))
+            val out = File(dir, asset(island, layout))
             out.parentFile?.mkdirs()
             val tmp = File(out.path + ".tmp")
             tmp.writeBytes(img.png())
@@ -77,8 +77,9 @@ object SmTownMap {
     }
 
     /** The islands' pictures (for tests too). */
-    internal fun readPictures(cart: File): Map<Int, RomArt.Image> = RomFs(cart).use { fs ->
-        val arc = fs.read("a/2/3/4")?.let { Gen6Text.garcFiles(it).firstOrNull() }?.let(Gen6Text::unlz) ?: return@use emptyMap()
+    internal fun readPictures(cart: File, layout: N3dsLayout = N3dsLayout.SM): Map<Int, RomArt.Image> = RomFs(cart).use { fs ->
+        val path = if (layout == N3dsLayout.USUM) "a/2/3/8" else "a/2/3/4"
+        val arc = fs.read(path)?.let { Gen6Text.garcFiles(it).firstOrNull() }?.let(Gen6Text::unlz) ?: return@use emptyMap()
         val files = sarc(arc)
         (1..ISLANDS).mapNotNull { isl ->
             val f = files["timg/land_0$isl.bflim"] ?: return@mapNotNull null

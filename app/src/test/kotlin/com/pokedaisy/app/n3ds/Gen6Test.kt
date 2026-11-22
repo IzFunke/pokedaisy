@@ -87,6 +87,40 @@ class Gen6Test {
         assertTrue(en.types.contains("Fairy"))
     }
 
+    /** The EU Ultra Moon cart's Gen 7 assets, supplied locally through POKEDAISY_USUM_ROM; never bundled. */
+    @Test fun readsUltraMoonEuRomFsLayoutWhenProvided() {
+        val cart = System.getenv("POKEDAISY_USUM_ROM")?.let(::File)
+        assumeTrue(cart != null && cart.isFile)
+        val rom = cart!!
+        val layout = N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA)
+        val german = Gen6Text.load(rom, 5, layout)!!
+        assertEquals("Bisasam", german.species[1])
+        assertEquals("Pfund", german.moves[1])
+        assertEquals("Meisterball", german.items[1])
+        assertEquals("Bedroher", german.abilities[22])
+        assertEquals("Robust", german.natures[0])
+        assertEquals("Normal", german.types[0])
+        assertEquals("Route 1", german.places[6])
+
+        assertEquals(40, Gen6Moves.load(rom, layout)!![1].power)
+        assertArrayEquals(intArrayOf(11, 3), Gen6Personal.load(rom, layout)!![1])
+        val zones = Gen6Zones.load(rom, layout)!!
+        assertTrue(zones.isNotEmpty())
+        assertTrue(zones.indices.any { Gen6Zones.placeName(zones, german, it) == "Route 1" })
+        assertTrue(Gen6Wild.load(rom, layout)!!.any { it.isNotEmpty() })
+
+        val art = java.nio.file.Files.createTempDirectory("pokedaisy-usum-romfs-").toFile()
+        try {
+            assertTrue(Gen6Icons.extractTo(rom, art, layout))
+            assertTrue(File(art, "n3ds/usum/icons/1.png").isFile)
+            assertTrue(SmTownMap.extractTo(rom, art, layout))
+            assertTrue(File(art, "n3ds/usum/land_1.png").isFile)
+            assertTrue(SmTownMap.zones(rom, layout) != null)
+        } finally {
+            art.deleteRecursively()
+        }
+    }
+
     /** The zones' place names from the cart (zone numbers as the RP6 read them, 2026-11-15: 67 outside in Lumiose's
      * south, 359 its Pokemon Center). */
     @Test fun readsTheCartsZones() {

@@ -21,3 +21,7 @@ The pinned Azahar headless harness reports Ultra Moon Europe (`00040000001b5100`
 loaded at the initial permanent language chooser. The existing Sun/Moon USA static root (`0x00869000`) is not a verified
 replacement for this title. Keep USUM's `Gen6Reader.configFor` unset until field/battle/party data is measured; the
 generic Companion status should explain that limitation instead of holding at an indefinite loading state.
+
+## USUM ROM data adapter
+
+`N3dsLayout.USUM` shares the Gen 7 SM record decoders and archive paths where the user's Ultra Moon EU ROM confirmed them, while supplying title-specific text indices, the zones configuration, and `n3ds/usum` art namespace. `SmTownMap` accepts the layout so USUM reads its `a/2/3/8` map SARC and caches/extracts under the correct namespace. This adapter covers static RomFS assets only; live gameplay memory configuration stays separate and unset pending runtime evidence.

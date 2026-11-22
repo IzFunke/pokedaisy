@@ -63,6 +63,8 @@ class N3dsCartTest {
         assertEquals(GameKind.POKEMON_ULTRA_MOON, N3dsCart.kindOf(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertEquals(N3dsLayout.Family.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA).family)
         assertEquals(N3dsLayout.Family.SM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA).family)
+        assertEquals(N3dsLayout.USUM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_SUN_USA))
+        assertEquals(N3dsLayout.USUM, N3dsLayout.forTitle(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertFalse(N3dsCart.playable(cart(N3dsCart.POKEMON_ULTRA_SUN_USA, noCrypto = false, "ultra-enc.3ds")))
     }
 

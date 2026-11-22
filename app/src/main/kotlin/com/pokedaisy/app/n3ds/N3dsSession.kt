@@ -763,8 +763,8 @@ class N3dsSession(
             Gen6TownMap.spots(rom, layout)
         }.onFailure { Log.w(TAG, "town map failed", it) }.getOrDefault(emptyMap())
         val smZones = if (layout.family != N3dsLayout.Family.SM) null else runCatching {
-            if (SmTownMap.extractTo(rom, com.pokedaisy.app.companion.data.RomArt.dir(appFiles.toOkioPath()).toFile())) com.pokedaisy.app.companion.data.RomArt.announce()
-            SmTownMap.zones(rom)
+            if (SmTownMap.extractTo(rom, com.pokedaisy.app.companion.data.RomArt.dir(appFiles.toOkioPath()).toFile(), layout)) com.pokedaisy.app.companion.data.RomArt.announce()
+            SmTownMap.zones(rom, layout)
         }.onFailure { Log.w(TAG, "town map failed", it) }.getOrNull()
         var smLast: com.pokedaisy.app.companion.ui.XyMapSpot? = null
         var smLastIsland = 0
@@ -802,7 +802,7 @@ class N3dsSession(
                                 val (x, y) = SmTownMap.spot(b.getFloat(0), b.getFloat(8))
                                 if (x in 0f..SmTownMap.SIZE.toFloat() && y in 0f..SmTownMap.SIZE.toFloat()) {
                                     smLast = com.pokedaisy.app.companion.ui.XyMapSpot(
-                                        SmTownMap.asset(island), null, SmTownMap.SIZE, SmTownMap.SIZE, x, y, 10f, 10f,
+                                        SmTownMap.asset(island, layout), null, SmTownMap.SIZE, SmTownMap.SIZE, x, y, 10f, 10f,
                                     )
                                     smLastIsland = island
                                 }

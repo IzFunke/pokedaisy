@@ -169,3 +169,7 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
 - `:app:testDebugUnitTest --tests 'com.pokedaisy.app.n3ds.Gen6Test' --tests 'com.pokedaisy.app.n3ds.OrasSmCartTest' --offline --no-daemon --console=plain` — PASS. JUnit XML: `Gen6Test` 11 tests (0 failures, 7 skipped); `OrasSmCartTest` 9 tests (0 failures, 6 skipped). The skipped cases require ROM fixtures not present in the checkout.
 - `:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true --offline --no-daemon --console=plain` — PASS. Dev APK: `app/build/outputs/apk/dev/app-dev.apk` (131,804,599 bytes). No APK was installed in this run.
 - Independently compared `work/usum-appdemo-heap.bin` and `work/usum-photo-view-heap.bin`: each is 16 MiB; 86,455 bytes differ. The strings and `+0x19AC` checks are recorded in `RESEARCH.md`; they provide no reliable runtime-state marker or Ultra Moon address map.
+
+## 2026-11-22 Ultra Moon EU ROM-backed test
+
+With `POKEDAISY_USUM_ROM` set to the local read-only Ultra Moon Europe `.3ds` image, the focused USUM layout and routing tests passed. Coverage confirms German text tables, move/personal records, named Route 1 zones, wild encounter records, icon extraction, and map extraction from the USUM-specific `a/2/3/8` archive. The same focused run passed in 24 seconds. A feature-enabled `assembleDev` build for ARM64 and x86_64 also succeeded in 19 seconds. ROM contents were not modified or included in outputs.

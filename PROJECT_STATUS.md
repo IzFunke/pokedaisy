@@ -128,3 +128,7 @@ After the user-authorized German language choice, the API 36 x86_64 emulator was
 The emulator log during the intro reported roughly 17–18 game FPS and 33–36 system FPS (about 55–62% speed), falling lower around the photo view. This is x86_64 emulator evidence, not an S25 Ultra performance measurement. The RAM capture is preserved under the ignored/untracked `work/` directory; no ROM or save data was changed.
 
 The debug capture path now lives in app-private `files/n3ds-debug`, which makes its marker and output accessible to `adb run-as`; debug snapshots for Gen 7 retail titles capture the first 16 MiB at `0x30000000` even when the title has no `Gen6Reader.Config`. The capture scheduler no longer depends on a non-null game config. This improves diagnostics only and does not enable a guessed USUM Companion map.
+
+## 2026-11-22 Ultra Moon static data follow-up
+
+Using the user's local Ultra Moon EU image read-only, corrected USUM's German text-table indices and its island-map archive location (`a/2/3/8`). The layout-aware static readers now pass against the ROM for labels, moves, species types, zones, wild encounters, icons, and island map extraction. Focused USUM tests and the ARM64+x86_64 feature-enabled Dev build pass. The photo/profile prompt remains untouched. Live USUM party/battle/scene mapping and DS-level automatic second-screen/Companion parity are still open.

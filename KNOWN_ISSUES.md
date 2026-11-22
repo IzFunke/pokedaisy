@@ -27,3 +27,5 @@ map at `0x00869000` must not be assigned to USUM without runtime evidence. The p
 unmapped status, but full USUM Companion and automatic lower-screen behavior are still unsupported.
 
 - The current x86_64 emulator run advanced Ultra Moon in German to Kukui's photo/profile setup view and stopped before any photo/profile choice. Runtime modules are `AppDemo`, `SequencePlayer`, and `Object`; these remain unmapped, so Companion data and scene-driven lower-screen behavior are still unavailable. Intro performance was about 17–18 game FPS / 33–36 system FPS and is not S25 evidence.
+
+- **Ultra Moon static RomFS:** the EU cart's German tables, Gen 7 moves/personal data, zones, wild encounters, icons, and island maps are now verified through a ROM-gated unit test. USUM uses its own text indices and `a/2/3/8` map SARC. This does not enable live Companion telemetry or automatic lower-screen behavior; those still require a verified USUM memory map.
