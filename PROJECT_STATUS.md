@@ -86,7 +86,7 @@ The active branch is still `feature/azahar-3ds-single-screen`, at `61fdd8ea`; `o
 
 | Capability | Pokémon Black 2 reference | Ultra Moon on S25 | Current implementation / gap | Evidence status |
 |---|---|---|---|---|
-| Core and screen | melonDS/DS path, top screen full-size in ONE SCREEN | Azahar boots and renders the 5:3 top display in ONE SCREEN | Both paths exist; 3DS renderer boot is verified | Device captures, Black 2 and Ultra Moon screenshots |
+| Core and screen | melonDS/DS path, top screen full-size in ONE SCREEN | Azahar boots and renders the 5:3 top display in ONE SCREEN | Rendering path exists, but Azahar is the only usable 3DS core; no second selectable backend exists. Automatic lower-screen policy still needs verified USUM runtime state. | Device captures; no parity claim |
 | Companion initialization | Gen 5 telemetry publishes the common `SnapshotView` | Companion remained at `LÄDT … startet…` | `N3dsSession.sampler` publishes only inside `config != null`; USUM has no `Gen6Reader.Config` | Source path and S25 screenshot confirm the cause |
 | Runtime state and party | `Poller.readGen5Telemetry` reads identified game state and party data | No party, map, item, battle or scene sample | Need title-specific USUM memory map, then reuse common Companion presentation | Not implemented for USUM |
 | Automatic lower screen | DS core frame flags drive `dsTouchWanted`; menus open the lower-screen window and it hides afterward | USUM scene remains default `FIELD`; the scene loop does not run with null config | Existing 3DS scene policy is ready, but it requires verified memory addresses; currently only manual TOUCH SCREEN works | The exact gate is confirmed in `N3dsSession` / `Gen6Reader` |
@@ -94,6 +94,8 @@ The active branch is still `feature/azahar-3ds-single-screen`, at `61fdd8ea`; `o
 | Battle menus | Gen 5 battle telemetry and DS menu state drive context UI | No USUM battle state; no auto bag/party opening | USUM battle readers and real battle verification are missing | Not implemented for USUM |
 | Reddit X field HUD / map / camera | Not applicable to DS | Shared 3DS HUD paths exist, but USUM's missing telemetry leaves them without live data | Verify with Pokémon Y/X and extend only after title-specific data exists | Feature parity not claimed |
 | Dismiss auto-open battle page | DS has core-dependent dismiss behavior | A 3DS auto-open bag/party page's dim backdrop did not send B | Fixed to send B only for mapped battle bag/party states; covered by focused policy test | Code change; device verification awaits mapped battle state |
+
+The 2026-11-22 live sparse-memory follow-up did not close the USUM map gap: the primary published party candidate was empty and the alternate candidate failed PK7 checksum validation. It is diagnostic-only evidence from an intro/setup session. No USUM Companion map or automatic screen-state rule is enabled from this capture.
 
 The root cause is not a generic Azahar rendering failure: the USUM title boots, but `Gen6Reader.configFor()` returns null by design, which prevents both snapshot publication and scene polling. The game-specific map must be recovered and validated before automatic menus or party/battle data can work. No Sun/Moon address was copied into USUM.
 
@@ -158,3 +160,7 @@ Azahar source inspection confirms that `N3dsSession.screenshot(..., bottom = tru
 ## 3DS core preference now reaches the launch path (2026-11-22)
 
 `Prefs.n3dsCore` is now resolved before save preparation and session construction. `AUTO` selects the first bundled backend; an explicit backend is accepted only when available. The session factory currently has one real branch, native Azahar. An unavailable choice reports that the 3DS title cannot start instead of silently starting a different backend. This wires the existing setting into runtime selection but does not add a second core.
+
+## 2026-11-22 live sparse-capture follow-up
+
+The newly built feature-enabled Dev APK was installed on `emulator-5556` with `adb install -r`; the preference SHA-256 stayed identical. A read-only sparse capture succeeded. At `0x33F7FA44`, the six candidate party slots are empty. At `0x330128E4`, populated-looking bytes fail PK7 checksum validation. Neither candidate is validated for production use. The emulator screenshot now shows “Die Einstellungen wurden gespeichert.” rather than clearly identifying Kukui's photo prompt, so no more game input was sent. S25 remains untouched.

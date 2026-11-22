@@ -193,3 +193,13 @@ Removed the temporary rule that treated `AppDemo + SequencePlayer + Object` as a
 - `:app:compileDevKotlin -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true` — PASS. Alongside the existing Gen 7 heap dump, the debug path now captures the published USUM trainer, bag, money, and two party-candidate ranges with a TSV address manifest. It does not activate those offsets in Companion or screen policy.
 - The full `:app:testDevUnitTest` run completed 4,220 tests with 1 failure and 61 skipped. The failure was an outdated USUM layout assertion expecting `N3dsLayout.SM` after USUM received its own static layout. The assertion and test name were updated; `:app:testDevUnitTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest` then passed all 9 class cases (6 ROM-dependent skips).
 - The full suite was not rerun after that test-only correction. No APK was installed, so the active emulator session was preserved; the sparse candidate capture has not yet been run on-device. The S25 was not accessed.
+
+### Live sparse capture follow-up
+
+The feature-enabled Dev APK had since been installed in place on `emulator-5556`; the prior shared-preferences SHA-256 was unchanged. A read-only `n3ds_dump` marker captured the published candidate ranges while Ultra Moon continued running. The current game screenshot reads “Die Einstellungen wurden gespeichert.”, so no game input was sent and this is not assumed to be the previously documented Kukui photo prompt.
+
+- Capture `work/usum-candidates-1795357810421.bin` matches its TSV manifest and contains exactly 9,652 bytes.
+- At primary candidate `0x33F7FA44`, six candidate slots have zero encryption constants and species 0 (empty slots).
+- At alternate candidate `0x330128E4`, the sampled slots with nonzero encryption constants fail the PK7 stored-checksum validation using the existing Gen 6/7 Pokémon cipher; no valid Pokémon was decoded.
+- This does not validate either candidate as the live party, nor establish trainer, bag, scene, or battle mappings. The capture is only evidence from the current setup/session state; do not enable a production Companion or automatic screen map from it.
+- Sparse capture succeeded and the existing 16 MiB heap file was also produced. The S25 received no commands or input.
