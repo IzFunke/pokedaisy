@@ -12,7 +12,11 @@ internal fun dsStageEnabled(
     companionOverGame: Boolean,
     folded: Boolean,
 ): Boolean =
-    (is3ds || isNds && !portrait) && !hasSecondScreen && !debugMirror && !companionOverGame && !folded
+    (is3ds || isNds && !portrait) && !hasSecondScreen && !debugMirror && (!companionOverGame || is3ds) && !folded
+
+/** NDS scene tracking may request both screens for its menus; it must never override a 3DS player's chosen layout. */
+internal fun dsStageLayout(is3ds: Boolean, dsMenuUp: Boolean, chosen: DsLayout): DsLayout =
+    if (!is3ds && dsMenuUp && chosen.floats) DsLayout.SIDE_BY_SIDE else chosen
 
 /** ONE SCREEN keeps the lower 3DS render hidden until the player asks for it; other selected layouts show it. */
 internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): Boolean =

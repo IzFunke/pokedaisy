@@ -1,6 +1,7 @@
 package com.pokedaisy.app
 
 import com.pokedaisy.app.companion.DsLayout
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,7 +30,7 @@ class DsStagePolicyTest {
     @Test fun anotherScreenOrSpecialLayoutKeepsItsExistingPath() {
         assertFalse(enabled(is3ds = true, portrait = true, secondScreen = true))
         assertFalse(enabled(is3ds = true, portrait = true, debugMirror = true))
-        assertFalse(enabled(is3ds = true, portrait = true, companionOverGame = true))
+        assertTrue(enabled(is3ds = true, portrait = true, companionOverGame = true))
         assertFalse(enabled(is3ds = true, portrait = true, folded = true))
     }
 
@@ -39,6 +40,14 @@ class DsStagePolicyTest {
         for (layout in DsLayout.entries.filter { it != DsLayout.ONE_SCREEN }) {
             assertTrue("$layout remains explicit", n3dsTouchScreenVisible(layout, manuallyOpened = false))
         }
+    }
+
+    @Test fun ndsMenuTrackingNeverTurnsAThreeDsLayoutIntoDualScreen() {
+        for (layout in DsLayout.entries) {
+            assertEquals("3DS keeps $layout when NDS menu tracking is active", layout, dsStageLayout(is3ds = true, dsMenuUp = true, chosen = layout))
+        }
+        assertEquals(DsLayout.SIDE_BY_SIDE, dsStageLayout(is3ds = false, dsMenuUp = true, chosen = DsLayout.ONE_SCREEN))
+        assertEquals(DsLayout.ONE_SCREEN, dsStageLayout(is3ds = false, dsMenuUp = false, chosen = DsLayout.ONE_SCREEN))
     }
 
     @Test fun touchScreenQuickActionHotkeyAndHintAreAvailableForEitherSystem() {

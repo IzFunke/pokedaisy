@@ -7,7 +7,7 @@ Development is on `feature/azahar-3ds-single-screen` in the personal fork `IzFun
 - Fork, remotes, branch and submodules are configured. Azahar is pinned at `219d743a1e698101fe1ab8bef43e6563126c3c27` (2126.2).
 - The checkout already contains feature-flagged Azahar JNI integration and Pokémon X/Y single-screen support. This work extends and validates existing integration rather than recreating it.
 - Baseline `assembleDebug` succeeded. `assembleDebug -Ppokedaisy.n3ds=true` and `assembleDev -Ppokedaisy.n3ds=true` succeeded on Windows x64 with NDK 28.2.13676358.
-- Dev APK contains `lib/arm64-v8a/libpk_n3ds.so`; its package is `com.pokedaisy.app.dev`. It is installed separately on the Galaxy S25 Ultra (ARM64, Android 17) and the x86_64 translation AVD.
+- Dev APK contains `lib/arm64-v8a/libpk_n3ds.so`; Azahar is ARM64-only. The package is `com.pokedaisy.app.dev` and is installed separately on the Galaxy S25 Ultra (ARM64, Android 17). An x86_64 AVD can run the app shell but cannot run Azahar.
 - On the Galaxy S25 Ultra, `LibraryActivity` resumed and no fatal exception or native load error appeared in the captured startup log.
 - The x86_64 translation AVD aborts with SIGILL during startup; it is not a viable Azahar runtime target.
 - Official v1.6.2-beta.1 APK used for reference was checksum-verified against its published GitHub release digest; the original file was preserved.
@@ -23,7 +23,10 @@ Commit `89c80ab2` adds USUM retail title recognition and Sun/Moon-style presenta
 
 The official app's private settings have not been copied into Dev. The installed official package is non-debuggable and declares `allowBackup=false`, so Android blocks `run-as` and backup access to its preferences; its Settings screen and source expose no preferences export action. Dev's existing data remains preserved by in-place installation.
 
-The 3DS stage is enabled on portrait phones as well as landscape. `ONE SCREEN` is now top-screen-only for every scene: scene detection does not change it to side-by-side or automatically open the floating touch surface. The lower render remains available through the existing TOUCH control, hotkey, and quick action, including menus and battle bag/party; the hotkey hint now correctly appears and its try action toggles the screen. Other explicitly selected layouts still display both screens. The focused regression suite passes, the Dev build succeeds, and the latest APK was installed with `adb install -r` at 01:04:54. `pokedaisy.xml`, the Ultra Moon `00000001/` save directory, and its sibling metadata remain present. No uninstall or data clear occurred. The game was not relaunched, respecting the user's request to stop at the profile photo prompt, so visual behavior in the game remains unverified. The verified Ultra Moon metadata fallback is implemented and covered by unit tests.
+
+The user later reported that the 3DS view still appeared dual-screen and that 3DS ROMs no longer start on the S25 Ultra. A source review found another path that could force `SIDE_BY_SIDE`: the shared DS menu tracker overrode any floating layout even for a 3DS title. `dsStageLayout` now applies that override only to DS games, and 3DS keeps its chosen layout; the 3DS stage also remains enabled if the companion is opened over the game. Focused tests and a Dev build pass. This source fix is not yet visually verified on the S25 Ultra because the device is away, and the reported launch regression has not been reproduced or diagnosed from fresh device logs.
+
+An x86_64 API 36 AVD (`Recompia_UI_API36`) booted the updated Dev app via `adb install -r` and reached `LibraryActivity` without a fatal app exception. The 3DS core is packaged only under `arm64-v8a`, so the emulator cannot load Azahar; the AVD also had only 786 MB free, less than the available 4 GB Ultra Moon dump. This is an app-shell smoke check, not 3DS runtime verification. No S25 Ultra package or data was touched in this emulator session.
 
 ## Runtime validation and remaining gaps
 
