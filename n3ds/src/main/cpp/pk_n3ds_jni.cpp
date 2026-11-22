@@ -362,7 +362,8 @@ JNIEXPORT jint JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_run(JNIEnv* env, j
     }
     const bool two = surfaces[1] != nullptr;
     // Two surfaces: the top screen alone on the main one, the touch screen alone on the second. With one surface use
-    // the requested Azahar layout; ONE SCREEN passes SingleScreen and adds the touch window only when opened.
+    // the requested Azahar layout; ONE SCREEN passes SingleScreen. Its second window stays attached and is hidden by
+    // the Android SurfaceView's composition alpha until the player opens TOUCH SCREEN.
     Settings::values.layout_option = two ? Settings::LayoutOption::SingleScreen
                                          : static_cast<Settings::LayoutOption>(std::clamp(oneSurfaceLayout, 0, 3));
     Settings::values.secondary_display_layout = Settings::SecondaryDisplayLayout::BottomScreenOnly;
