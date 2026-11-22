@@ -42,6 +42,31 @@ class DsStagePolicyTest {
         }
     }
 
+    @Test fun threeDsTouchWindowFrameTracksTheDsLikeOpenState() {
+        assertFalse(n3dsTouchWindowFramed(DsLayout.ONE_SCREEN, windowOpen = false))
+        assertTrue(n3dsTouchWindowFramed(DsLayout.ONE_SCREEN, windowOpen = true))
+        assertTrue(n3dsTouchWindowFramed(DsLayout.PICTURE_IN_PICTURE, windowOpen = false))
+        assertFalse(n3dsTouchWindowFramed(DsLayout.SIDE_BY_SIDE, windowOpen = false))
+    }
+
+    @Test fun threeDsMenusAndBattleSubmenusRequestTheTouchDisplayLikeDs() {
+        val bag = com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN
+        val party = com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
+        assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU, 0))
+        assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, bag))
+        assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, party))
+        assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, 0))
+        assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, 0))
+    }
+
+    @Test fun threeDsPagesThatNeedBothScreensTemporarilyUseTheDsPairedLayout() {
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.ONE_SCREEN))
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.PICTURE_IN_PICTURE))
+        assertEquals(DsLayout.LARGE_SMALL, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.LARGE_SMALL))
+        assertEquals(DsLayout.ONE_SCREEN, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, DsLayout.ONE_SCREEN))
+        assertEquals(DsLayout.PICTURE_IN_PICTURE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU, DsLayout.PICTURE_IN_PICTURE))
+    }
+
     @Test fun threeDsBootKeepsItsSecondWindowReadyOffscreen() {
         assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false))
         assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = true))

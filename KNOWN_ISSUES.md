@@ -12,3 +12,6 @@
 - Ultra Sun has identity and launch routing, but no Ultra Sun ROM is available for a runtime check and its existing-save metadata format remains unmapped. Do not synthesize metadata for an unrecognized Ultra Sun save until live evidence is available; a clean game can still create its own save.
 - Importing private preferences from the installed official package is blocked: it is a non-debuggable app with `allowBackup=false`. Dev's own preferences are preserved by `adb install -r`; Android does not permit reading the official package's private SharedPreferences on this unrooted device.
 - The current Pokémon Y x86_64 run confirmed the user-authorized German choice and stopped at `Begin game` / `Select language`, before any personal setup. Persistence across a process restart is unverified. This was emulator evidence, not an S25 Ultra run. The Android ARM64 AVD cannot start on this x86_64 Windows host.
+
+- The latest x86_64 emulator update passed focused unit tests and the Dev build, but its Ultra Moon relaunch remained at PokeDaisy's loading presentation without a fresh Azahar run log. Recheck game startup and closed/open/closed touch-screen layout before treating this patch as runtime-verified. The S25 Ultra was not updated.
+

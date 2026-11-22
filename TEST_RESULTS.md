@@ -109,3 +109,8 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 - Follow-up refinement compiled and installed with `adb install -r`: 3DS field menus and battle bag/party states now request the lower display automatically; manual opening works for both ONE SCREEN and PIP. The app launched back to the library without an AndroidRuntime exception. Battle submenus and stylus input have not yet been exercised in-game.
 - External-display 3DS routing now retains the lower surface on the DS-style bottom-screen host and keeps it visible across scene/layout updates. Build-verified only; no external display is attached for runtime confirmation.
 - The S25 timeout restore was verified: secure timeout `5000`, screen timeout `300000`; the scheduled task and local helper files were removed.
+
+## 2026-11-22 latest layout follow-up
+
+Command: :app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.DsStagePolicyTest --tests com.pokedaisy.app.n3ds.SmReaderTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest`nResult: BUILD SUCCESSFUL; focused suites passed. The x86_64 Dev build (:app:assembleDev with pokedaisy.n3ds, pokedaisy.n3dsX86_64, and pokedaisy.x86_64) also completed successfully. The APK installed on emulator-5558 using db install -r. After the install, Ultra Moon did not progress beyond the app loading presentation and no fresh Azahar performance log appeared; no runtime layout result is recorded for this exact build. The Galaxy S25 Ultra was not touched.
+

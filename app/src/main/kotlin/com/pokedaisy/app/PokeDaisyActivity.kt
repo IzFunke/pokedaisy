@@ -4163,8 +4163,8 @@ class PokeDaisyActivity : Activity() {
         // A menu screen (the party, the bag, the Pokédex...) has something to say on both screens: side by side then, not
         // the touch screen over the top one (whose 4:3 left bars beside it in EXPAND).
         val n3dsScene = n3ds?.scene
-        val layout = if (romIs3ds && chosen.floats && n3dsScene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN)
-            com.pokedaisy.app.companion.DsLayout.SIDE_BY_SIDE
+        val layout = if (romIs3ds && n3dsScene != null)
+            n3dsStageLayout(n3dsScene, chosen)
         else dsStageLayout(romIs3ds, dsMenuUp, chosen)
         // EXPAND / STRETCH fill the screen only where EXPAND has the scene to widen; elsewhere the backdrop's beside it.
         val fill = aspect != GameAspect.ORIGINAL && (dsWide || aspect == GameAspect.STRETCH)
@@ -4443,7 +4443,7 @@ class PokeDaisyActivity : Activity() {
         val frame = if (framed) (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() else 0
         stage.viewport.dsTouchFrame = frame
         dsTouchView.setPadding(frame, frame, frame, frame)
-        if (floating) {
+        if (framed) {
             if (dsTouchView.background !is com.pokedaisy.app.n3ds.N3dsWindowFrame) {
                 dsTouchView.background = com.pokedaisy.app.n3ds.N3dsWindowFrame(resources.displayMetrics.density)
             }
@@ -4464,11 +4464,14 @@ class PokeDaisyActivity : Activity() {
         }
         val touchVisible = n3dsTouchOnSecond || on &&
             (n3dsTouchScreenVisible(layout, n3dsFloating.value) || n3dsTouchAutoWanted)
-        // TextureView is composed by the app window, so its alpha hides the native surface on API levels where
-        // SurfaceView content is independently composited from its parent.
+        // Alpha alone still leaked the lower output in an API 36 Ultra Moon capture; hide the TextureView itself while
+        // closed, while keeping it attached so Azahar retains its second render surface.
         dsTouchView.visibility = if (on) View.VISIBLE else View.GONE
-        dsTouchView.alpha = if (touchVisible) 1f else 0f
-        n3ds?.touchView?.alpha = if (touchVisible) 1f else 0f
+        dsTouchView.alpha = 1f
+        n3ds?.touchView?.apply {
+            alpha = 1f
+            visibility = if (touchVisible) View.VISIBLE else View.INVISIBLE
+        }
         n3ds?.surfacesChanged()
         dsFloats.value = false
         dsPip.value = false

@@ -71,3 +71,11 @@ Commit `e75b457a` records the follow-up Ultra Moon boot on the updated API 36 em
 - The API 36 x86_64 emulator was updated only with `adb install -r`. Ultra Moon's setup and intro were advanced on German to the `Wie heißt du?` player-name entry. No name or profile choice was made. Lower-screen keyboard input and the new battle auto-window states still need live verification.
 - `:app:assembleDev` with `-Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true` passed, and the resulting APK was installed with `adb install -r` on emulator-5558. No unit-test task was run for this follow-up. The S25 Ultra app/data were untouched.
 - At the seven-hour deadline the restore task ran: S25 `lock_screen_lock_after_timeout=5000` and `screen_off_timeout=300000`; the scheduled task and its local PowerShell/log files are absent.
+
+### 2026-11-22 latest layout follow-up
+
+- Adjusted the 3DS touch window frame so ONE SCREEN shows a frame only while the window is open; PIP retains its always-visible inset frame. Added regression coverage for both states.
+- Focused policy, Sun/Moon reader, and cart routing tests passed. The x86_64 Dev APK built successfully and was installed on emulator-5558 with db install -r.
+- This latest emulator restart stayed on PokeDaisy's loading presentation, with no fresh Azahar run/performance log; the previous runtime visual evidence therefore does not verify this exact build. No claim of a new closed/open/closed visual pass is made.
+- The S25 Ultra was not changed. The official package and app data were not removed or reset.
+

@@ -28,6 +28,14 @@ internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, bat
         battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN ||
         battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
 
+/** A page rendered on both 3DS screens uses the same temporary paired layout as a DS menu page. */
+internal fun n3dsStageLayout(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, chosen: DsLayout): DsLayout =
+    if (chosen.floats && scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN) DsLayout.SIDE_BY_SIDE else chosen
+
+/** A closed ONE SCREEN has no frame; PIP keeps its always-visible inset framed, like the DS touch layout. */
+internal fun n3dsTouchWindowFramed(layout: DsLayout, windowOpen: Boolean): Boolean =
+    layout == DsLayout.PICTURE_IN_PICTURE || layout == DsLayout.ONE_SCREEN && windowOpen
+
 /** A staged 3DS game keeps Azahar's second window ready; ONE SCREEN hides it through SurfaceView composition alpha. */
 internal fun n3dsTouchSurfaceRequired(stageOn: Boolean, onSecondDisplay: Boolean): Boolean =
     stageOn || onSecondDisplay
