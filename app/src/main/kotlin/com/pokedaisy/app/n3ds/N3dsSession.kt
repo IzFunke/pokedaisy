@@ -692,8 +692,26 @@ class N3dsSession(
 
     /** The last snapshot with [battle]'s fields: the strip follows the battle at once, not at the next sample. */
     private fun publishBattle() {
-        val view = lastView ?: return
-        postSnapshot(withBattle(view))
+        synchronized(snapshotLock) {
+            val view = lastView ?: return
+            postSnapshot(withBattle(view))
+        }
+    }
+
+    /** A sustained memory-read failure invalidates both the companion sample and battle strip until a fresh sample. */
+    private fun clearStaleSnapshot() {
+        synchronized(snapshotLock) {
+            lastView = null
+            battle = null
+            ui.post { onBattle(null) }
+            postSnapshot(
+                SnapshotView(
+                    connected = false,
+                    error = "3DS game data is temporarily unavailable",
+                    game = N3dsCart.kindOf(titleId),
+                ),
+            )
+        }
     }
 
     /** Handler posts from the sampler may outlive stop() and land after a replacement game starts. */
@@ -703,6 +721,7 @@ class N3dsSession(
     }
 
     @Volatile private var lastView: SnapshotView? = null
+    private val snapshotLock = Any()
 
     /** The wild Pokemon of the zone the player is in, for the HUD's WILD ([Gen6Wild]); empty where there are none. */
     @Volatile var wildHere: List<com.pokedaisy.app.companion.ui.XyWildRow> = emptyList()
@@ -863,18 +882,13 @@ class N3dsSession(
                         items = N3dsCompanionData.bag(sample, text),
                         location = N3dsCompanionData.location(sample, text, zones),
                     )
-                    lastView = view
-                    val shown = withBattle(view)
-                    postSnapshot(shown)
+                    synchronized(snapshotLock) {
+                        lastView = view
+                        postSnapshot(withBattle(view))
+                    }
                 } else if (snapshotHealth.onReadFailure()) {
-                    // A temporary address/read failure must not leave the previous party, bag and location looking live.
-                    postSnapshot(
-                        SnapshotView(
-                            connected = false,
-                            error = "3DS game data is temporarily unavailable",
-                            game = N3dsCart.kindOf(titleId),
-                        ),
-                    )
+                    // A temporary address/read failure must not leave old party, bag, location or battle data live.
+                    clearStaleSnapshot()
                 }
             }
             try { Thread.sleep(SAMPLE_MS) } catch (_: InterruptedException) { break }
