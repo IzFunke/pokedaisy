@@ -4359,6 +4359,8 @@ class PokeDaisyActivity : Activity() {
     private fun endN3ds() {
         val session = n3ds ?: return
         n3ds = null
+        n3dsTouchPolicyScene = null
+        n3dsTouchAutoDismissed = false
         romIs3ds = false
         n3dsTouchOnSecond = false
         n3dsFloating.value = false
@@ -4386,9 +4388,13 @@ class PokeDaisyActivity : Activity() {
     /** The 3DS game's field a moment ago: behind the native screen and app overlays. */
     private val n3dsFieldShot = androidx.compose.runtime.mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
 
-    /** The game scene controls app overlays only. The lower render stays hidden until the player opens TOUCH SCREEN. */
+    /** The verified game scene controls app overlays and automatic 3DS touch-screen presentation. */
     private fun onN3dsScene(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene) {
         if (n3ds == null) return
+        if (n3dsTouchPolicyScene != scene) {
+            n3dsTouchPolicyScene = scene
+            n3dsTouchAutoDismissed = false
+        }
         n3dsOnField.value = scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD
         // A battle on ONE SCREEN: full size, with the app's buttons for its commands (DsBattleMenu) where the touch
         // screen would float. Not in PICTURE IN PICTURE: the touch screen is in that corner already (as for a DS game).
@@ -4425,7 +4431,7 @@ class PokeDaisyActivity : Activity() {
 
     /**
      * DS LAYOUT for a 3DS game's two screens (a 5:3 top one, a 4:3 touch screen). ONE SCREEN keeps the touch
-     * TextureView ready for Azahar and hides its output with app composition alpha until it is requested.
+     * TextureView ready for Azahar; verified field and menu scenes can request its floating presentation.
      */
     private fun n3dsArrange(layout: com.pokedaisy.app.companion.DsLayout, w: Int, h: Int, fill: Boolean): com.pokedaisy.app.companion.DsArrangement {
         val top = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
@@ -4503,19 +4509,35 @@ class PokeDaisyActivity : Activity() {
     private fun setN3dsFloating(open: Boolean) {
         if (open && !n3dsFloats) return
         if (n3dsFloating.value == open) return
+        if (open) {
+            n3dsTouchAutoDismissed = false
+        } else if (n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD && n3dsTouchAutoWanted) {
+            n3dsTouchAutoDismissed = true
+        }
         n3dsFloating.value = open
         if (!open) n3ds?.releaseTouch()
         syncGameScreen()
     }
 
-    /** Like DS LAYOUT's touch-wanted state: field menus and battle bag/party pages request the real lower display. */
+    /** Like DS LAYOUT's touch-wanted state: field play, field menus, and battle bag/party request the lower display. */
     private val n3dsTouchAutoWanted: Boolean
         get() = n3ds?.scene?.let { scene ->
-            n3dsTouchWanted(scene, telemetry.snapshot.value.battleInputState)
+            !n3dsTouchAutoDismissed && n3dsTouchWanted(scene, telemetry.snapshot.value.battleInputState)
         } == true
+
+    /** Current scene and local dismissal state for the automatically presented field touch screen. */
+    private var n3dsTouchPolicyScene: com.pokedaisy.app.n3ds.Gen6Reader.Scene? = null
+    private var n3dsTouchAutoDismissed = false
 
     /** Like the DS touch window: a hand-opened window closes; a game-opened menu receives B to leave its page. */
     private fun dismissN3dsTouch() {
+        if (n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD && n3dsTouchAutoWanted) {
+            if (n3dsFloating.value) setN3dsFloating(false) else {
+                n3dsTouchAutoDismissed = true
+                syncGameScreen()
+            }
+            return
+        }
         if (n3dsFloating.value) { setN3dsFloating(false); return }
         if (!n3dsAutoTouchCanDismiss(n3ds?.scene ?: return, telemetry.snapshot.value.battleInputState)) return
         input.setPress(CoreKey.B)

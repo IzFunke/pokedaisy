@@ -28,7 +28,8 @@ internal fun n3dsTouchVisibleForLayout(layout: DsLayout, manuallyOpened: Boolean
 
 /** 3DS scenes that need Azahar's lower screen, matching the DS auto-window triggers. */
 internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
-    scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
+    scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD ||
+        scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE &&
         battleInput in setOf(
             com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,
