@@ -106,6 +106,8 @@ class N3dsSession(
     /** Asked for by the activity once the game should play; it starts when both surfaces are there. */
     @Volatile private var wanted = false
     private var lastReadiness: String? = null
+    private val snapshotGate = N3dsSnapshotGate()
+    @Volatile private var snapshotGeneration = 0L
 
     fun start() {
         wanted = true
@@ -127,13 +129,26 @@ class N3dsSession(
         if (!wanted || thread != null || !topReady || (wantsTouchSurface() && !touchReady)) return
         Log.i(TAG, "starting Azahar for ${rom.name}")
         running = true
+        snapshotGeneration = snapshotGate.begin()
+        val generation = snapshotGeneration
         thread = Thread({
             N3dsNative.init(userDir)
             N3dsNative.setResolution(RESOLUTION)
             val result = N3dsNative.run(rom.absolutePath, ONE_SURFACE_LAYOUT)
             running = false
             Log.i(TAG, "game ended: $result")
-            ui.post { onEnded(result) }
+            ui.post {
+                snapshotGate.finishIfCurrent(generation) {
+                    onSnapshot(
+                        SnapshotView(
+                            connected = false,
+                            error = "3DS game stopped",
+                            game = N3dsCart.kindOf(titleId),
+                        ),
+                    )
+                }
+                onEnded(result)
+            }
         }, "pokedaisy-n3ds").also { it.start() }
         pump.start()
         sampler.start()
@@ -152,6 +167,7 @@ class N3dsSession(
     fun stop() {
         wanted = false
         running = false
+        snapshotGate.end()
         OwnItemNames.lookup = null
         if (thread == null) return
         N3dsNative.stop()
@@ -677,7 +693,13 @@ class N3dsSession(
     /** The last snapshot with [battle]'s fields: the strip follows the battle at once, not at the next sample. */
     private fun publishBattle() {
         val view = lastView ?: return
-        ui.post { onSnapshot(withBattle(view)) }
+        postSnapshot(withBattle(view))
+    }
+
+    /** Handler posts from the sampler may outlive stop() and land after a replacement game starts. */
+    private fun postSnapshot(view: SnapshotView) {
+        val generation = snapshotGeneration
+        ui.post { snapshotGate.publishIfCurrent(generation) { onSnapshot(view) } }
     }
 
     @Volatile private var lastView: SnapshotView? = null
@@ -763,15 +785,13 @@ class N3dsSession(
         if (config == null) {
             // A recognized cart can boot before its memory map is verified. Tell the Companion why it has no live data
             // instead of leaving the generic startup state up forever; the game's display and manual touch window work.
-            ui.post {
-                if (running) onSnapshot(
-                    SnapshotView(
-                        connected = false,
-                        error = "3DS companion data is not mapped yet",
-                        game = N3dsCart.kindOf(titleId),
-                    ),
-                )
-            }
+            postSnapshot(
+                SnapshotView(
+                    connected = false,
+                    error = "3DS companion data is not mapped yet",
+                    game = N3dsCart.kindOf(titleId),
+                ),
+            )
             return@Thread
         }
         // The cart's icons into rom-art once (a few hundred small files), before the first sample needs them.
@@ -843,7 +863,7 @@ class N3dsSession(
                     )
                     lastView = view
                     val shown = withBattle(view)
-                    ui.post { onSnapshot(shown) }
+                    postSnapshot(shown)
                 }
             }
             try { Thread.sleep(SAMPLE_MS) } catch (_: InterruptedException) { break }

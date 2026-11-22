@@ -395,17 +395,24 @@ object Gen6Reader {
         else -> null
     }
 
-    /** The only verified USUM module root so far: the EU Ultra Moon language selector (headless Azahar, 2026-11-22). */
+    /** The verified Ultra Moon EU module root. LangSelect was seen headless; HeroSelect was also observed live on S25. */
     fun startupSceneModuleRoot(titleId: Long): Int = when (titleId) {
         N3dsCart.POKEMON_ULTRA_MOON_USA -> 0x008B2000
         else -> 0
     }
 
-    /** Recognize only Ultra Moon's observed language selector; every other module remains explicitly unmapped. */
+    /**
+     * Recognize only observed Ultra Moon setup pages that use the game's screens. The S25 trace showed
+     * `StrInput` / `HeroSelect` on the player setup page; the preceding `AppDemo` / `SequencePlayer` / `Object`
+     * narration remains unmapped. This is deliberately not a gameplay-state map.
+     */
     fun startupSceneOf(titleId: Long, modules: String?): Scene? {
         if (startupSceneModuleRoot(titleId) == 0 || modules.isNullOrBlank()) return null
-        return if ("LangSelect" in modules.lineSequence()) Scene.SCREEN else Scene.UNMAPPED
+        val names = modules.lineSequence().toSet()
+        return if (names.any { it in ULTRA_MOON_SETUP_SCREENS }) Scene.SCREEN else Scene.UNMAPPED
     }
+
+    private val ULTRA_MOON_SETUP_SCREENS = setOf("LangSelect", "HeroSelect")
 
     /** One party Pokemon, decoded. [species] 0 = an empty slot (never returned). */
     data class Mon(

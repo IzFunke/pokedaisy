@@ -68,6 +68,8 @@ class DsStagePolicyTest {
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, bag))
         assertTrue(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, party))
         assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, 0))
+        assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, bag))
+        assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.UNMAPPED, party))
         assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, 0))
     }
 

@@ -241,6 +241,30 @@ class Gen6Test {
         assertEquals(945, icons.size)
     }
 
+    /** The player's European Pokémon Y cart validates on its own through POKEDAISY_Y_ROM; no X cart is required. */
+    @Test fun pokemonYEuRomFsLayoutWhenProvided() {
+        val cart = System.getenv("POKEDAISY_Y_ROM")?.let(::File)
+            ?: File(File(RETAIL_ROM_DIR).parentFile, "3ds/Pokemon Y (Europe) (En,Ja,Fr,De,Es,It,Ko).3ds")
+        assumeTrue("Set POKEDAISY_Y_ROM to the local European Pokémon Y cart", cart.isFile)
+        val header = N3dsCart.header(cart)!!
+        assertEquals(N3dsCart.POKEMON_Y_USA, header.titleId)
+        assertTrue(N3dsCart.supported(cart))
+
+        val layout = N3dsLayout.forTitle(N3dsCart.POKEMON_Y_USA)
+        val german = Gen6Text.load(cart, 5, layout)!!
+        assertEquals("Bisasam", german.species[1])
+        assertEquals("Aquaknarre", german.moves[55])
+        assertEquals("Trank", german.items[17])
+        assertEquals(360, Gen6Zones.load(cart, layout)!!.size)
+        assertTrue(Gen6TownMap.spots(cart, layout).isNotEmpty())
+        assertTrue(Gen6Personal.load(cart, layout)!!.size > 700)
+        val route2 = Gen6Wild.load(cart, layout)!![259][0].slots.map { it.species }.toSet()
+        assertTrue("Y's Route 2 encounter table contains Caterpie", 10 in route2)
+        assertTrue("Y's Route 2 encounter table excludes X's Weedle", 13 !in route2)
+        val icons = RomFs(cart).use { it.read("a/0/9/3") }!!.let { Gen6Text.garcFiles(it) }
+        assertEquals(945, icons.size)
+    }
+
     /** The field menu's bytes ([Gen6Reader.Config.fieldMenuRoot]) as the RP6 read them: the menu's pointer and the byte at +0x24. */
     private fun fieldMenu(pointer: Int, flag: Int): ByteArray =
         ByteBuffer.allocate(Gen6Reader.FIELD_MENU_BYTES).order(ByteOrder.LITTLE_ENDIAN).apply {

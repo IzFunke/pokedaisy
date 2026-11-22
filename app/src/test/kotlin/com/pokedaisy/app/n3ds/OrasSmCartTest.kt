@@ -37,7 +37,7 @@ class OrasSmCartTest {
         assertFalse(N3dsCart.POKEMON_ULTRA_MOON_USA in N3dsCart.SUPPORTED)
     }
 
-    @Test fun ultraMoonRecognizesOnlyItsObservedLanguageScreen() {
+    @Test fun ultraMoonRecognizesOnlyItsObservedSetupScreens() {
         assertEquals(0x008B2000, Gen6Reader.startupSceneModuleRoot(N3dsCart.POKEMON_ULTRA_MOON_USA))
         assertEquals(0, Gen6Reader.startupSceneModuleRoot(N3dsCart.POKEMON_ULTRA_SUN_USA))
         assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "LangSelect"))
@@ -46,7 +46,8 @@ class OrasSmCartTest {
             Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "AppDemo\nSequencePlayer\nObject"),
         )
         assertEquals(Gen6Reader.Scene.UNMAPPED, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "Object\nAppDemo\nSequencePlayer"))
-        assertEquals(Gen6Reader.Scene.UNMAPPED, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "HeroSelect"))
+        assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "HeroSelect"))
+        assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "StrInput\nHeroSelect"))
         assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, ""))
         assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_SUN_USA, "LangSelect"))
     }

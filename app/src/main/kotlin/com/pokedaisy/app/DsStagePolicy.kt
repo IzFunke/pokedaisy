@@ -29,8 +29,11 @@ internal fun n3dsTouchVisibleForLayout(layout: DsLayout, manuallyOpened: Boolean
 /** 3DS scenes that need Azahar's lower screen, matching the DS auto-window triggers. */
 internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
     scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
-        battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN ||
-        battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
+        scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE &&
+        battleInput in setOf(
+            com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,
+            com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN,
+        )
 
 /** The dimmed-area close gesture exits only a game-opened menu page; a hand-opened window simply closes locally. */
 internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
