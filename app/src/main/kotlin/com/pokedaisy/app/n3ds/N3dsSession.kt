@@ -20,7 +20,7 @@ import java.io.File
  * A 3DS game in the game screen (PokeDaisyActivity, docs/3DS_GAMES_PLAN.md): Azahar on a thread of its own, drawing the
  * top screen into [topView] and the touch screen into [touchView] (the stage places both: DS LAYOUT's arrangement, the
  * floating window, the second display), the app's own input ([GbaInput]: the player's buttons, the touch controls) and
- * the circle pad, speed, states, and the companion's snapshot once a second (PARTY / BAG, [Gen6Reader]).
+ * the circle pad, speed, states, and the companion's snapshot every 200 ms (PARTY / BAG, [Gen6Reader]).
  *
  * Azahar keeps one game per process and is set up once ([N3dsNative.init]); this boots when the top surface is ready
  * and waits for the touch surface only when the selected presentation needs it. It stops in [stop]. A pause holds it
@@ -882,7 +882,9 @@ class N3dsSession(
         // LayoutOption::Default here draws both screens into the top view and defeats ONE SCREEN on phones.
         private const val ONE_SURFACE_LAYOUT = 1
         private const val STICK_DEAD = 0.12f
-        private const val SAMPLE_MS = 1000L
+        // The Windows DS core refreshes its companion snapshot every 12 emulation frames (~200 ms at 60 FPS).
+        // Keep mapped 3DS companion data on the same visible-update cadence without polling once per frame.
+        private const val SAMPLE_MS = 200L
         private const val SCENE_MS = 100L
         /** The field's picture every this many scene reads (a second), at the 3DS's own top-screen size. */
         private const val FIELD_SHOT_EVERY = 10

@@ -231,3 +231,12 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 
 - `:app:testDevUnitTest --tests=com.pokedaisy.app.SavesLocationTest --offline --no-daemon --console=plain` — PASS, 8 tests, 0 failures/errors/skips, including global-over-per-game precedence and per-game restoration policy.
 - The tests cover path policy only; the app was not installed on the emulator or S25.
+
+## 2026-11-22 mapped 3DS Companion refresh cadence
+
+- `:app:compileDevKotlin -Ppokedaisy.n3ds=true --offline --no-daemon --console=plain` — PASS. This compile includes the N3DS session change from a 1,000 ms to a 200 ms Companion sampling interval.
+- The 200 ms interval matches the Windows DS source's 12-frame Companion refresh at 60 FPS. It is a cadence comparison only; no USUM runtime map was added and no game-session behavior was claimed as verified by this compile.
+- `:app:assembleDev -Ppokedaisy.n3ds=true --offline --no-daemon --console=plain` — PASS; ARM64 Azahar JNI packaged in `app/build/outputs/apk/dev/app-dev.apk`.
+- `:app:testDevUnitTest --tests=com.pokedaisy.app.DsStagePolicyTest --tests=com.pokedaisy.app.n3ds.Gen6Test --tests=com.pokedaisy.app.companion.N3dsCoreTest --offline --no-daemon --console=plain` — PASS, 28 tests, 0 failures, 0 errors, 8 ROM-dependent skips.
+- The APK was installed to the Galaxy S25 Ultra's `com.pokedaisy.app.dev` via `adb install -r`. Device reports `versionName=1.6.2-beta.1`, `versionCode=23`, and updated `lastUpdateTime`; the package data was not cleared. The `pokedaisy.xml` SHA-256 matched before and immediately after installation. On app launch, `LibraryActivity` resumed and `setup_done` / `last_rom` keys were present. The app's normal launch wrote the preferences file afterward, so its post-launch hash differs; their values were not dumped or changed manually.
+- This was a library-start smoke check only. No ROM was launched; no gameplay, Ultra Moon scene mapping, or S25 touch interaction was verified.
