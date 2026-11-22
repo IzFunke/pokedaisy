@@ -302,6 +302,14 @@ class Gen6Test {
         )
         assertEquals(Gen6Reader.Scene.MENU, yPssMenu)
         assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssMenu!!, 0))
+        // The blue round arrow closes that overlay; the ordinary field/PSS friends view remains on the lower screen.
+        val yPssClosed = Gen6Reader.sceneOf(
+            "DllField\nDllUSMirror",
+            fieldMenu(0, 0),
+            Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!,
+        )
+        assertEquals(Gen6Reader.Scene.FIELD, yPssClosed)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssClosed!!, 0))
         assertEquals(Gen6Reader.Scene.MENU, scene("DllField\nDllUSC02\nDllPssCharaMenu", fieldMenu(0, 0)))
         assertEquals(Gen6Reader.Scene.FIELD, scene("DllField\nDllUSC02\nDllPssMessageWindow", fieldMenu(0, 0)))
         assertNull(scene("", null))
