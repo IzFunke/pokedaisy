@@ -813,10 +813,12 @@ class N3dsSession(
         var smLastIsland = 0
         var textLanguage = -1
         val zones = Gen6Zones.load(rom, layout)
+        val snapshotHealth = N3dsSnapshotHealth()
         while (running) {
             if (!paused) {
                 val sample = N3dsNative.readMemory(Gen6Reader.ranges(config))?.let { Gen6Reader.read(config, it) }
                 if (sample != null) {
+                    snapshotHealth.onReadSuccess()
                     // Reloaded when the language changes: a read before the save is loaded (the title) has none yet.
                     if (text == null || sample.language != textLanguage) text = Gen6Text.load(rom, sample.language, layout)?.also { t ->
                         textLanguage = sample.language
@@ -864,6 +866,15 @@ class N3dsSession(
                     lastView = view
                     val shown = withBattle(view)
                     postSnapshot(shown)
+                } else if (snapshotHealth.onReadFailure()) {
+                    // A temporary address/read failure must not leave the previous party, bag and location looking live.
+                    postSnapshot(
+                        SnapshotView(
+                            connected = false,
+                            error = "3DS game data is temporarily unavailable",
+                            game = N3dsCart.kindOf(titleId),
+                        ),
+                    )
                 }
             }
             try { Thread.sleep(SAMPLE_MS) } catch (_: InterruptedException) { break }
