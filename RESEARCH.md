@@ -31,3 +31,9 @@ The headless title reaches the permanent language chooser. A savestate captured 
 subsequent UI experiments skip the several-minute cold boot. The one-frame button script is not reliable for this menu;
 the language was not committed and the diagnostic run did not pass a personal profile/photo prompt. No real save or ROM
 was modified. Screenshots and savestates from this capture are disposable artifacts in `work/`.
+
+## Ultra Moon intro memory evidence (2026-11-22)
+
+Independently compared the 16 MiB Gen 7 heap snapshots from the live `AppDemo` intro and Kukui photo/profile view. They differ at 86,455 bytes across the snapshots, but neither contains an ASCII/UTF-16 `AppDemo`, `SequencePlayer`, `HeroSelect`, `Photo`, or `PlayerPhoto` state string. Both have zero at heap base + `0x19AC`; that does not validate Sun/Moon's zone address for Ultra Moon. Asset-name strings such as `HeroSel_Chara_` and `Intro_MIN_` occur in both states and are not state markers. No field, party, or menu address is inferred from this comparison.
+
+A public PKSM-Scripts Gen 7 USUM save-layout note lists save-file offsets for the bag (`0x0000`), Trainer1 (`0x1000`), Trainer Card (`0x1400`), and party (`0x1600`): https://github.com/FlagBrew/PKSM-Scripts/blob/master/dev/docs/gen7/usum.txt. These describe the save archive, not live process RAM, so they are only a possible future save-reader reference and cannot drive live Companion or screen behavior.

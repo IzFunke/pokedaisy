@@ -163,3 +163,9 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
 - S25 update used `adb install -r`. `setup_done=true`, the `last_rom` preference remains present (currently Pokémon Y),
   and the shared save directory preference is still set. No game was launched and no save was written. Screen-level
   confirmation is pending.
+
+## Focused Gen 6 / USUM startup regression and build (2026-11-22)
+
+- `:app:testDebugUnitTest --tests 'com.pokedaisy.app.n3ds.Gen6Test' --tests 'com.pokedaisy.app.n3ds.OrasSmCartTest' --offline --no-daemon --console=plain` — PASS. JUnit XML: `Gen6Test` 11 tests (0 failures, 7 skipped); `OrasSmCartTest` 9 tests (0 failures, 6 skipped). The skipped cases require ROM fixtures not present in the checkout.
+- `:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true --offline --no-daemon --console=plain` — PASS. Dev APK: `app/build/outputs/apk/dev/app-dev.apk` (131,804,599 bytes). No APK was installed in this run.
+- Independently compared `work/usum-appdemo-heap.bin` and `work/usum-photo-view-heap.bin`: each is 16 MiB; 86,455 bytes differ. The strings and `+0x19AC` checks are recorded in `RESEARCH.md`; they provide no reliable runtime-state marker or Ultra Moon address map.

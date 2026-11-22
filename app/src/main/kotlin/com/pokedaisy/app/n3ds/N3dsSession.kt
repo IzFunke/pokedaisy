@@ -53,6 +53,8 @@ class N3dsSession(
 
     private val ui = Handler(Looper.getMainLooper())
     private val userDir = N3dsSaves.root(context).absolutePath
+    /** Debug-only Azahar capture commands and outputs stay in app-private storage, where adb run-as can access them. */
+    private val debugDir = File(context.filesDir, "n3ds-debug")
     private val appFiles = context.filesDir
     private var topReady = false
     private var touchReady = false
@@ -376,20 +378,21 @@ class N3dsSession(
                         readBattle(config, if (modules.split('\n').contains(config.battleModule)) modules else null)
                     }
                 }
-                if (config != null && pass++ % FIELD_SHOT_EVERY == 0 && scene == Gen6Reader.Scene.FIELD) fieldShot()
-                if (com.pokedaisy.app.BuildConfig.DEBUG) debugCommands(pass % FIELD_SHOT_EVERY == 1)
+                val dumpTurn = pass++ % FIELD_SHOT_EVERY == 0
+                if (config != null && dumpTurn && scene == Gen6Reader.Scene.FIELD) fieldShot()
+                if (com.pokedaisy.app.BuildConfig.DEBUG) debugCommands(dumpTurn)
             }
             try { Thread.sleep(SCENE_MS) } catch (_: InterruptedException) { break }
         }
     }, "pokedaisy-n3ds-scene")
 
     /**
-     * Debug builds: also `files/debug/n3ds_cmd`, lines of `poke <hex address> <hex bytes>` (written into the game's
-     * memory) and `shot <name>` (the touch screen at 320 x 240 into `files/debug/<name>.png`), run in order, then
+     * Debug builds: also `files/n3ds-debug/n3ds_cmd`, lines of `poke <hex address> <hex bytes>` (written into the game's
+     * memory) and `shot <name>` (the touch screen at 320 x 240 into `files/n3ds-debug/<name>.png`), run in order, then
      * `n3ds_cmd.done` written (what adb waits for). How Pokemon X's party icons were read off the game.
      */
     private fun debugCommands(dumpTurn: Boolean) {
-        val dir = File(userDir).parentFile?.let { File(it, "debug") } ?: return
+        val dir = debugDir.apply { mkdirs() }
         val cmd = File(dir, "n3ds_cmd")
         if (cmd.isFile) {
             val lines = runCatching { cmd.readLines() }.getOrDefault(emptyList())
@@ -415,14 +418,21 @@ class N3dsSession(
         if (dumpTurn) debugDump(dir)
     }
 
-    /** Debug builds: `files/debug/n3ds_dump` there = the game's heap (0x08000000, 15 MB) and data (0x005A6000) written
-     * to `files/debug/n3ds-<time>-<base>.bin`, the marker deleted (finding addresses on a device: diff two dumps). */
+    /** Debug builds: `files/n3ds-debug/n3ds_dump` writes the current game's memory to timestamped files and deletes
+     * the marker (finding addresses on a device: diff two dumps). */
     private fun debugDump(dir: File) {
         val marker = File(dir, "n3ds_dump")
         if (!marker.isFile) return
         marker.delete()
         val stamp = System.currentTimeMillis()
-        for ((base, len) in listOf(0x005A6000 to 0x260000, 0x08000000 to 0xF00000)) {
+        // Sun/Moon's Gen 7 process heap starts at 0x30000000. Capture its first 16 MiB for Gen 7 titles so live
+        // Ultra game snapshots can be compared without assuming Sun/Moon's runtime offsets match.
+        val gen7 = titleId in setOf(
+            N3dsCart.POKEMON_SUN_USA, N3dsCart.POKEMON_MOON_USA,
+            N3dsCart.POKEMON_ULTRA_SUN_USA, N3dsCart.POKEMON_ULTRA_MOON_USA,
+        )
+        val regions = if (gen7) listOf(0x30000000 to 0x1000000) else listOf(0x005A6000 to 0x260000, 0x08000000 to 0xF00000)
+        for ((base, len) in regions) {
             val ranges = IntArray(len / 0x100000 * 2 + 2).also { r ->
                 var i = 0
                 var a = 0

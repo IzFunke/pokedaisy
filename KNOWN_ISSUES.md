@@ -25,3 +25,5 @@ Ultra Moon EU was booted in the isolated headless Azahar harness and its initial
 `0x008b2000`. This does not establish save-backed field, party, bag, battle, or touch-scene addresses. The USA Sun/Moon
 map at `0x00869000` must not be assigned to USUM without runtime evidence. The production companion now reports the
 unmapped status, but full USUM Companion and automatic lower-screen behavior are still unsupported.
+
+- The current x86_64 emulator run advanced Ultra Moon in German to Kukui's photo/profile setup view and stopped before any photo/profile choice. Runtime modules are `AppDemo`, `SequencePlayer`, and `Object`; these remain unmapped, so Companion data and scene-driven lower-screen behavior are still unavailable. Intro performance was about 17–18 game FPS / 33–36 system FPS and is not S25 evidence.

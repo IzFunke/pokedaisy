@@ -120,3 +120,11 @@ fallback. No USUM field, battle, party, or Companion mapping is inferred from Su
 passed and `:app:assembleDev -Ppokedaisy.n3ds=true` passed. The resulting Dev APK was installed on the S25 with
 `adb install -r`; `setup_done`, the existing `last_rom` entry, and the shared save-folder preference were retained.
 The phone was locked during install, so this automatic transition has not yet been visually verified on hardware.
+
+## 2026-11-22: Ultra Moon intro on x86_64 emulator
+
+After the user-authorized German language choice, the API 36 x86_64 emulator was advanced through the Ultra Moon intro. At the Kukui photo/profile setup view, input stopped before selecting or confirming a photo or profile. The live CRO query reports `AppDemo`, `SequencePlayer`, and `Object`; `N3dsSession` still labels this as `UNMAPPED`, as intended. The Companion therefore remains on the explicit unmapped-data message, and no new USUM memory mapping can be claimed.
+
+The emulator log during the intro reported roughly 17–18 game FPS and 33–36 system FPS (about 55–62% speed), falling lower around the photo view. This is x86_64 emulator evidence, not an S25 Ultra performance measurement. The RAM capture is preserved under the ignored/untracked `work/` directory; no ROM or save data was changed.
+
+The debug capture path now lives in app-private `files/n3ds-debug`, which makes its marker and output accessible to `adb run-as`; debug snapshots for Gen 7 retail titles capture the first 16 MiB at `0x30000000` even when the title has no `Gen6Reader.Config`. The capture scheduler no longer depends on a non-null game config. This improves diagnostics only and does not enable a guessed USUM Companion map.
