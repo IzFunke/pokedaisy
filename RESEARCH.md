@@ -55,3 +55,7 @@ A real 3DS core selector remains in Settings (`AUTO`, `AZAHAR`), but there is on
 ## Measured Ultra Moon setup modules (2026-11-22)
 
 The x86_64 Azahar session at the Kukui photo/profile setup prompt reported `AppDemo`, `SequencePlayer`, and `Object`; the same sequence appeared during the intro capture. The startup scene classifier now recognizes the full group as `SCREEN`, which feeds the existing `n3dsStageLayout` DS-style paired-display behavior. A unit test checks the module group in either order and asserts partial/unknown groups remain `UNMAPPED`. This extends only the observed setup sequence; the later field, menu, battle, and party modules remain unmapped, and the current prompt was left untouched.
+
+## AppDemo signal rejected after cross-scene check (2026-11-22)
+
+The `AppDemo`, `SequencePlayer`, `Object` trio appears during ordinary narration as well as the photo/profile setup. It cannot distinguish a touch-dependent screen from a top-screen dialogue. A temporary automatic paired-screen mapping was removed, and regression coverage now requires this group to remain `UNMAPPED`. The 16 MiB heap diff remains too broad for a memory address claim. Continue with a state marker observed across multiple stable samples or a verified game-owned structure.

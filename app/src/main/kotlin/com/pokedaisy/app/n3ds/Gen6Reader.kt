@@ -401,15 +401,10 @@ object Gen6Reader {
         else -> 0
     }
 
-    /** Recognized Ultra Moon setup/start screens. Unknown module groups remain explicitly unmapped. */
+    /** Recognize only Ultra Moon's observed language selector; every other module remains explicitly unmapped. */
     fun startupSceneOf(titleId: Long, modules: String?): Scene? {
         if (startupSceneModuleRoot(titleId) == 0 || modules.isNullOrBlank()) return null
-        val names = modules.lineSequence().toSet()
-        // Language chooser seen on the EU cart at cold boot. AppDemo + SequencePlayer + Object were captured together
-        // in both the intro and Kukui's player-photo/profile prompt on the x86_64 Azahar run (2026-11-22). The latter
-        // asks for setup interaction, so a ONE SCREEN layout must show the actual lower display just as DS does.
-        val observedSetupSequence = names.containsAll(setOf("AppDemo", "SequencePlayer", "Object"))
-        return if ("LangSelect" in names || observedSetupSequence) Scene.SCREEN else Scene.UNMAPPED
+        return if ("LangSelect" in modules.lineSequence()) Scene.SCREEN else Scene.UNMAPPED
     }
 
     /** One party Pokemon, decoded. [species] 0 = an empty slot (never returned). */
