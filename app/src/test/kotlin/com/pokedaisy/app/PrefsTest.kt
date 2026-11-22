@@ -73,4 +73,20 @@ class PrefsTest {
         p.playMillis = 4_000_000_001L
         assertEquals(4_000_000_001L, Prefs(store).playMillis)
     }
+
+    @Test fun globalDsAnd3dsSaveFoldersSurvivePrefsRecreationAndCanReset() {
+        val store = Store()
+        val prefs = Prefs(store)
+        prefs.dsSavesDirOverride = "/storage/emulated/0/DS Saves"
+        prefs.n3dsUserDirOverride = "/storage/emulated/0/3DS Saves"
+
+        val reopened = Prefs(store)
+        assertEquals("/storage/emulated/0/DS Saves", reopened.dsSavesDirOverride)
+        assertEquals("/storage/emulated/0/3DS Saves", reopened.n3dsUserDirOverride)
+
+        reopened.dsSavesDirOverride = null
+        reopened.n3dsUserDirOverride = null
+        assertNull(Prefs(store).dsSavesDirOverride)
+        assertNull(Prefs(store).n3dsUserDirOverride)
+    }
 }
