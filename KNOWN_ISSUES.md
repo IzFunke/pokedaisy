@@ -14,4 +14,13 @@
 - The current Pokémon Y x86_64 run confirmed the user-authorized German choice and stopped at `Begin game` / `Select language`, before any personal setup. Persistence across a process restart is unverified. This was emulator evidence, not an S25 Ultra run. The Android ARM64 AVD cannot start on this x86_64 Windows host.
 
 - A startup wait on an invisible touch `TextureView` was resolved: the latest x86_64 build starts Ultra Moon with only the top surface and adds the second native window when TOUCH SCREEN is opened. Closed/open/closed visuals are verified on emulator-5558. The S25 Ultra was updated in place but not visually checked.
+- Ultra Sun / Ultra Moon have no verified runtime memory map. Until one is derived, the Companion reports that 3DS game data is unmapped, the live HUD/party/map/battle data is unavailable, and game-driven lower-screen presentation cannot be automatic. Manual TOUCH SCREEN remains the fallback. Do not copy Sun/Moon RAM addresses into Ultra games without live validation.
+- On mapped 3DS games, the dimmed-area dismiss action now sends B for auto-opened field menus and battle bag/party pages. The policy is unit-tested, but the S25 battle-page interaction remains unverified because USUM battle state is currently unmapped.
+- The headless `n3ds_dump` build needs C++20 explicitly on its executable target. The initial local Docker build had overlapping CMake/Ninja writers; task-created containers were stopped. Rebuild and run one instance at a time before using it for ROM-backed memory analysis.
 
+# Ultra Sun / Ultra Moon mapping remains open (2026-11-22)
+
+Ultra Moon EU was booted in the isolated headless Azahar harness and its initial `LangSelect` CRO root was observed at
+`0x008b2000`. This does not establish save-backed field, party, bag, battle, or touch-scene addresses. The USA Sun/Moon
+map at `0x00869000` must not be assigned to USUM without runtime evidence. The production companion now reports the
+unmapped status, but full USUM Companion and automatic lower-screen behavior are still unsupported.

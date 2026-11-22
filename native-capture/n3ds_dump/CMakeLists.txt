@@ -20,7 +20,7 @@ endif()
 set(ENABLE_BUILTIN_KEYBLOB OFF CACHE BOOL "" FORCE)
 foreach(off ENABLE_QT ENABLE_SDL2 ENABLE_TESTS ENABLE_ROOM ENABLE_ROOM_STANDALONE ENABLE_WEB_SERVICE ENABLE_SCRIPTING
         ENABLE_GDBSTUB ENABLE_CUBEB ENABLE_OPENAL ENABLE_LIBUSB ENABLE_DISCORD_RPC ENABLE_LIBRETRO ENABLE_OPENGL ENABLE_VULKAN
-        CITRA_WARNINGS_AS_ERRORS CITRA_USE_PRECOMPILED_HEADERS)
+        CITRA_WARNINGS_AS_ERRORS)
     set(${off} OFF CACHE BOOL "" FORCE)
 endforeach()
 set(ENABLE_SOFTWARE_RENDERER ON CACHE BOOL "" FORCE)
@@ -29,11 +29,16 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_subdirectory("${AZAHAR_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/azahar" EXCLUDE_FROM_ALL)
+# The upstream Pica headers use std::bit_cast but normally receive <bit> via Azahar's PCH.
+# This diagnostic target intentionally disables Azahar's broad PCH; provide the required header
+# to video_core explicitly so the standalone build follows the same C++20 contract.
+target_precompile_headers(video_core PRIVATE <bit>)
 if(ENABLE_BUILTIN_KEYBLOB)
     message(FATAL_ERROR "ENABLE_BUILTIN_KEYBLOB is on: PokeDaisy never ships console keys")
 endif()
 
 add_executable(n3ds_dump n3ds_dump.cpp)
+target_compile_features(n3ds_dump PRIVATE cxx_std_20)
 target_include_directories(n3ds_dump PRIVATE "${AZAHAR_DIR}/src")
 target_link_libraries(n3ds_dump PRIVATE citra_core citra_common audio_core video_core input_common lodepng)
 # Azahar sets its renderer switches for its own directories only (src/CMakeLists.txt); its headers read them.

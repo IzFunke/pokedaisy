@@ -4508,7 +4508,7 @@ class PokeDaisyActivity : Activity() {
     /** Like the DS touch window: a hand-opened window closes; a game-opened menu receives B to leave its page. */
     private fun dismissN3dsTouch() {
         if (n3dsFloating.value) { setN3dsFloating(false); return }
-        if (n3ds?.scene != com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU) return
+        if (!n3dsAutoTouchCanDismiss(n3ds?.scene ?: return, telemetry.snapshot.value.battleInputState)) return
         input.setPress(CoreKey.B)
         window.decorView.postDelayed({ input.setPress(0) }, DS_B_PRESS_MS)
     }

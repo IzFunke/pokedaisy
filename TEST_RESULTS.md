@@ -124,3 +124,30 @@ Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_6
 - The startup deadlock was an invisible 3DS `TextureView` being required before Azahar could start. The start policy now waits for a touch surface only while its window is visible or routed to another display.
 - Ultra Moon (`00040000001b5100`) booted on emulator-5558, showed the top screen alone while closed, opened the lower screen in a framed window, then closed back to ONE SCREEN. After the transition, logs returned to roughly 30 game FPS / 59.8 system FPS. No language or personal profile choice was made.
 - The x86_64 emulator and S25 Ultra were updated with `adb install -r`. The S25's `setup_done=true` and existing `last_rom` preference remained present. No uninstall or data clear was used; the S25 display was not manually inspected.
+
+## Black 2 / Ultra Moon comparison follow-up (2026-11-22)
+
+- Focused Windows Gradle run: `:app:testDevUnitTest -Ppokedaisy.n3ds=true --tests '*DsStagePolicyTest' --tests '*OrasSmCartTest'` — PASS. `DsStagePolicyTest`: 11 tests, 0 failures. `OrasSmCartTest`: 8 tests, 0 failures, 6 skipped because the associated ROMs are absent. These tests cover policy and existing synthetic Sun/Moon routing; they do not prove USUM RAM mapping or S25 battle-touch behavior.
+- Source review against the live S25 screenshots confirmed Ultra Moon's config-null path suppresses both Companion snapshots and scene polling. A clear unmapped-title Companion message and battle auto-window dismiss policy were added; the focused run passed against the first change set. A final incremental test/build is still required after the last source cleanup.
+- The first Windows native-capture configure correctly failed because no native C/C++ compiler is installed. A Linux Docker builder was used instead. Its initial run exposed a missing C++20 requirement on `n3ds_dump`; `target_compile_features(n3ds_dump PRIVATE cxx_std_20)` is now explicit. Two task-created containers wrote to one Ninja directory at once; they were stopped, and a single rebuild is running. No executable or ROM analysis result is recorded yet.
+- No S25 APK update was installed as part of this comparison follow-up; package data and the live Ultra Moon setup prompt were preserved. No ROM or save was changed.
+# 2026-11-22 headless Ultra Moon EU startup
+
+- `n3ds_dump` configured and built successfully against the pinned Azahar core in Docker (`83/83` incremental steps).
+- The cart was mounted read-only; output/config/save paths were isolated under `work/usum-diagnostic-scratch`.
+- Verified title ID `00040000001b5100`, frame-600 language chooser, `findcrs` static root `0x008b2000`, and module name
+  `LangSelect`. Captured/reloaded a 7.7 MB savestate successfully for faster follow-up observations.
+- A frame-600 interpreter run took several minutes. A subsequent JIT run also booted to the language screen; a savestate
+  attempt after an A-button experiment crashed in Boost serialization (`unregistered class`). That crash was confined to
+  the diagnostic process and scratch directory. A screenshot showed the permanent language choice had not been
+  confirmed. No profile/photo prompt was passed, and no production app, ROM, or save was changed.
+- The harness initially failed because disabling Azahar PCH removed the transitive `<bit>` include required by
+  `video_core/pica_types.h`; a target-local PCH for `<bit>` resolved it. No vendor source was modified.
+
+## Full Dev validation after the Companion fallback changes (2026-11-22)
+
+- `:app:testDevUnitTest :app:assembleDev -Ppokedaisy.n3ds=true` — PASS (`BUILD SUCCESSFUL`, 9m30s).
+- JUnit XML confirms 4,213 tests across 191 suites, 0 failures, 0 errors, and 60 skipped.
+- The ARM64 Dev native library and Dev APK were built. The APK was not installed on the S25 so the live Ultra Moon
+  setup session would not be interrupted. The device remains connected, and existing package data was left intact.
+- `git diff --check` reports no whitespace errors; Git only reports line-ending normalization warnings for edited files.

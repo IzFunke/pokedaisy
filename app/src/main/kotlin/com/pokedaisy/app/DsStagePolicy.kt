@@ -28,6 +28,15 @@ internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, bat
         battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN ||
         battleInput == com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
 
+/** The dimmed-area close gesture exits only a game-opened menu page; a hand-opened window simply closes locally. */
+internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
+    scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
+        scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE &&
+        battleInput in setOf(
+            com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,
+            com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN,
+        )
+
 /** A page rendered on both 3DS screens uses the same temporary paired layout as a DS menu page. */
 internal fun n3dsStageLayout(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, chosen: DsLayout): DsLayout =
     if (chosen.floats && scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN) DsLayout.SIDE_BY_SIDE else chosen

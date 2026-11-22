@@ -59,6 +59,18 @@ class DsStagePolicyTest {
         assertFalse(n3dsTouchWanted(com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE, 0))
     }
 
+    @Test fun threeDsAutoTouchDismissClosesOnlyGameOpenedPages() {
+        val menu = com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU
+        val battle = com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE
+        val bag = com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN
+        val party = com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN
+        assertTrue(n3dsAutoTouchCanDismiss(menu, 0))
+        assertTrue(n3dsAutoTouchCanDismiss(battle, bag))
+        assertTrue(n3dsAutoTouchCanDismiss(battle, party))
+        assertFalse(n3dsAutoTouchCanDismiss(battle, 0))
+        assertFalse(n3dsAutoTouchCanDismiss(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, bag))
+    }
+
     @Test fun threeDsPagesThatNeedBothScreensTemporarilyUseTheDsPairedLayout() {
         assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.ONE_SCREEN))
         assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.PICTURE_IN_PICTURE))

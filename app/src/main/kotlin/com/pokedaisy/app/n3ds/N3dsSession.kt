@@ -706,6 +706,21 @@ class N3dsSession(
     // ---- the companion's snapshot -------------------------------------------------------------------------------
 
     private val sampler = Thread({
+        val config = Gen6Reader.configFor(titleId)
+        if (config == null) {
+            // A recognized cart can boot before its memory map is verified. Tell the Companion why it has no live data
+            // instead of leaving the generic startup state up forever; the game's display and manual touch window work.
+            ui.post {
+                if (running) onSnapshot(
+                    SnapshotView(
+                        connected = false,
+                        error = "3DS companion data is not mapped yet",
+                        game = N3dsCart.kindOf(titleId),
+                    ),
+                )
+            }
+            return@Thread
+        }
         // The cart's icons into rom-art once (a few hundred small files), before the first sample needs them.
         runCatching {
             if (Gen6Icons.extractTo(rom, com.pokedaisy.app.companion.data.RomArt.dir(appFiles.toOkioPath()).toFile(), layout)) com.pokedaisy.app.companion.data.RomArt.announce()
@@ -723,11 +738,10 @@ class N3dsSession(
         }.onFailure { Log.w(TAG, "town map failed", it) }.getOrNull()
         var smLast: com.pokedaisy.app.companion.ui.XyMapSpot? = null
         var smLastIsland = 0
-        val config = Gen6Reader.configFor(titleId)
         var textLanguage = -1
         val zones = Gen6Zones.load(rom, layout)
         while (running) {
-            if (config != null && !paused) {
+            if (!paused) {
                 val sample = N3dsNative.readMemory(Gen6Reader.ranges(config))?.let { Gen6Reader.read(config, it) }
                 if (sample != null) {
                     // Reloaded when the language changes: a read before the save is loaded (the title) has none yet.

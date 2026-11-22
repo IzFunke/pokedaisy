@@ -1368,7 +1368,15 @@ private fun LoadingView(status: String?, modifier: Modifier = Modifier) {
     )
     val dots = (phase * 4).toInt().coerceAtMost(3)
     var showStatus by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(10_000); showStatus = true }
+    LaunchedEffect(status) {
+        if (!status.isNullOrBlank() && status != "starting…" && status != tr("starting…")) {
+            showStatus = true
+        } else {
+            showStatus = false
+            delay(10_000)
+            showStatus = true
+        }
+    }
     Column(modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         RockingPokeBall(Modifier.size(m.u * 36))
         Spacer(Modifier.height(m.u * 6))

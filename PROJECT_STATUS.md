@@ -79,3 +79,32 @@ Commit `e75b457a` records the follow-up Ultra Moon boot on the updated API 36 em
 - Initial diagnostics showed an invisible touch `TextureView` was incorrectly required, leaving Ultra Moon at the loading presentation. The startup policy now waits only for a visible or second-display touch surface; a subsequent run booted title `00040000001b5100` and passed the closed/open/closed visual check on emulator-5558.
 - The S25 Ultra was updated with `adb install -r` only. `setup_done=true` and the pre-existing `last_rom` remained in its private preferences; no uninstall or data clear was performed.
 - Focused tests and the x86_64 Dev build passed after this fix. The S25 display was not visually inspected. No upstream PR was opened.
+
+## 2026-11-22 Black 2 / Ultra Moon comparison and follow-up
+
+The active branch is still `feature/azahar-3ds-single-screen`, at `61fdd8ea`; `origin` is the personal fork and `upstream` is the official repository. Local status before this work had only the pre-existing untracked `work/` artifacts. The S25 Ultra (`SM-S938B`, Android 17/API 37) still has the Dev package installed; this work has not uninstalled the app or cleared its data.
+
+| Capability | Pokémon Black 2 reference | Ultra Moon on S25 | Current implementation / gap | Evidence status |
+|---|---|---|---|---|
+| Core and screen | melonDS/DS path, top screen full-size in ONE SCREEN | Azahar boots and renders the 5:3 top display in ONE SCREEN | Both paths exist; 3DS renderer boot is verified | Device captures, Black 2 and Ultra Moon screenshots |
+| Companion initialization | Gen 5 telemetry publishes the common `SnapshotView` | Companion remained at `LÄDT … startet…` | `N3dsSession.sampler` publishes only inside `config != null`; USUM has no `Gen6Reader.Config` | Source path and S25 screenshot confirm the cause |
+| Runtime state and party | `Poller.readGen5Telemetry` reads identified game state and party data | No party, map, item, battle or scene sample | Need title-specific USUM memory map, then reuse common Companion presentation | Not implemented for USUM |
+| Automatic lower screen | DS core frame flags drive `dsTouchWanted`; menus open the lower-screen window and it hides afterward | USUM scene remains default `FIELD`; the scene loop does not run with null config | Existing 3DS scene policy is ready, but it requires verified memory addresses; currently only manual TOUCH SCREEN works | The exact gate is confirmed in `N3dsSession` / `Gen6Reader` |
+| Touch mapping | Existing DS touch renderer and core coordinate path | Azahar lower-screen view and touch path exist; S25 menu/tap correctness has not been checked in a live touch-dependent screen | Verify on S25 in a known touch screen after a title memory map exists | Not yet verified on S25 |
+| Battle menus | Gen 5 battle telemetry and DS menu state drive context UI | No USUM battle state; no auto bag/party opening | USUM battle readers and real battle verification are missing | Not implemented for USUM |
+| Reddit X field HUD / map / camera | Not applicable to DS | Shared 3DS HUD paths exist, but USUM's missing telemetry leaves them without live data | Verify with Pokémon Y/X and extend only after title-specific data exists | Feature parity not claimed |
+| Dismiss auto-open battle page | DS has core-dependent dismiss behavior | A 3DS auto-open bag/party page's dim backdrop did not send B | Fixed to send B only for mapped battle bag/party states; covered by focused policy test | Code change; device verification awaits mapped battle state |
+
+The root cause is not a generic Azahar rendering failure: the USUM title boots, but `Gen6Reader.configFor()` returns null by design, which prevents both snapshot publication and scene polling. The game-specific map must be recovered and validated before automatic menus or party/battle data can work. No Sun/Moon address was copied into USUM.
+
+An additional truthful-status change now publishes a dedicated Companion message for an unmapped 3DS title instead of leaving the generic startup text indefinitely. The message explains that game data is not mapped and points to the manual TOUCH SCREEN fallback. A Linux `n3ds_dump` build using the existing Azahar submodule is running in a local Docker container to inspect the user's own Ultra Moon image; it uses a scratch user directory and does not touch the original ROM or live save.
+# 2026-11-22: Ultra Moon EU headless startup verification
+
+The native Azahar capture target now builds successfully in the existing Linux Docker builder. It boots the user's EU
+Ultra Moon cart from a read-only ROM mount in an isolated scratch user directory. The title ID is `00040000001b5100`;
+the language chooser uses a static CRO root at `0x008b2000` with module `LangSelect`. This proves boot and the early
+module root only. Ultra Moon field/battle/party offsets, automatic 3DS lower-screen behavior, and full Companion parity
+remain incomplete. The production S25 app and its data were not touched during this headless capture.
+
+The full Dev UnitTest suite subsequently passed: 4,213 tests, 0 failures, 0 errors, 60 skipped across 191 suites. The
+ARM64 Dev native library and APK also built successfully. No install was performed on the S25, preserving its live setup.
