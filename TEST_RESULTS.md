@@ -112,5 +112,15 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 
 ## 2026-11-22 latest layout follow-up
 
-Command: :app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.DsStagePolicyTest --tests com.pokedaisy.app.n3ds.SmReaderTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest`nResult: BUILD SUCCESSFUL; focused suites passed. The x86_64 Dev build (:app:assembleDev with pokedaisy.n3ds, pokedaisy.n3dsX86_64, and pokedaisy.x86_64) also completed successfully. The APK installed on emulator-5558 using db install -r. After the install, Ultra Moon did not progress beyond the app loading presentation and no fresh Azahar performance log appeared; no runtime layout result is recorded for this exact build. The Galaxy S25 Ultra was not touched.
+The first attempt after the preceding update exposed a startup wait on an invisible 3DS `TextureView`: logs showed `top=true`, `touch=false`, and `touchRequired=true`. The policy now waits for the second surface only while its window is visible or routed to another display. Ultra Moon then launched as title `00040000001b5100`; after warm-up it ran around 29.8-30.0 game FPS / 59.6-59.9 system FPS.
 
+## 2026-11-22 diagnostic startup and surface transition
+
+Focused policy, Sun/Moon reader, and cart routing tests passed, as did the x86_64 Dev build. The emulator and S25 Ultra were updated only with adb install -r. On emulator-5558, the closed screenshot shows the top display alone; opening TOUCH SCREEN created the second surface and showed the language-selection help content in the framed window; closing returned to ONE SCREEN. Renderer creation briefly reduced performance, then it returned to about 30 game FPS / 59.8 system FPS. No language or personal setup option was selected in this run. On the S25, setup_done=true and the existing last_rom remained present after the in-place update.
+
+## Verified startup and touch-surface transition (2026-11-22)
+
+- Regression test/build commands: `:app:testDebugUnitTest -Ppokedaisy.n3ds=true --tests com.pokedaisy.app.DsStagePolicyTest --tests com.pokedaisy.app.n3ds.SmReaderTest --tests com.pokedaisy.app.n3ds.OrasSmCartTest` and `:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true`: PASS.
+- The startup deadlock was an invisible 3DS `TextureView` being required before Azahar could start. The start policy now waits for a touch surface only while its window is visible or routed to another display.
+- Ultra Moon (`00040000001b5100`) booted on emulator-5558, showed the top screen alone while closed, opened the lower screen in a framed window, then closed back to ONE SCREEN. After the transition, logs returned to roughly 30 game FPS / 59.8 system FPS. No language or personal profile choice was made.
+- The x86_64 emulator and S25 Ultra were updated with `adb install -r`. The S25's `setup_done=true` and existing `last_rom` preference remained present. No uninstall or data clear was used; the S25 display was not manually inspected.

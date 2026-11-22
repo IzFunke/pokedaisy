@@ -75,7 +75,7 @@ Commit `e75b457a` records the follow-up Ultra Moon boot on the updated API 36 em
 ### 2026-11-22 latest layout follow-up
 
 - Adjusted the 3DS touch window frame so ONE SCREEN shows a frame only while the window is open; PIP retains its always-visible inset frame. Added regression coverage for both states.
-- Focused policy, Sun/Moon reader, and cart routing tests passed. The x86_64 Dev APK built successfully and was installed on emulator-5558 with db install -r.
-- This latest emulator restart stayed on PokeDaisy's loading presentation, with no fresh Azahar run/performance log; the previous runtime visual evidence therefore does not verify this exact build. No claim of a new closed/open/closed visual pass is made.
-- The S25 Ultra was not changed. The official package and app data were not removed or reset.
-
+- Focused policy, Sun/Moon reader, and cart routing tests passed. The x86_64 Dev APK built successfully and was installed on emulator-5558 with adb install -r.
+- Initial diagnostics showed an invisible touch `TextureView` was incorrectly required, leaving Ultra Moon at the loading presentation. The startup policy now waits only for a visible or second-display touch surface; a subsequent run booted title `00040000001b5100` and passed the closed/open/closed visual check on emulator-5558.
+- The S25 Ultra was updated with `adb install -r` only. `setup_done=true` and the pre-existing `last_rom` remained in its private preferences; no uninstall or data clear was performed.
+- Focused tests and the x86_64 Dev build passed after this fix. The S25 display was not visually inspected. No upstream PR was opened.

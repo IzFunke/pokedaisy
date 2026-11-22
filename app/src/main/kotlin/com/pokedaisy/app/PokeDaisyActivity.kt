@@ -3515,7 +3515,7 @@ class PokeDaisyActivity : Activity() {
     /** Starts the loaded ROM's engine, resuming where it was left; false with no ROM. */
     private fun startGame(): Boolean {
         val r = rom ?: return false
-        n3ds?.let { it.start(); return true }
+        n3ds?.let { Log.i("pokedaisy/n3ds", "activity startGame: ${r.name}"); it.start(); return true }
         val st = states ?: return false
         AudioEffects.load(Prefs(this))
         AudioEffectsTrack.open(this)
@@ -4309,9 +4309,11 @@ class PokeDaisyActivity : Activity() {
             this, romFile, header.titleId, input,
             onSnapshot = { telemetry.publish(it) },
             onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
-            // Keep Azahar's touch window attached so its renderer can route the 4:3 display separately from the main one.
+            // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
             wantsTouchSurface = {
-                n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond)
+                val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
+                    (n3dsTouchScreenVisible(Prefs(this).dsLayout, n3dsFloating.value) || n3dsTouchAutoWanted)
+                n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
             },
             onScene = { onN3dsScene(it) },
             onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },

@@ -67,11 +67,12 @@ class DsStagePolicyTest {
         assertEquals(DsLayout.PICTURE_IN_PICTURE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU, DsLayout.PICTURE_IN_PICTURE))
     }
 
-    @Test fun threeDsBootKeepsItsSecondWindowReadyOffscreen() {
-        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false))
-        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = true))
-        assertTrue(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = true))
-        assertFalse(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = false))
+    @Test fun threeDsBootDoesNotWaitForHiddenTouchSurfaceButWaitsWhenVisible() {
+        assertFalse(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false, touchVisible = false))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false, touchVisible = true))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = true, touchVisible = false))
+        assertTrue(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = true, touchVisible = true))
+        assertFalse(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = false, touchVisible = false))
     }
 
     @Test fun ndsMenuTrackingNeverTurnsAThreeDsLayoutIntoDualScreen() {

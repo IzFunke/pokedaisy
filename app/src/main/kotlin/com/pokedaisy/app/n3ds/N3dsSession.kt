@@ -22,9 +22,9 @@ import java.io.File
  * floating window, the second display), the app's own input ([GbaInput]: the player's buttons, the touch controls) and
  * the circle pad, speed, states, and the companion's snapshot once a second (PARTY / BAG, [Gen6Reader]).
  *
- * Azahar keeps one game per process and is set up once ([N3dsNative.init]); this boots it when both surfaces are there
- * and stops it in [stop]. A pause holds it between two frames ([N3dsNative.setPaused]), the surfaces may come and go
- * meanwhile.
+ * Azahar keeps one game per process and is set up once ([N3dsNative.init]); this boots when the top surface is ready
+ * and waits for the touch surface only when the selected presentation needs it. It stops in [stop]. A pause holds it
+ * between two frames ([N3dsNative.setPaused]), and surfaces may come and go meanwhile.
  */
 class N3dsSession(
     context: Context,
@@ -103,9 +103,11 @@ class N3dsSession(
 
     /** Asked for by the activity once the game should play; it starts when both surfaces are there. */
     @Volatile private var wanted = false
+    private var lastReadiness: String? = null
 
     fun start() {
         wanted = true
+        Log.i(TAG, "start requested: ${readiness()}")
         // A pause before the game thread started (the activity paused while it booted) must not outlive the start:
         // the sampler and the scene reader skip their work while [paused].
         if (started) setPaused(false) else { paused = false; maybeStart() }
@@ -115,7 +117,13 @@ class N3dsSession(
     fun surfacesChanged() = maybeStart()
 
     private fun maybeStart() {
+        val state = readiness()
+        if (state != lastReadiness) {
+            Log.i(TAG, "surface readiness: $state")
+            lastReadiness = state
+        }
         if (!wanted || thread != null || !topReady || (wantsTouchSurface() && !touchReady)) return
+        Log.i(TAG, "starting Azahar for ${rom.name}")
         running = true
         thread = Thread({
             N3dsNative.init(userDir)
@@ -130,6 +138,8 @@ class N3dsSession(
         scenes.start()
         camera.start()
     }
+
+    private fun readiness() = "wanted=$wanted started=${thread != null} top=$topReady touch=$touchReady touchRequired=${wantsTouchSurface()}"
 
     fun setPaused(p: Boolean) {
         paused = p

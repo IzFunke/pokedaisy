@@ -3,7 +3,7 @@
 //
 // Screens: with two surfaces, the main one shows the top screen alone and the second one the touch screen alone (the
 // Thor's two displays, or ONE SCREEN's floating touch window); with one, Azahar uses the selected app layout, which is
-// SingleScreen for ONE SCREEN. The app keeps the second native window ready and hides its Android surface until asked.
+// SingleScreen for ONE SCREEN. Its second Android surface is attached when TOUCH SCREEN is opened.
 #include <android/log.h>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
@@ -332,8 +332,8 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSurface(JNIEnv*
     if (surfaces[which]) ANativeWindow_release(surfaces[which]);
     surfaces[which] = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
     surfaceCv.notify_all();
-    // The second surface is attached from boot but remains composition-alpha hidden in ONE SCREEN until requested.
-    // Create its renderer on the game thread at a frame boundary (not here, on UI).
+    // TOUCH SCREEN attaches this surface on demand in ONE SCREEN. Create its renderer on the game thread at a frame
+    // boundary (not here, on UI).
     if (which == 1 && surfaces[which] && !windows[which] && Core::System::GetInstance().IsPoweredOn()) {
         makeSecondaryWindow = true;
     } else if (windows[which] && windows[which]->SetSurface(surfaces[which])) {
@@ -362,8 +362,8 @@ JNIEXPORT jint JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_run(JNIEnv* env, j
     }
     const bool two = surfaces[1] != nullptr;
     // Two surfaces: the top screen alone on the main one, the touch screen alone on the second. With one surface use
-    // the requested Azahar layout; ONE SCREEN passes SingleScreen. Its second window stays attached and is hidden by
-    // the Android SurfaceView's composition alpha until the player opens TOUCH SCREEN.
+    // the requested Azahar layout; ONE SCREEN passes SingleScreen. If TOUCH SCREEN is opened later, setSurface creates
+    // Azahar's second window on the emulation thread.
     Settings::values.layout_option = two ? Settings::LayoutOption::SingleScreen
                                          : static_cast<Settings::LayoutOption>(std::clamp(oneSurfaceLayout, 0, 3));
     Settings::values.secondary_display_layout = Settings::SecondaryDisplayLayout::BottomScreenOnly;

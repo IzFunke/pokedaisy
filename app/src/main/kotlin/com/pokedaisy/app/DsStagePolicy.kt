@@ -36,9 +36,9 @@ internal fun n3dsStageLayout(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, cho
 internal fun n3dsTouchWindowFramed(layout: DsLayout, windowOpen: Boolean): Boolean =
     layout == DsLayout.PICTURE_IN_PICTURE || layout == DsLayout.ONE_SCREEN && windowOpen
 
-/** A staged 3DS game keeps Azahar's second window ready; ONE SCREEN hides it through SurfaceView composition alpha. */
-internal fun n3dsTouchSurfaceRequired(stageOn: Boolean, onSecondDisplay: Boolean): Boolean =
-    stageOn || onSecondDisplay
+/** Azahar waits for a lower surface only when that screen is actually visible; ONE SCREEN opens it on demand. */
+internal fun n3dsTouchSurfaceRequired(stageOn: Boolean, onSecondDisplay: Boolean, touchVisible: Boolean): Boolean =
+    onSecondDisplay || stageOn && touchVisible
 
 /** The TOUCH SCREEN quick action, hotkey, and hint are available for either DS or 3DS floating layouts. */
 internal fun touchScreenToggleAvailable(dsFloats: Boolean, n3dsFloats: Boolean): Boolean = dsFloats || n3dsFloats
