@@ -47,7 +47,7 @@ object N3dsCart {
     /** Decrypted title images that can be launched by the 3DS core. */
     val PLAYABLE: Set<Long> get() = KINDS.keys
 
-    /** The game a cart's title id is; X for one the app doesn't know (never reached: only [SUPPORTED] carts boot). */
+    /** The game a cart's title id is; X is a defensive fallback for an unrecognized title id. */
     fun kindOf(titleId: Long) = KINDS[titleId] ?: com.pokedaisy.app.companion.data.GameKind.POKEMON_X
 
     class Header(val titleId: Long, val decrypted: Boolean)
