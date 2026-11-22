@@ -40,4 +40,10 @@ class DsStagePolicyTest {
             assertTrue("$layout remains explicit", n3dsTouchScreenVisible(layout, manuallyOpened = false))
         }
     }
+
+    @Test fun touchScreenQuickActionHotkeyAndHintAreAvailableForEitherSystem() {
+        assertFalse(touchScreenToggleAvailable(dsFloats = false, n3dsFloats = false))
+        assertTrue(touchScreenToggleAvailable(dsFloats = true, n3dsFloats = false))
+        assertTrue(touchScreenToggleAvailable(dsFloats = false, n3dsFloats = true))
+    }
 }

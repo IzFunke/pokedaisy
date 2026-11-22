@@ -17,3 +17,6 @@ internal fun dsStageEnabled(
 /** ONE SCREEN keeps the lower 3DS render hidden until the player asks for it; other selected layouts show it. */
 internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): Boolean =
     layout != DsLayout.ONE_SCREEN || manuallyOpened
+
+/** The TOUCH SCREEN quick action, hotkey, and hint are available for either DS or 3DS floating layouts. */
+internal fun touchScreenToggleAvailable(dsFloats: Boolean, n3dsFloats: Boolean): Boolean = dsFloats || n3dsFloats

@@ -1090,7 +1090,7 @@ class PokeDaisyActivity : Activity() {
                     com.pokedaisy.app.companion.QuickAction.BIKE, com.pokedaisy.app.companion.QuickAction.ROD -> keyItemsWork()
                     com.pokedaisy.app.companion.QuickAction.TURBO -> true
                     // A DS / 3DS game whose touch screen floats in on this layout (the TOUCH SCREEN hotkey's rule).
-                    com.pokedaisy.app.companion.QuickAction.TOUCH_SCREEN -> dsFloats.value || n3dsFloats
+                    com.pokedaisy.app.companion.QuickAction.TOUCH_SCREEN -> touchScreenToggleAvailable(dsFloats.value, n3dsFloats)
                     // One screen held sideways: the companion's window or side panel (upright, it's always open).
                     com.pokedaisy.app.companion.QuickAction.COMPANION -> hudSingleScreen.value && !hudUpright.value
                     else -> false
@@ -2585,7 +2585,7 @@ class PokeDaisyActivity : Activity() {
         // L2 / R2 are TOUCH SCREEN / DS LAYOUT's in a DS game on one screen, SPEED CYCLE / FF HOLD's elsewhere.
         Hotkeys.dsActive = { a ->
             when (a) {
-                Hotkeys.Action.TOUCH_SCREEN -> dsFloats.value || n3dsFloats
+                Hotkeys.Action.TOUCH_SCREEN -> touchScreenToggleAvailable(dsFloats.value, n3dsFloats)
                 Hotkeys.Action.DS_LAYOUT -> dsStageOn
                 else -> false
             }
@@ -5996,7 +5996,7 @@ class PokeDaisyActivity : Activity() {
         TipId.QUICK_MENU -> listOfNotNull(tipKey(Hotkeys.Action.QUICK_MENU)?.let { it to tr("QUICK MENU") })
         // TOUCH SCREEN only where the touch screen floats in (ONE SCREEN, PICTURE IN PICTURE).
         TipId.DS_TRIGGERS -> listOfNotNull(
-            tipKey(Hotkeys.Action.TOUCH_SCREEN)?.takeIf { dsFloats.value }?.let { it to tr("TOUCH SCREEN") },
+            tipKey(Hotkeys.Action.TOUCH_SCREEN)?.takeIf { touchScreenToggleAvailable(dsFloats.value, n3dsFloats) }?.let { it to tr("TOUCH SCREEN") },
             tipKey(Hotkeys.Action.DS_LAYOUT)?.let { it to tr("NEXT LAYOUT") },
         )
         else -> emptyList()
@@ -6029,7 +6029,7 @@ class PokeDaisyActivity : Activity() {
                 runQuickAction(com.pokedaisy.app.companion.QuickAction.FLY)
             }
             // L2's touch screen floated in, else (both screens on show) R2's next layout.
-            TipId.DS_TRIGGERS -> if (dsFloats.value) toggleDsTouch() else nextDsLayout()
+            TipId.DS_TRIGGERS -> if (touchScreenToggleAvailable(dsFloats.value, n3dsFloats)) toggleDsTouch() else nextDsLayout()
         }
     }
 
