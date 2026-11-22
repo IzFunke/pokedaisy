@@ -809,6 +809,15 @@ class SettingsActivity : ComponentActivity() {
                     revision++
                 }
             }.takeIf { com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT },
+            SettingRow(
+                tk("3DS CORE"), prefs.n3dsCore.valueLabel(), subtitle = "AUTO uses the available 3DS core",
+            ) {
+                val cores = com.pokedaisy.app.companion.N3dsCore.entries
+                selector = Selector(tk("3DS CORE"), cores.map { it.label }, prefs.n3dsCore.label) { label ->
+                    prefs.n3dsCore = cores.first { it.label == label }
+                    revision++
+                }
+            }.takeIf { com.pokedaisy.app.FeatureFlags.n3ds() },
             // DS games: the 3D at 2x to 8x the DS's own, drawn on the GPU (nds/pk_nds_gl.h); ORIGINAL keeps the CPU's,
             // pixel for pixel. N/A without OpenGL ES 3.2, or on DSperate (melonDS's renderer).
             (dsGpu && dsResOk).let { gpu ->
@@ -841,12 +850,12 @@ class SettingsActivity : ComponentActivity() {
             ) {
                 prefs.dsTouchFill = !prefs.dsTouchFill
                 revision++
-            }.takeIf { com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT && usesSecondScreen },
+            }.takeIf { (com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT || com.pokedaisy.app.FeatureFlags.n3ds()) && usesSecondScreen },
             // A DS game on one screen held sideways: where its two screens go (DsLayout), picked from miniatures.
             SettingRow(
                 tk("DS LAYOUT"), prefs.dsLayout.label, subtitle = "Where a DS game's two screens go",
                 labelBadge = com.pokedaisy.app.companion.NewFeatures.badge(com.pokedaisy.app.companion.NewFeatures.DS_LAYOUT),
-            ) { dsLayoutPicker = true }.takeIf { com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT && !usesSecondScreen },
+            ) { dsLayoutPicker = true }.takeIf { (com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT || com.pokedaisy.app.FeatureFlags.n3ds()) && !usesSecondScreen },
             // The party, a minimap, the balls and BAG / WILD over the game on the field: its own page (layout, look, size, parts).
             SettingRow(tk("HUD"), onOff(prefs.fieldHud), labelBadge = com.pokedaisy.app.companion.NewFeatures.badge(com.pokedaisy.app.companion.NewFeatures.HUD), opensPage = true, subtitle = "Party, minimap and bag over the game") { screen = Screen.FIELD_HUD },
             // Two screens: the game's own FIGHT / BAG and move menus off its screen, the companion's buttons pick.

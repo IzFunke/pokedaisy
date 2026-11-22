@@ -228,6 +228,7 @@ class N3dsSession(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> N3dsNative.TOUCH_UP
             else -> return
         }
+        // Native touch coordinates are in the Surface's pixel space; Azahar maps them into the displayed touch panel.
         N3dsNative.touch(1, e.x.toInt(), e.y.toInt(), action)
     }
 
@@ -281,7 +282,11 @@ class N3dsSession(
     // ---- the game's scene (what its touch screen shows) -----------------------------------------------------------
 
     /** What the game's screens show now ([Gen6Reader.sceneOf]), read ten times a second; [onScene] hears a change. */
-    @Volatile var scene: Gen6Reader.Scene = Gen6Reader.Scene.FIELD
+    private val sceneConfig = Gen6Reader.configFor(titleId)
+    // A mapped game starts with both displays until the scene reader identifies the field (setup screens need touch).
+    // Where this build has no scene map, keep the user's ONE SCREEN choice from the start.
+    @Volatile var scene: Gen6Reader.Scene = if (sceneConfig?.staticModule?.let { it != 0 } == true)
+        Gen6Reader.Scene.SCREEN else Gen6Reader.Scene.FIELD
         private set
     private var sceneTold = false
 
@@ -296,7 +301,7 @@ class N3dsSession(
     private var freeReads = 0
 
     private val scenes = Thread({
-        val config = Gen6Reader.configFor(titleId)
+        val config = sceneConfig
         var lastModules: String? = null
         // A change counts once two reads in a row agree (between two screens the modules come and go). Out of one of
         // the game's screens, the field counts only after a second of it: on the way back to the X menu the field's

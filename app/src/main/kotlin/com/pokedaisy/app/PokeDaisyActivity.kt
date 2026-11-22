@@ -2527,7 +2527,7 @@ class PokeDaisyActivity : Activity() {
         n3dsDim = View(this).apply {
             setBackgroundColor(0x99000000.toInt())
             visibility = View.GONE
-            setOnClickListener { setN3dsFloating(false) }
+            setOnClickListener { dismissN3dsTouch() }
         }
         val root = GameScreenView(this, view, statusBar).apply {
             setBackgroundColor(Color.BLACK)
@@ -4036,6 +4036,7 @@ class PokeDaisyActivity : Activity() {
     private fun dsBottomHost(ctx: Context, companion: () -> View): NdsBottomHost {
         val screen = n3ds?.touchView?.also { v ->
             (v.parent as? android.view.ViewGroup)?.removeView(v)
+            v.alpha = 1f
             n3dsTouchOnSecond = true
             v.post { n3ds?.surfacesChanged() }
         }
@@ -4161,7 +4162,10 @@ class PokeDaisyActivity : Activity() {
         val chosen = Prefs(this).dsLayout.forGame(com.pokedaisy.app.companion.DsLayout.followed(romCode) || romOrigin || romIs3ds)
         // A menu screen (the party, the bag, the Pokédex...) has something to say on both screens: side by side then, not
         // the touch screen over the top one (whose 4:3 left bars beside it in EXPAND).
-        val layout = dsStageLayout(romIs3ds, dsMenuUp, chosen)
+        val n3dsScene = n3ds?.scene
+        val layout = if (romIs3ds && chosen.floats && n3dsScene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN)
+            com.pokedaisy.app.companion.DsLayout.SIDE_BY_SIDE
+        else dsStageLayout(romIs3ds, dsMenuUp, chosen)
         // EXPAND / STRETCH fill the screen only where EXPAND has the scene to widen; elsewhere the backdrop's beside it.
         val fill = aspect != GameAspect.ORIGINAL && (dsWide || aspect == GameAspect.STRETCH)
         stage.viewport.dsArrange = if (on) dsArranger(layout, fill) else null
@@ -4410,32 +4414,33 @@ class PokeDaisyActivity : Activity() {
 
     /**
      * DS LAYOUT for a 3DS game's two screens (a 5:3 top one, a 4:3 touch screen). ONE SCREEN keeps the touch
-     * SurfaceView ready for Azahar and hides its output with composition alpha until the player opens it.
+     * TextureView ready for Azahar and hides its output with app composition alpha until it is requested.
      */
     private fun n3dsArrange(layout: com.pokedaisy.app.companion.DsLayout, w: Int, h: Int, fill: Boolean): com.pokedaisy.app.companion.DsArrangement {
         val top = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
         val touch = com.pokedaisy.app.companion.DsLayouts.ASPECT
-        if (layout != com.pokedaisy.app.companion.DsLayout.ONE_SCREEN) {
-            return com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch)
+        val floating = n3dsFloating.value || n3dsTouchAutoWanted
+        if (layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN ||
+            layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE && floating) {
+            val alone = com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch).top
+            val frame = (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() * 2
+            val th = minOf(h * N3DS_FLOAT_HEIGHT, (w * N3DS_FLOAT_WIDTH - frame) / touch).toInt()
+            val tw = (th * touch).toInt()
+            val x = (w - tw) / 2
+            val y = (h - th) / 2
+            return com.pokedaisy.app.companion.DsArrangement(alone, com.pokedaisy.app.companion.DsBox(x, y, x + tw, y + th))
         }
-        val alone = com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch).top
-        // At most the area's width too (a locked side panel leaves the game a narrow area: the window went under it).
-        // (Inside its frame: N3dsWindowFrame, [syncN3dsStage].)
-        val frame = (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() * 2
-        val th = minOf(h * N3DS_FLOAT_HEIGHT, (w * N3DS_FLOAT_WIDTH - frame) / touch).toInt()
-        val tw = (th * touch).toInt()
-        val x = (w - tw) / 2
-        val y = (h - th) / 2
-        return com.pokedaisy.app.companion.DsArrangement(alone, com.pokedaisy.app.companion.DsBox(x, y, x + tw, y + th))
+        return com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch)
     }
 
-    /** [syncDsStage]'s part for a 3DS game: ONE SCREEN keeps the native touch window ready but hidden until opened. */
+    /** [syncDsStage]'s part for 3DS: share DS auto/manual touch-window behavior and layout framing. */
     private fun syncN3dsStage(on: Boolean, layout: com.pokedaisy.app.companion.DsLayout) {
-        // ONE SCREEN's floating touch screen in a frame of the game's smooth look (side by side and the other layouts: none).
-        // ONE SCREEN always keeps the top game screen alone. Scene detection may offer controls, but must not turn
-        // this layout into a side-by-side pair (which was the reported dual-screen behavior on the phone).
-        val floating = on && layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN
-        val frame = if (floating) (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() else 0
+        // ONE SCREEN's requested touch display floats in a frame. A mapped game screen that needs both displays uses
+        // SIDE BY SIDE temporarily, as DS menu pages do; field play stays top-only until a touch screen is requested.
+        val floating = on && layout.floats
+        val windowOpen = n3dsFloating.value || n3dsTouchAutoWanted
+        val framed = floating && (layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE || windowOpen)
+        val frame = if (framed) (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() else 0
         stage.viewport.dsTouchFrame = frame
         dsTouchView.setPadding(frame, frame, frame, frame)
         if (floating) {
@@ -4450,14 +4455,15 @@ class PokeDaisyActivity : Activity() {
         // A screen of the game's own: its two screens framed over the field it came from, as a DS game's menus.
         dsBackdropView.visibility = View.GONE
         // Back from the second display (SINGLE SCREEN, the display gone): the touch surface into the stage again.
+        if (n3dsTouchOnSecond && secondScreen() == null) n3dsTouchOnSecond = false
         n3ds?.touchView?.let { v ->
-            if (on && v.parent !== dsTouchView) {
+            if (on && !n3dsTouchOnSecond && v.parent !== dsTouchView) {
                 (v.parent as? android.view.ViewGroup)?.removeView(v)
                 dsTouchView.addView(v, FrameLayout.LayoutParams(-1, -1))
-                n3dsTouchOnSecond = false
             }
         }
-        val touchVisible = on && n3dsTouchScreenVisible(layout, n3dsFloating.value)
+        val touchVisible = n3dsTouchOnSecond || on &&
+            (n3dsTouchScreenVisible(layout, n3dsFloating.value) || n3dsTouchAutoWanted)
         // TextureView is composed by the app window, so its alpha hides the native surface on API levels where
         // SurfaceView content is independently composited from its parent.
         dsTouchView.visibility = if (on) View.VISIBLE else View.GONE
@@ -4469,11 +4475,11 @@ class PokeDaisyActivity : Activity() {
         dsFill.value = false
         dsCornerTaken.value = on && (layout == com.pokedaisy.app.companion.DsLayout.LARGE_SMALL || layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE)
         if (::touchControls.isInitialized) touchControls.passMisses = on
-        if (!on || layout != com.pokedaisy.app.companion.DsLayout.ONE_SCREEN) n3dsFloating.value = false
+        if (!on || !layout.floats) n3dsFloating.value = false
         // The battle's buttons follow a layout changed mid-battle (DS LAYOUT's hotkey) too.
         n3dsBattle.value = on && layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN &&
             n3ds?.scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.BATTLE
-        n3dsDim.visibility = if (on && n3dsFloating.value) View.VISIBLE else View.GONE
+        n3dsDim.visibility = if (on && windowOpen && layout.floats) View.VISIBLE else View.GONE
         dsTouchView.translationX = 0f
         dsTouchView.requestLayout()
         stage.viewport.requestLayout()
@@ -4486,6 +4492,20 @@ class PokeDaisyActivity : Activity() {
         n3dsFloating.value = open
         if (!open) n3ds?.releaseTouch()
         syncGameScreen()
+    }
+
+    /** Like DS LAYOUT's touch-wanted state: field menus and battle bag/party pages request the real lower display. */
+    private val n3dsTouchAutoWanted: Boolean
+        get() = n3ds?.scene?.let { scene ->
+            n3dsTouchWanted(scene, telemetry.snapshot.value.battleInputState)
+        } == true
+
+    /** Like the DS touch window: a hand-opened window closes; a game-opened menu receives B to leave its page. */
+    private fun dismissN3dsTouch() {
+        if (n3dsFloating.value) { setN3dsFloating(false); return }
+        if (n3ds?.scene != com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU) return
+        input.setPress(CoreKey.B)
+        window.decorView.postDelayed({ input.setPress(0) }, DS_B_PRESS_MS)
     }
 
     /** The hotkeys a 3DS game answers its own way (Azahar's speed and states); true = taken. */
@@ -4592,6 +4612,10 @@ class PokeDaisyActivity : Activity() {
     @androidx.compose.runtime.Composable
     private fun DsWindowContent() {
         val engine by hudEngine.collectAsState()
+        val screenSnapshot by telemetry.snapshot.collectAsState()
+        androidx.compose.runtime.LaunchedEffect(romIs3ds, n3ds?.scene, screenSnapshot.battleInputState) {
+            if (romIs3ds) syncGameScreen()
+        }
         val idle = remember { kotlinx.coroutines.flow.MutableStateFlow(false) }
         val wantedLive by (engine?.dsTouchWanted ?: idle).collectAsState()
         val manual = dsWindowManual.value

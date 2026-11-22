@@ -100,3 +100,12 @@ The user's European Ultra Moon image was checked read-only (decrypted NCSD, titl
 - Ultra Moon booted to the German `Begin game` / `Select language` screen; the accepted German setting persisted through this session. Azahar logged title ID `00040000001b5100` and ran at about 29.9 game FPS / 59.8 system FPS. No crash or ANR was observed. No character or profile choice was made.
 - SurfaceFlinger showed only the top native `SurfaceView`; the touch surface is now a TextureView inside the app layer. The TOUCH SCREEN hotkey opened and closed its framed window without a crash, but its content was black on the settings-saved dialog. Normal in-game touch-screen output remains to be verified. The S25 package and data were untouched.
 - A landscape rotation on the API 36 AVD showed the top 5:3 game view filling the central available area. Azahar remained live during rotation at 27.8–28.7 game FPS while settling; it returned to about 29.9 FPS after. Emulator rotation settings were restored to automatic portrait.
+
+## 2026-11-22 DS-style 3DS screen follow-up
+
+- `:app:assembleDev` with `-Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true`: PASS.
+- The Dev app was updated on emulator-5558 with `adb install -r`; Ultra Moon rendered its setup displays side by side, then continued in top-only ONE SCREEN mode. The German language choice was confirmed and the intro advanced to `Wie heißt du?`. No protagonist name or profile was selected.
+- 3DS scene-driven touch overlay and routing compile. Touch input on the virtual keyboard remains unverified. No unit tests were run for this follow-up. The Galaxy S25 Ultra app/data were untouched.
+- Follow-up refinement compiled and installed with `adb install -r`: 3DS field menus and battle bag/party states now request the lower display automatically; manual opening works for both ONE SCREEN and PIP. The app launched back to the library without an AndroidRuntime exception. Battle submenus and stylus input have not yet been exercised in-game.
+- External-display 3DS routing now retains the lower surface on the DS-style bottom-screen host and keeps it visible across scene/layout updates. Build-verified only; no external display is attached for runtime confirmation.
+- The S25 timeout restore was verified: secure timeout `5000`, screen timeout `300000`; the scheduled task and local helper files were removed.

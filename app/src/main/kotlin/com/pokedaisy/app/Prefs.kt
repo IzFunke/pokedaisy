@@ -664,6 +664,11 @@ class Prefs(
         get() = com.pokedaisy.app.companion.DsCore.of(p.getInt("ds_core", 0))
         set(v) = p.edit().putInt("ds_core", v.id).apply()
 
+    /** SCREEN > 3DS CORE. AUTO currently resolves to Azahar, the only bundled 3DS backend. */
+    var n3dsCore: com.pokedaisy.app.companion.N3dsCore
+        get() = com.pokedaisy.app.companion.N3dsCore.of(p.getInt("n3ds_core", 0))
+        set(v) = p.edit().putInt("n3ds_core", v.id).apply()
+
     var dsResolution: Int
         get() = p.getInt("ds_resolution", 1).coerceIn(1, DS_RESOLUTION_MAX)
         set(v) = p.edit().putInt("ds_resolution", v.coerceIn(1, DS_RESOLUTION_MAX)).apply()
