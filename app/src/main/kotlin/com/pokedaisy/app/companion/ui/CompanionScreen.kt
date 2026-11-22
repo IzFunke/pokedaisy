@@ -1354,14 +1354,13 @@ private fun BlockedView(
 /** The tabs a 3DS game has so far: its party, its bag and Azahar's states. */
 private val N3DS_TABS = setOf("PARTY", "ITEMS", "STATES")
 
-/** The data tabs until the first telemetry arrives: a rocking Poké Ball and
- * "LOADING...". [status] (the reader's own message) only shows up if it
- * drags on, so a normal boot stays quiet. */
+/** The data tabs until the first telemetry arrives. A real startup waits; a reader error is shown as settled. */
 @Composable
 private fun LoadingView(status: String?, modifier: Modifier = Modifier) {
     val m = rememberGbaTextMetrics()
     val small = rememberGbaTextMetrics(1f)
     // The dots count up with the ball's rock (same 1.4s cycle).
+    val waiting = companionDataStillStarting(status)
     val transition = rememberInfiniteTransition(label = "loading")
     val phase by transition.animateFloat(
         0f, 1f, infiniteRepeatable(tween(1400, easing = LinearEasing)), label = "loading-dots",
@@ -1369,7 +1368,7 @@ private fun LoadingView(status: String?, modifier: Modifier = Modifier) {
     val dots = (phase * 4).toInt().coerceAtMost(3)
     var showStatus by remember { mutableStateOf(false) }
     LaunchedEffect(status) {
-        if (!status.isNullOrBlank() && status != "starting…" && status != tr("starting…")) {
+        if (!waiting) {
             showStatus = true
         } else {
             showStatus = false
@@ -1378,12 +1377,16 @@ private fun LoadingView(status: String?, modifier: Modifier = Modifier) {
         }
     }
     Column(modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        RockingPokeBall(Modifier.size(m.u * 36))
+        if (waiting) RockingPokeBall(Modifier.size(m.u * 36))
         Spacer(Modifier.height(m.u * 6))
-        // Fixed-width dots so the word doesn't shift as they appear.
-        Box {
-            BackdropText(tr("LOADING") + "...", m, Modifier.alpha(0f))
-            BackdropText(tr("LOADING") + ".".repeat(dots), m)
+        if (waiting) {
+            // Fixed-width dots so the word doesn't shift as they appear.
+            Box {
+                BackdropText(tr("LOADING") + "...", m, Modifier.alpha(0f))
+                BackdropText(tr("LOADING") + ".".repeat(dots), m)
+            }
+        } else {
+            BackdropText(tr("NOT AVAILABLE"), m)
         }
         if (showStatus && !status.isNullOrBlank()) {
             Spacer(Modifier.height(m.u * 4))
@@ -1391,6 +1394,10 @@ private fun LoadingView(status: String?, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** A concrete reader error is a settled state, not a game that is still loading. */
+fun companionDataStillStarting(status: String?): Boolean =
+    status.isNullOrBlank() || status == "starting…" || status == tr("starting…")
 
 /**
  * PARTY / BAG / MAP / CARD before the player is in the game ([GameStart]): the game's own party slots, empty and dimmed,

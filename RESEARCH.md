@@ -38,6 +38,10 @@ Independently compared the 16 MiB Gen 7 heap snapshots from the live `AppDemo` i
 
 A public PKSM-Scripts Gen 7 USUM save-layout note lists save-file offsets for the bag (`0x0000`), Trainer1 (`0x1000`), Trainer Card (`0x1400`), and party (`0x1600`): https://github.com/FlagBrew/PKSM-Scripts/blob/master/dev/docs/gen7/usum.txt. These describe the save archive, not live process RAM, so they are only a possible future save-reader reference and cannot drive live Companion or screen behavior.
 
+## Windows PokeDaisy release reference (2026-11-22)
+
+The user-provided [Windows v1.6.2-beta.1 release](https://github.com/drake-dot-o/pokedaisy-windows/releases/tag/v1.6.2-beta.1-windows) is described as adding Windows support plus companion, HUD, and zoom functionality. Its tagged commit `37b8520a` specifically changes the Windows DS core and Libretro DS HUD/zoom layout, hit testing, and anchoring. That is useful as a DS presentation reference, but it does not provide a 3DS core, Azahar state detection, or a USUM memory map, so it cannot directly supply the missing Android 3DS integration.
+
 ## Ultra Moon EU static RomFS validation (2026-11-22)
 
 A read-only probe of the user's own decrypted Ultra Moon Europe cart confirmed that USUM reuses the Sun/Moon Gen 7 archive paths and record formats for moves, personal data, zones, encounters, and icons, while German text table indices differ. USUM indices are species 60, moves 118, items 40, abilities 101, natures 92, types 112, and places 72. Its island-map SARC is at `a/2/3/8` (Sun/Moon uses `a/2/3/4`). `N3dsLayout.USUM` now has these indices, its own output art directory, and the map archive override. The ROM-gated `readsUltraMoonEuRomFsLayoutWhenProvided` test verified decoded German labels, Tackle power, Bulbasaur types, Route 1 zones, wild entries, icons, and map extraction. This is static ROM support; it provides no live RAM mapping or Companion state.

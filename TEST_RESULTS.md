@@ -180,6 +180,10 @@ Focused tests passed for the known language and profile/intro module groups, unk
 
 The classifier/layout change builds in the feature-enabled Dev APK (`:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true`; successful, 2026-11-22). The APK was not installed during this check, so the emulator remains at the existing photo/profile prompt.
 
+## 2026-11-22 Companion unmapped-status display
+
+The feature-enabled Dev build succeeded with ARM64 and x86_64 Azahar libraries (`:app:assembleDev -Ppokedaisy.n3ds=true -Ppokedaisy.n3dsX86_64=true -Ppokedaisy.x86_64=true`). The focused `:app:testDebugUnitTest --tests '*CompanionLoadingStatusTest'` invocation compiled the changed app and test sources, but the test worker produced no report and did not exit; it was interrupted after the second bounded run. No test pass is claimed. The APK was not installed on either emulator or the S25 Ultra.
+
 ## 2026-11-22 classifier correction
 
 Removed the temporary rule that treated `AppDemo + SequencePlayer + Object` as a known screen: the same module group spans ordinary narration and photo/profile setup. Focused tests now assert the group remains unmapped, while `LangSelect` remains recognized. The feature-enabled ARM64+x86_64 Dev build passes after this correction; no game input or APK installation is part of this check.
