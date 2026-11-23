@@ -818,6 +818,7 @@ class SettingsActivity : ComponentActivity() {
             }.takeIf { com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT },
             SettingRow(
                 tk("3DS CORE"), prefs.n3dsCore.valueLabel(), subtitle = "AUTO uses the available 3DS core",
+                labelBadge = com.pokedaisy.app.companion.NewFeatures.badge(com.pokedaisy.app.companion.NewFeatures.N3DS_CORE),
             ) {
                 val cores = com.pokedaisy.app.companion.N3dsCore.entries
                 selector = Selector(tk("3DS CORE"), cores.map { it.label }, prefs.n3dsCore.label) { label ->

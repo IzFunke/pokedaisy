@@ -72,7 +72,7 @@ A few things worth knowing:
 
 ## 3DS core
 
-`3DS CORE` selects the emulator used to start 3DS games. `AUTO` chooses an available core; this build includes Azahar, so the setting shows `AUTO: AZAHAR`. `AZAHAR` selects it directly. The choice takes effect the next time a game starts.
+In a build with Nintendo 3DS support enabled, `3DS CORE` selects the emulator used to start 3DS games. `AUTO` chooses an available core; the current 3DS-enabled build includes Azahar, so the setting shows `AUTO: AZAHAR`. `AZAHAR` selects it directly. The choice takes effect the next time a game starts. Regular builds keep 3DS support disabled.
 
 ## DS resolution: sharper 3D
 

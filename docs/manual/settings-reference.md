@@ -55,7 +55,7 @@ The `SPEED OPTIONS` page:
 | `AUTO ZOOM IN` | **`ON`**, `OFF` | Only with `ASPECT` on `EXPAND`: conversations and signs ease the zoom back in. Battles and the game's menu screens always do. | [Screen](screen.md) |
 | `LOOK AROUND` | **`ON`**, `OFF` | Only with `ASPECT` on `EXPAND`: the right stick moves the view. | [Screen](screen.md) |
 | `DS CORE` | **`AUTO`**, `MELONDS`, `DSPERATE`, `BANANADS` | Which emulator runs DS games: melonDS has every feature, DSperate needs far less from your device, BananaDS is the one from BananaOS. `AUTO` picks DSperate on a weak device. | [Screen](screen.md#ds-core-ds-games-on-weaker-devices) |
-| `3DS CORE` | **`AUTO`**, `AZAHAR` | Which emulator runs 3DS games. `AUTO` uses Azahar, the 3DS core included in this build. Takes effect when the game starts. | [Screen](screen.md#3ds-core) |
+| `3DS CORE` | **`AUTO`**, `AZAHAR` | In builds with 3DS support enabled, which emulator runs 3DS games. `AUTO` uses the first available backend (currently Azahar). Takes effect when the game starts. | [Screen](screen.md#3ds-core) |
 | `DS RESOLUTION` | **`ORIGINAL`**, `2x` to `8x` | The DS games' 3D drawn sharper by your device's graphics chip. `N/A` on a device that can't, or on DSperate or BananaDS. | [Screen](screen.md#ds-resolution-sharper-3d) |
 | `DS CPU BOOST` | `OFF`, **`ON`** (**`OFF`** on slower devices) | The DS's processor twice as fast, so the games' own slow frames go. `N/A` on DSperate. | [Screen](screen.md#ds-cpu-boost-fewer-slowdowns) |
 | `DS TOUCH SCREEN` | **`ORIGINAL`**, `STRETCH` | Only on a device with two screens: a DS game's touch screen at its own shape with the `COMPANION` bar under it, or stretched over the whole bottom screen with a small tab for the switch. | [Devices](devices.md#ds-games) |

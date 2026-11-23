@@ -1,18 +1,22 @@
-# 3DS games in the app: plan (Pokemon X first)
+# 3DS games in the app: X/Y, Sun/Moon and Ultra Sun/Moon
 
-Working notes for the branch. Not the homebrew port in `3ds/`: this is 3DS carts running inside the Android app,
-on two screens and on one. Moves into docs/DEVELOPMENT.md (and the manual) once it ships.
+Implementation and evidence notes for the branch. This is not the homebrew port in `3ds/`: it covers retail 3DS carts
+inside the Android app, on two screens and on one. Player-facing settings are documented in `docs/manual/`; this file
+tracks 3DS-specific implementation details and remaining validation gates.
 
 ## Decisions so far (2026-11-14)
 
-- **Core: Azahar** (`third_party/azahar`, tag 2126.2, GPLv3+ like us). Linked into the APK with our own JNI front end,
+- **Core: Azahar** (`third_party/azahar`, tag 2126.2). Its root `license.txt` is GPL-2.0-only, and the pinned tree
+  contains mixed license notices; see `NOTICE` for the unresolved distribution-compatibility and attribution gates. It is linked into the APK with our own JNI front end,
   the way melonDS is (`app/src/main/cpp/n3ds/`), not its Android app and not its libretro core: the companion needs the
   emulated process's memory directly. Its `citra_libretro` stays the option for the Linux port later.
 - **No keys, ever.** Azahar's CMake has `ENABLE_BUILTIN_KEYBLOB` ON by default (an obfuscated key blob in
   `src/core/hw/default_keys.h`). Our build forces it OFF, and a check (like `check_melonds_patch.py`) fails the build if
   it's on. Only decrypted dumps play (NCCH NoCrypto, which Pokemon X's is); an encrypted one gets a plain message.
 - **Behind a feature flag** (`FeatureFlags.n3ds`, off; `-Ppokedaisy.n3ds=true` / local.properties / marker
-  `files/features/n3ds`), like co-op, until it's ready for players. No NEW tags / manual / website until then.
+  `files/features/n3ds`) until the runtime and release gates are met. The setting and manual document the feature-enabled
+  build; new player-facing settings follow `CLAUDE.md` by using a dated NEW badge. Do not announce a general release or
+  enable the feature by default before the runtime and license reviews are complete.
 - **Screens**: two screens = 3DS top on the top display, the touch screen on the bottom one, the companion swapping in
   over it (DS games' way). One screen = DS LAYOUT, default ONE SCREEN: the top screen fills the display and the touch
   screen floats in when the game wants it (rules per game, later) or by hand (HUD TOUCH, L2).

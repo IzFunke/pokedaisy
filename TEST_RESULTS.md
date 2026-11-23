@@ -273,3 +273,12 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - Installed to `com.pokedaisy.app.dev` using `adb install -r`; Android kept version code 23 / version name `1.6.2-beta.1` and recorded the new update time.
 - The app was not running before installation. `shared_prefs/pokedaisy.xml` SHA-256 was identical before and after (`5dd6ce9f0a29bc38b8b7fb81c9474bdf9f13565fbea8d7ac2121225caa98151a`), confirming the existing preference file was preserved byte-for-byte by installation.
 - Device remained Dozing with keyguard shown, so no app launch or gameplay input was sent. Pokémon Y / Ultra Moon runtime validation on the S25 remains pending an unlocked session.
+
+## 2026-11-23 feature settings, full suite, and ARM64 native smoke
+
+- `:app:testDevUnitTest` with `pokedaisy.n3ds=true` — PASS, 4,251 tests across 199 suites; 0 failures, 0 errors, 62 skipped. This includes `N3dsSettingRowsTest` (2/2), which verifies Azahar/Ultra Moon settings search and NEW-feature registration.
+- `:app:assembleDev` with `pokedaisy.n3ds=true` — PASS; APK SHA-256 `E31AFFA21BF5B0CC4B288E97A1B92F7E393ACE8862A4D9A4FDBEA33457269A4B`.
+- `python scripts/check_translations.py` — PASS, 2,126 entries, 1,808 used keys, 0 problems. `git diff --check` passed.
+- `:app:connectedDevAndroidTest` with `N3dsNativeInitTest` — PASS on both the SM-S938B (Android API 36, ARM64) and the API 36 x86_64 AVD. `libpk_n3ds.so` loaded and `N3dsNative.init()` succeeded without a game ROM.
+- **Device-test side effect:** the Gradle UTP log records uninstalling `com.pokedaisy.app.dev` and its `.test` package after the instrumentation run. This removed the Dev app's private data. The Dev APK was reinstalled with `adb install -r`, and the exact pre-test preference backup `work/s25-prefs-before-isolated-um.xml` was restored; its SHA-256 again matches `5dd6ce9f0a29bc38b8b7fb81c9474bdf9f13565fbea8d7ac2121225caa98151a`. The six canonical shared `.sav` files in `/storage/emulated/0/Emulation/PokeDaisy/saves` match the pre-test snapshots byte-for-byte. No game was launched and no ROM/save was opened by the instrumentation test. Private save-state files and other app-private data were not present in the available backups, so their preservation cannot be confirmed.
+- Do not run `connectedDevAndroidTest` against the personal Dev installation again. Use an isolated AVD, or a separately validated manual instrumentation invocation that does not uninstall the target package.

@@ -3953,6 +3953,13 @@ This installs the separate dev test APK and checks that `libpk_n3ds.so` loads
 and its Android/JNI setup initializes without game content. It does not boot a
 game. The x86_64 translation AVD is not compatible with the ARM64 core.
 
+Use this Gradle UTP task only on a dedicated test device or AVD. On the S25
+Ultra, UTP uninstalled both `com.pokedaisy.app.dev` and its test package after
+running the test, which erased the target app's private data. For personal
+devices, build the test APK without invoking the connected UTP task and use a
+separately verified instrumentation command that leaves the target package
+installed; otherwise run this smoke test on an isolated AVD.
+
 APK: `app/build/outputs/apk/debug/app-debug.apk`. Requires the Android SDK with
 NDK `28.2.13676358` and CMake `3.22.1` (both installable via `sdkmanager`).
 `make help` lists the other workflows (install, Paparazzi shots, ui-preview,
