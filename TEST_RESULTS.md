@@ -288,3 +288,12 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - `:app:testDevUnitTest` with `pokedaisy.n3ds=true`, filtered to `DsStagePolicyTest`, `AdaptiveTouchWindowTest`, and `N3dsSceneTransitionTest` — PASS, 23 tests; 0 failures, 0 errors, 0 skipped.
 - The tests cover the shared 4:3 fit calculation at portrait and landscape sizes, the 3DS display aspect and frame bounds, retention of explicit dual-screen layouts, and automatic touch-window visibility only after a scene transition commits.
 - The first invocation exceeded its command window and was stopped after a second Gradle invocation reported a locked result file; the clean rerun completed successfully. No device instrumentation or S25 interaction was part of this validation.
+
+## 2026-11-23 S25 verification of adaptive layout build
+
+- `:app:assembleDev` with `pokedaisy.n3ds=true` — PASS. APK SHA-256: `F892D25FF3553C8D5D41F98C29F049AC6167194D9E83F615DFE058C64277059D`.
+- Installed with `adb install -r` to the existing `com.pokedaisy.app.dev` package. The settings XML hash was identical immediately before and after installation (`462dadbc514bb6d9ef381350bcc08bc3c7615fff135895fab0618147057dae1d`).
+- Pokémon Y launched and rendered its intro/demo followed by a field scene; the app process remained alive and no JNI / `readObservation` crash appeared in the inspected logcat window. The existing save remained byte-identical (`82c8e89b2e7e11a296db847031cf2b53f225a819c66f17c2b827b55582133616`). No game controls were sent.
+- Ultra Moon launched and rendered its first-run language warning and selector without a process crash. Testing stopped before confirming a language or changing its existing save. Its shared `.sav` hash remained `90a3a00e0a4d9bcc05164bb54af380a996943f5ccda4800a7e7d41db35e1d725`.
+- All six canonical shared `.sav` hashes were the same after both launch checks. The current Ultra Moon screen remains at the language choice; no permanent selection was made. Screen-mode parity and Companion gameplay telemetry were not established by these startup checks.
+- Opening the app and both games naturally updated usage metadata in its preferences (`app_open_count`, `play_millis`, per-ROM last-play timestamps, the new-feature-seen timestamp, and the setup-complete flag). No manual game, layout, core, save-path, or language preference was changed. This expected app activity means the preference file hash after gameplay differs from the immediate pre/post-install comparison above.
