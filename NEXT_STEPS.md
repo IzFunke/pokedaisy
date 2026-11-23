@@ -49,6 +49,22 @@ and must be reconciled against current evidence before following them.
 - GitHub Action execution, real-device gameplay rendering, Azahar license/notice resolution, and final upstream diff
   review remain open.
 
+### Pokémon Y movement anti-loop
+
+Confirmed: the isolated game remains in the living-room/hall scene (`DllField`, `DllUSMirror`). Repeated D-pad cardinal
+and circle-pad cardinal inputs changed facing/camera but did not trigger an outdoor scene transition. The game-created
+`main` save did not change; only private Savestates were written. Do not repeat blind cardinal probes.
+
+- Current hypothesis: the character is at a collision boundary or the exit trigger is on a different side of the hall.
+- Alternative: the mother/neighbor intro event still requires an interaction or acknowledgment before the field exit opens.
+- Alternative: the harness binding is accepted but movement is being suppressed by the scene/event state; verify with a
+  small before/after player-position memory observation after locating a candidate position field.
+- Alternative: the house exit is a bottom-screen touch or a specific interaction trigger; inspect the current Field CRO
+  and earlier scene screenshots before another input.
+
+Next diagnostic: inspect the exit geometry/trigger in the Field CRO or establish a player-position delta from two existing
+savestates. Only then send one targeted input and confirm a module/zone transition. Save through the game after outdoors.
+
 ### Next actions
 
 1. Continue Pokémon Y from the latest useful private savestate; save again after the first outdoor/starter milestone.
