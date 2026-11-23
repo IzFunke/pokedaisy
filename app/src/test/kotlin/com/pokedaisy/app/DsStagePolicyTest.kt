@@ -37,9 +37,25 @@ class DsStagePolicyTest {
     @Test fun threeDsOneScreenShowsTouchOnlyOnManualRequest() {
         assertFalse(n3dsTouchScreenVisible(DsLayout.ONE_SCREEN, manuallyOpened = false))
         assertTrue(n3dsTouchScreenVisible(DsLayout.ONE_SCREEN, manuallyOpened = true))
+        assertFalse(n3dsTouchVisibleForLayout(DsLayout.ONE_SCREEN, manuallyOpened = false, autoWanted = false))
+        assertTrue(n3dsTouchVisibleForLayout(DsLayout.ONE_SCREEN, manuallyOpened = false, autoWanted = true))
+        assertTrue(n3dsTouchVisibleForLayout(DsLayout.ONE_SCREEN, manuallyOpened = true, autoWanted = false))
         for (layout in DsLayout.entries.filter { it != DsLayout.ONE_SCREEN }) {
             assertTrue("$layout remains explicit", n3dsTouchScreenVisible(layout, manuallyOpened = false))
         }
+    }
+
+    @Test fun threeDsDualScreenLayoutsKeepBothScreensAndNeverUseTheFloatingOneScreenFit() {
+        for (layout in listOf(DsLayout.SIDE_BY_SIDE, DsLayout.LARGE_SMALL, DsLayout.STACKED)) {
+            val pair = com.pokedaisy.app.companion.DsLayouts.arrange(layout, 1080, 720, fill = false,
+                topAspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT)
+            assertTrue("$layout includes the touch display", pair.touch != null)
+            assertEquals(layout, n3dsStageLayout(layout))
+        }
+        val oneScreen = com.pokedaisy.app.companion.DsLayouts.arrange(DsLayout.ONE_SCREEN, 1080, 720, fill = true,
+            topAspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT).top
+        assertEquals(1080, oneScreen.width)
+        assertEquals(720, oneScreen.height)
     }
 
     @Test fun startupWaitUsesTheEffectiveSceneLayoutForOneScreenGames() {

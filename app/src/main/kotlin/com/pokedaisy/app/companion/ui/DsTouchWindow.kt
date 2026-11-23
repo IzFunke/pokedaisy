@@ -29,9 +29,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
+import com.pokedaisy.app.companion.fitTouchWindow
+import com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE
+import com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE
 import com.pokedaisy.app.companion.i18n.tr
 
 /*
@@ -104,16 +105,23 @@ fun DsTouchWindow(
         // The window's width decides which buttons it sits under, and they its height: from the whole height, twice.
         var top = 0.dp
         var bottom = 0.dp
-        var fit = windowSize(maxWidth * WIDTH_SHARE - frame * 2, maxHeight * HEIGHT_SHARE - frame * 2)
+        var fit = fitTouchWindow(
+            (maxWidth * TOUCH_WINDOW_WIDTH_SHARE - frame * 2).value,
+            (maxHeight * TOUCH_WINDOW_HEIGHT_SHARE - frame * 2).value,
+        )
         repeat(2) {
-            val half = with(density) { (fit.first / 2 + frame).toPx() }
+            val half = with(density) { (fit.width.dp / 2 + frame).toPx() }
             val mid = with(density) { (maxWidth / 2).toPx() }
             val (t, b) = clearFor(mid - half, mid + half)
             top = with(density) { t.toDp() }
             bottom = with(density) { b.toDp() }
-            fit = windowSize(maxWidth * WIDTH_SHARE - frame * 2, (maxHeight - top - bottom) * HEIGHT_SHARE - frame * 2)
+            fit = fitTouchWindow(
+                (maxWidth * TOUCH_WINDOW_WIDTH_SHARE - frame * 2).value,
+                ((maxHeight - top - bottom) * TOUCH_WINDOW_HEIGHT_SHARE - frame * 2).value,
+            )
         }
-        val (w, h) = fit
+        val w = fit.width.dp
+        val h = fit.height.dp
         val band = maxHeight - top - bottom
         with(density) {
             box[0] = ((maxWidth - w) / 2 - frame).toPx()
@@ -190,18 +198,8 @@ private const val HELD_SHADE = 0.3f
 private const val HELD_SHADE_IN_MS = 90
 private const val HELD_OUT_MS = 140
 
-/** The largest 4:3 that fits [maxW] x [maxH]. */
-private fun windowSize(maxW: Dp, maxH: Dp): Pair<Dp, Dp> {
-    val w = min(maxW, maxH * 4f / 3f)
-    return w to w * 3f / 4f
-}
-
 /** How far the game dims behind the window. */
 private const val DIM = 0.55f
-
-/** The window's share of the stage: tall, with room for the dim round it. */
-private const val WIDTH_SHARE = 0.92f
-private const val HEIGHT_SHARE = 0.88f
 
 /** The frame round the screen, in GBA pixels. */
 private const val FRAME = 3

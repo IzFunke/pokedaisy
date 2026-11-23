@@ -4553,9 +4553,14 @@ class PokeDaisyActivity : Activity() {
         if (layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN ||
             layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE && floating) {
             val alone = com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch).top
-            val frame = (com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density).toInt() * 2
-            val th = minOf(h * N3DS_FLOAT_HEIGHT, (w * N3DS_FLOAT_WIDTH - frame) / touch).toInt()
-            val tw = (th * touch).toInt()
+            val frame = com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density * 2f
+            val fit = com.pokedaisy.app.companion.fitTouchWindow(
+                w * com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE - frame,
+                h * com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE - frame,
+                touch,
+            )
+            val tw = fit.width.toInt()
+            val th = fit.height.toInt()
             val x = (w - tw) / 2
             val y = (h - th) / 2
             return com.pokedaisy.app.companion.DsArrangement(alone, com.pokedaisy.app.companion.DsBox(x, y, x + tw, y + th))
@@ -6457,12 +6462,8 @@ class PokeDaisyActivity : Activity() {
         private const val DS_B_PRESS_MS = 80L
         /** How often [DsShots] takes the game's picture. */
         private const val DS_SHOT_MS = 1000L
-        /** ONE SCREEN: a 3DS game's floating touch screen, as a share of the screen's height. */
         /** 3DS ZOOM's camera distances, times the game's own ([n3dsZoomNext]). */
         private val N3DS_CAMERA_PULLS = floatArrayOf(1f, 1.35f, 1.75f)
-        private const val N3DS_FLOAT_HEIGHT = 0.82f
-        /** ... and at most this share of its width. */
-        private const val N3DS_FLOAT_WIDTH = 0.70f
         /** FF in a 3DS game: Azahar's frame limit, percent. */
         private const val N3DS_FF_PERCENT = 300
         /** The overworld's picture over the black between a menu and the field fades out over this once the game is back. */

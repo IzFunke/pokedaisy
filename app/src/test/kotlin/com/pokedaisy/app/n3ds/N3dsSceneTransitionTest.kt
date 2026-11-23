@@ -24,6 +24,21 @@ class N3dsSceneTransitionTest {
         assertTrue(gate.observe(Gen6Reader.Scene.MENU).cachePair)
     }
 
+    @Test fun autoTouchPolicyChangesOnlyAfterTheNewSceneIsCommitted() {
+        val gate = N3dsSceneTransition(Gen6Reader.Scene.UNMAPPED)
+        assertFalse(com.pokedaisy.app.n3dsTouchWanted(gate.scene, 0))
+
+        val first = gate.observe(Gen6Reader.Scene.MENU)
+        assertTrue(first.capturePair)
+        assertFalse(first.releasePair)
+        assertFalse(com.pokedaisy.app.n3dsTouchWanted(gate.scene, 0))
+
+        val committed = gate.observe(Gen6Reader.Scene.MENU)
+        assertTrue(committed.releasePair)
+        assertEquals(Gen6Reader.Scene.MENU, committed.report)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(gate.scene, 0))
+    }
+
     @Test fun screenToFieldWaitsForElevenMatchingObservationsBeforeRelease() {
         val gate = N3dsSceneTransition(Gen6Reader.Scene.SCREEN)
         assertTrue(gate.observe(Gen6Reader.Scene.FIELD).capturePair)
