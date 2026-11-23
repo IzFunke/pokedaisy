@@ -44,13 +44,11 @@ folded into the older matrix.
 
 ## Distribution and pull request gates
 
-`NOTICE` correctly identifies the optional Azahar revision and warns that it does not establish redistribution
-compatibility. The current record identifies two unresolved review items: the pinned Azahar tree has mixed GPL notices,
-including a GPL-only FAAD2 component, and the generated GLAD loader has no license file or confirmed attribution in
-that tree. The Azahar submodule is not present in this checkout, so this audit could not inspect those source notices
-or establish the terms for the exact linked objects. Do not describe an APK containing the optional Azahar core as
-redistributable or PR-ready until the exact build inputs, notices, and applicable licenses have been reviewed and the
-GLAD attribution is resolved.
+The pinned Azahar source has since been inspected at commit `219d743a1e698101fe1ab8bef43e6563126c3c27`. That inspection
+found additional concrete notice and provenance questions, including bundled cpp-httplib, GLAD's generated output,
+generated system archive data, mixed GPL headers, and runtime changes in PokeDaisy's patch. The detailed source paths,
+build references, and unresolved obligations are recorded in [the Azahar Android license audit](3DS_AZAHAR_LICENSE_AUDIT.md).
+The source review does not establish that an APK containing the optional Azahar core is redistributable or PR-ready.
 
 The Android 3DS path also needs a reproducible CI/build check with `pokedaisy.n3ds=true`; the current default CI
 intentionally skips Azahar. That check should only become required after it can fetch and validate the pinned source
