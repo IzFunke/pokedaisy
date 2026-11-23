@@ -29,8 +29,10 @@ class Gen7UsUmSave private constructor(private val original: ByteArray) {
 
     sealed class Parsed {
         class Ok(val save: Gen7UsUmSave) : Parsed()
-        class Failed(val reason: String) : Parsed()
+        class Failed(val reason: Failure) : Parsed()
     }
+
+    enum class Failure { SIZE, FOOTER, BLOCK_CHECKSUMS, PARTY_COUNT }
 
     companion object {
         const val SIZE = 0x6CC00
@@ -63,13 +65,13 @@ class Gen7UsUmSave private constructor(private val original: ByteArray) {
         )
 
         fun parse(bytes: ByteArray): Parsed {
-            if (bytes.size != SIZE) return Parsed.Failed("not an Ultra Sun/Ultra Moon save (${bytes.size} bytes)")
-            if (u32(bytes, METADATA + 0x10) != FOOTER_MAGIC) return Parsed.Failed("its USUM save footer is missing")
+            if (bytes.size != SIZE) return Parsed.Failed(Failure.SIZE)
+            if (u32(bytes, METADATA + 0x10) != FOOTER_MAGIC) return Parsed.Failed(Failure.FOOTER)
             if (BLOCKS.any { block -> u16(bytes, METADATA + 0x14 + block.id * 8 + 6) != crc16Invert(bytes, block.offset, block.length) }) {
-                return Parsed.Failed("one or more USUM save block checksums don't match")
+                return Parsed.Failed(Failure.BLOCK_CHECKSUMS)
             }
             val count = readU32(bytes, PARTY_COUNT_OFFSET)
-            if (count !in 0..PARTY_SIZE.toLong()) return Parsed.Failed("invalid USUM party count")
+            if (count !in 0..PARTY_SIZE.toLong()) return Parsed.Failed(Failure.PARTY_COUNT)
             return Parsed.Ok(Gen7UsUmSave(bytes.copyOf()))
         }
 

@@ -594,7 +594,12 @@ class SaveEditorActivity : ComponentActivity() {
         if (!saveFile.isFile) return tr("No save yet - save once in the game first.")
         val bytes = runCatching { saveFile.readBytes() }.getOrNull() ?: return tr("Can't read the save {0}", saveFile.path)
         val parsed = when (val result = com.pokedaisy.app.companion.data.save.Gen7UsUmSave.parse(bytes)) {
-            is com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Parsed.Failed -> return result.reason
+            is com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Parsed.Failed -> return when (result.reason) {
+                com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Failure.SIZE -> tr("This isn't a decrypted Ultra Sun/Ultra Moon save file.")
+                com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Failure.FOOTER -> tr("The Ultra Sun/Ultra Moon save footer is missing.")
+                com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Failure.BLOCK_CHECKSUMS -> tr("One or more Ultra Sun/Ultra Moon save checksums don't match.")
+                com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Failure.PARTY_COUNT -> tr("The Ultra Sun/Ultra Moon party count is invalid.")
+            }
             is com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Parsed.Ok -> result.save
         }
         val cart = RomArchive.playable(rom, cacheDir) ?: rom
