@@ -16,7 +16,7 @@ class TranslationsTest {
     private val token = Regex(""""(?:[^"\\\n]++|\\.)*+"|/\*.*?\*/|//[^\n]*""", RegexOption.DOT_MATCHES_ALL)
     private val placeholder = Regex("""\{\d+\}""")
 
-    @After fun reset() = L10n.apply("EN", null)
+    @After fun reset() = L10n.apply("EN", null, Locale("en"))
 
     @Test
     fun `every tr and tk literal has every language`() {
@@ -87,8 +87,16 @@ class TranslationsTest {
 
     @Test
     fun placeholders() {
-        L10n.apply("EN", null)
+        L10n.apply("EN", null, Locale("en"))
         assertEquals("AUTO (ENGLISH)", L10n.settingLabel(LANGUAGE_AUTO))
         assertEquals("3 + 4", tr("{0} + {1}", 3, 4))
+    }
+
+    @Test
+    fun `AUTO label follows the device even when English is selected`() {
+        L10n.apply("EN", null, Locale("de"))
+        assertEquals(AppLanguage.EN, L10n.language)
+        assertEquals(AppLanguage.DE, L10n.autoLanguage)
+        assertEquals("AUTO (DEUTSCH)", L10n.settingLabel(LANGUAGE_AUTO))
     }
 }
