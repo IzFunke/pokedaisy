@@ -1,5 +1,58 @@
 # Next Steps
 
+## Active work plan (2026-11-24 00:17 CET)
+
+The long-term 3DS goal remains open. This is the current execution plan; older numbered entries below are historical context
+and must be reconciled against current evidence before following them.
+
+### Active workstreams
+
+- **Pokémon Y — root:** continue from the isolated game-created save in `work/y-headless-input-matrix/userdir`; German
+  mirror/clothing sequence and second in-game save are complete. Followed the mother's neighbor prompt down from the stair
+  into the living-room threshold. Current checkpoint `work/y-runtime-companion-capture/y-follow-left-edge.state`; after a
+  short up-gap movement, continue to the front door/outdoor field, save through the game, then capture existing X/Y reader
+  ranges and verify a populated party before changing mappings. Never use the personal app save or source copy.
+- **3DS Save Editor — `save_routing_impl`:** worktree `../pokedaisy-worktrees/3ds-save-routing`, branch
+  `agent/3ds-save-routing`; verified DS/3DS routing already uses the configured/default save directory and `<ROM basename>.sav`.
+  The agent is adding Ultra Sun/Ultra Moon read-only party/box/trainer views because valid USUM edits require RSA signing
+  with a private key the project does not have. It must not claim or write game-valid edits without safe signing support.
+- **3DS core selector:** implemented and integrated as `46c570c2`, then pushed to `origin`; only the available Azahar core
+  is offered while the stored AUTO preference remains compatible. Targeted core/translation tests passed in the agent
+  worktree. No unready Panda3DS or Libretro backend is presented as production-ready.
+- **UI/layout:** completed in `../pokedaisy-worktrees/layout-policy`; focused `DsStagePolicyTest` passed 17/17, and no
+  change was justified because portrait/landscape, explicit layouts, touch auto/manual, PIP and second-display behavior
+  are already covered.
+- **Ultra Moon — `usum_runtime_analysis`:** completed read-only analysis. Candidate addresses come from the local
+  PKMN-NTR reference; none is runtime-verified. Preserve the Kukui photo/profile stop. If the live pipe is unavailable,
+  use a separate isolated process/checkpoint with only `modules`, `regions`, `hex`/`peek`, `shot`, and `savestate`.
+- **Upstream/CI — root:** advisory Android 3DS CI job is implemented in `.github/workflows/ci.yml`, syntax-parsed, and
+  committed/pushed as `268de665`; observe a GitHub PR run when one exists. Keep it out of signed release calls while
+  Azahar licensing and provenance remain unresolved.
+
+### Verified state and blockers
+
+- Pokémon Y's private in-game save is `415232` bytes, SHA-256 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`.
+  `main-after-clothes-save` matches it byte-for-byte; the source copy remains `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2`.
+  Headless savestates/screenshots remain under `work/` and must not be committed.
+- S25 diagnostics are read-only: device reports awake with YouTube foreground; Dev v23 is installed but not running. Crash
+  buffer has no PokeDaisy/Pokémon-Y crash and exit history shows package update (~1.2 GB RSS), not a crash. Do not launch
+  over the foreground app; capture logcat around a no-input Y launch when the device is available for that test.
+- No populated Y party capture exists yet. Ultra Moon still has no verified gameplay Companion map; the PKMN-NTR
+  addresses remain hypotheses. Never pass the user's Kukui photo/profile stop without renewed authorization.
+- The missing Ultra Sun/Ultra Moon localized-ROM-data key is translated in all eight locales and pushed as `ccc45319`;
+  `scripts/check_translations.py` reports 0 issues. Parser failure reason strings still need a localized result mapping.
+- GitHub Action execution, real-device gameplay rendering, Azahar license/notice resolution, and final upstream diff
+  review remain open.
+
+### Next actions
+
+1. Continue Pokémon Y from the latest useful private savestate; save again after the first outdoor/starter milestone.
+2. Capture and decode Y party, MyStatus, bag, zone, menu, and scene state from a populated isolated runtime.
+3. Finish Save Editor parser validation in its own worktree, including PKHeX-pinned BEEF footer bytes, all localized parse
+   failures, focused tests, and safe integration only after review.
+4. Apply the Ultra Moon sparse-read findings only when supported by a new read-only observation; preserve its setup stop.
+5. Update this plan at the next milestone or before context compaction.
+
 1. Build a legal 3DSX homebrew smoke path. The Azahar loader has 3DSX support, but PokeDaisy currently routes only recognized decrypted retail carts to `N3dsSession`. Keep the smoke harness dev/test-only unless general homebrew support is intentionally designed.
 2. Keep the S25's existing Ultra Moon setup/game state and save unchanged; do not make profile/photo selections. Continue runtime mapping only from isolated copies. A recovered isolated headless checkpoint currently reports `FieldRo` / `FieldMenu` / `FieldEffectCommon`; an X press did not visibly open a menu. The latest device launcher attempt left Netflix's account-confirmation screen in front; do not interact with it during emulator checks.
 3. Extend physical-device validation to audio, broader controls, pause/resume, save lifecycle, and stability without changing the original ROM.
