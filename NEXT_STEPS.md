@@ -1,3 +1,29 @@
+# Coordination update (2026-11-24 00:58 CET)
+
+The persistent goal now includes the user's multi-agent coordination rules. Its pre-existing bytes were verified unchanged; the appended section occurs once (goal SHA-256: `7DA64A5704FD8560D65B73CB9427EFBE4211CFB60FF8CF186B595E9858829527`).
+
+## Active parallel work
+
+- **Pokémon Y route — `pokemon_y_route`:** read-only analysis of existing bedroom/hall checkpoints and static trigger evidence; no game input, save writes, or device use.
+- **Ultra Moon mapping — `ultra_moon_mapping`:** read-only analysis of existing captures, CROs, and local references; preserve the Kukui photo/profile stop; no game input or save writes.
+- **DS/3DS UI parity — `ui_3ds_parity`:** independent review and, only if a concrete parity defect is proven, a narrowly scoped implementation and regression test in its own worktree; no device or ROM/save use.
+- **Lead integration — root:** reconcile agent evidence with current architecture and continue the implementation in focused steps. Current source/docs review confirms the Android route is native Azahar via `N3dsSession`/JNI; Companion rendering and `SnapshotView` are shared, while 3DS scene/memory classification remains title-specific and incomplete for Ultra Moon.
+
+## Current blockers / constraints
+
+- The S25 is not available for gameplay validation while locked; do not wake/unlock or send input. The installed Dev update preserved app data.
+- No active `n3ds_dump` process was found on this host. Existing checkpoints under `work/` are the evidence base until a fresh isolated run can be started safely and productively.
+- Pokémon Y and Ultra Moon remain equal priority. Never commit ROMs, saves, keys, or `work/`; no save edits, no uninstall/data reset, and no upstream PR without user approval.
+
+## Immediate next steps
+
+1. Review each agent's concrete evidence on completion; ask for a next independent task only when useful and non-overlapping.
+2. Continue the Y and Ultra Moon runtime/data mapping from isolated copies/checkpoints, distinguishing verified addresses from hypotheses.
+3. Integrate any validated UI parity change from its own worktree and run its focused regression checks.
+4. Keep all new options/errors localized in all eight app languages and maintain user-facing manual/docs per `CLAUDE.md`.
+5. Update this coordination block at the next milestone and before any context handoff.
+
+---
 # Next Steps
 
 ## Active work plan (2026-11-24 00:41 CET)
