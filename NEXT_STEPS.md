@@ -1,6 +1,6 @@
 # Next Steps
 
-## Active work plan (2026-11-24 00:26 CET)
+## Active work plan (2026-11-24 00:41 CET)
 
 The long-term 3DS goal remains open. This is the current execution plan; older numbered entries below are historical context
 and must be reconciled against current evidence before following them.
@@ -8,11 +8,12 @@ and must be reconciled against current evidence before following them.
 ### Active workstreams
 
 - **Pokémon Y — root:** continue from the isolated game-created save in `work/y-headless-input-matrix/userdir`; German
-  mirror/clothing sequence and second in-game save are complete. Followed the mother's neighbor prompt through the stair
-  corridor and along the living-room sofa to the fireplace. Current checkpoint `work/y-runtime-companion-capture/y-sofa-upper-edge.state`;
-  continue through the hall/front door to the outdoor field, save through the game, then capture the existing X/Y reader
-  ranges and verify a populated party before changing mappings. The isolated `main` hash remains the post-clothes hash;
-  do not use the personal app save or untouched source copy.
+  mirror/clothing sequence and second in-game save are complete. Reached the living room on the isolated clone, but the
+  latest north/south/east and circle-pad probes in the hall did not produce an outdoor transition. Last checkpoint is
+  `work/y-runtime-companion-capture/y-cpad-west.state`; the `n3ds_dump` process was stopped to release CPU. The isolated
+  `main` remains SHA-256 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`. Before another input, inspect
+  the doorway/trigger or verify player coordinates so we do not repeat the same blocked directional probes. Never use the
+  S25 save or untouched source copy.
 - **3DS Save Editor:** read-only Ultra Sun/Ultra Moon trainer/party/PC-box viewing is integrated (`ab47ea16` and
   `78af8ac5`). Writes stay disabled because valid Gen 7 edits require RSA signing with a private key the project does not
   have. Existing DS/3DS routing uses the configured/default save directory and `<ROM basename>.sav`.
@@ -34,15 +35,17 @@ and must be reconciled against current evidence before following them.
 - Pokémon Y's private in-game save is `415232` bytes, SHA-256 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`.
   `main-after-clothes-save` matches it byte-for-byte; the source copy remains `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2`.
   Headless savestates/screenshots remain under `work/` and must not be committed.
-- S25 diagnostics are read-only: device reports awake with YouTube foreground; Dev v23 is installed but not running. Crash
-  buffer has no PokeDaisy/Pokémon-Y crash and exit history shows package update (~1.2 GB RSS), not a crash. Do not launch
-  over the foreground app; capture logcat around a no-input Y launch when the device is available for that test.
+- S25 Dev APK built by `:app:assembleDev -Ppokedaisy.n3ds=true -x :app:licensesAsset` and updated with `adb install -r`.
+  Package data was retained (`firstInstallTime=2026-11-23 18:29:14`, `lastUpdateTime=2026-11-24 00:34:54`). `versionCode`
+  remains 23. Launcher process stayed alive and no AndroidRuntime crash appeared, but screenshot showed the AOD/lockscreen;
+  no game was opened and no input or save change was made. Do not wake or unlock the S25; direct gameplay validation waits
+  until it is already unlocked and available.
 - No populated Y party capture exists yet. Ultra Moon still has no verified gameplay Companion map; the PKMN-NTR
   addresses remain hypotheses. Never pass the user's Kukui photo/profile stop without renewed authorization.
 - USUM parser errors and localized ROM-data failures are mapped in all eight languages. PKHeX's BEEF footer byte order
-  (`46 45 45 42`) has a regression assertion. Focused `Gen7UsUmSaveTest` passed; `scripts/check_translations.py` reports
-  2,131 entries, 1,814 used keys, 0 problems. A combined `TranslationsTest` run exposed an `AUTO (DEUTSCH)` vs
-  `AUTO (ENGLISH)` placeholder failure; the locale agent is checking whether test order/shared language state caused it.
+  (`46 45 45 42`) has a regression assertion. Focused `Gen7UsUmSaveTest` passed in the agent worktree; root
+  `:shared:testDebugUnitTest --tests com.pokedaisy.app.companion.i18n.TranslationsTest` passed after making device locale
+  deterministic. `scripts/check_translations.py` reports 2,131 entries, 1,814 used keys, 0 problems.
 - GitHub Action execution, real-device gameplay rendering, Azahar license/notice resolution, and final upstream diff
   review remain open.
 
@@ -53,8 +56,9 @@ and must be reconciled against current evidence before following them.
 3. Keep the USUM editor read-only until safe signing exists; review whether a future signing design is feasible before
    claiming editable Gen 7 saves.
 4. Apply the Ultra Moon sparse-read findings only when supported by a new read-only observation; preserve its setup stop.
-5. Resolve or document the TranslationsTest placeholder failure, then update this plan at the next milestone or before
-   context compaction.
+5. Resume the Y isolated checkpoint only after a distinct doorway/position diagnostic. Verify physical-device save hashes
+   before and after any authorized game test; never drive while the device is locked. Update this plan at the next milestone
+   or before context compaction.
 
 1. Build a legal 3DSX homebrew smoke path. The Azahar loader has 3DSX support, but PokeDaisy currently routes only recognized decrypted retail carts to `N3dsSession`. Keep the smoke harness dev/test-only unless general homebrew support is intentionally designed.
 2. Keep the S25's existing Ultra Moon setup/game state and save unchanged; do not make profile/photo selections. Continue runtime mapping only from isolated copies. A recovered isolated headless checkpoint currently reports `FieldRo` / `FieldMenu` / `FieldEffectCommon`; an X press did not visibly open a menu. The latest device launcher attempt left Netflix's account-confirmation screen in front; do not interact with it during emulator checks.
