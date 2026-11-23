@@ -9,6 +9,9 @@ import com.pokedaisy.app.FeatureFlags
  * with the n3ds flag. Every use checks [available] first: without the flag the library isn't in the APK at all.
  */
 object N3dsNative {
+    /** CRO names and their companion memory ranges copied together at one Azahar frame boundary. */
+    data class ReadObservation(val modules: String, val memory: ByteArray)
+
     /** Whether the library is built in and loaded. */
     val available: Boolean by lazy {
         FeatureFlags.n3ds() && runCatching { System.loadLibrary("pk_n3ds") }
@@ -85,10 +88,20 @@ object N3dsNative {
         /** The game's memory: [ranges] as (address, length) pairs, copied one after another between two frames; null without
      * a game. Blocks for up to a frame: never on the UI thread. */
     @JvmStatic external fun readMemory(ranges: IntArray): ByteArray?
+    /** [root]'s loaded CRO names plus [ranges] from the same frame boundary; null without a running game. */
+    fun readObservation(root: Int, ranges: IntArray = intArrayOf()): ReadObservation? {
+        val parts = readObservationNative(root, ranges) ?: return null
+        if (parts.size != 2) return null
+        return ReadObservation(String(parts[0], Charsets.UTF_8), parts[1])
+    }
+    @JvmStatic private external fun readObservationNative(root: Int, ranges: IntArray): Array<ByteArray>?
         /** Percent of real time; 0 = flat out. */
     @JvmStatic external fun setSpeed(percent: Int)
     @JvmStatic external fun frames(): Long
     @JvmStatic external fun gameFps(): Double
+    /** Both native displays from the same next Vulkan frame: top 400x240 followed by touch 320x240. */
+    fun screenshotPair(): IntArray? = if (available) screenshotPairNative() else null
+    @JvmStatic private external fun screenshotPairNative(): IntArray?
     /** The top screen of the next frame at [width] x [height], ARGB, top row first; null when there's no frame to take
      * (no game, paused, another one pending). Blocks up to a second: never on the UI thread. */
     @JvmStatic external fun screenshot(width: Int, height: Int, bottom: Boolean = false): IntArray?

@@ -79,14 +79,18 @@ class PrefsTest {
         val prefs = Prefs(store)
         prefs.dsSavesDirOverride = "/storage/emulated/0/DS Saves"
         prefs.n3dsUserDirOverride = "/storage/emulated/0/3DS Saves"
+        prefs.n3dsSavesDirOverride = "/storage/emulated/0/3DS Game Saves"
 
         val reopened = Prefs(store)
         assertEquals("/storage/emulated/0/DS Saves", reopened.dsSavesDirOverride)
         assertEquals("/storage/emulated/0/3DS Saves", reopened.n3dsUserDirOverride)
+        assertEquals("/storage/emulated/0/3DS Game Saves", reopened.n3dsSavesDirOverride)
 
         reopened.dsSavesDirOverride = null
         reopened.n3dsUserDirOverride = null
+        reopened.n3dsSavesDirOverride = null
         assertNull(Prefs(store).dsSavesDirOverride)
         assertNull(Prefs(store).n3dsUserDirOverride)
+        assertNull(Prefs(store).n3dsSavesDirOverride)
     }
 }

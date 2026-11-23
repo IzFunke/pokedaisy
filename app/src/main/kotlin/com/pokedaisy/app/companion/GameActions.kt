@@ -62,8 +62,8 @@ class GameActions(
         when (action) {
             Hotkeys.Action.SAVE_STATE -> slots.requestSave(slots.currentIndex)
             Hotkeys.Action.LOAD_STATE -> slots.requestLoad(slots.currentIndex)
-            Hotkeys.Action.UNDO_SAVE -> slots.requestUndoSave()
-            Hotkeys.Action.UNDO_LOAD -> slots.requestUndoLoad()
+            Hotkeys.Action.UNDO_SAVE -> if (slots.undoSupported) slots.requestUndoSave() else return false
+            Hotkeys.Action.UNDO_LOAD -> if (slots.undoSupported) slots.requestUndoLoad() else return false
             Hotkeys.Action.SLOT_NEXT -> selectSlot((slots.currentIndex + 1) % 10)
             Hotkeys.Action.SLOT_PREV -> selectSlot((slots.currentIndex + 9) % 10)
             Hotkeys.Action.FF_TOGGLE -> settings.setFfToggled(!settings.ffToggled)

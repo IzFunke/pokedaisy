@@ -51,4 +51,16 @@ class GbaInputTurboTest {
         assertEquals(com.pokedaisy.app.companion.data.CoreKey.A or com.pokedaisy.app.companion.data.CoreKey.B, i.mask)
         assertEquals(0, i.turboMask)
     }
+
+    @Test fun frameMaskPulsesTurboOnTheSameTwoFrameCadenceForEveryCore() {
+        val i = input().apply {
+            turboLatch = CoreKey.A
+            onKey(aKey, true)
+        }
+        assertEquals(CoreKey.A, i.frameMask(0))
+        assertEquals(CoreKey.A, i.frameMask(1))
+        assertEquals(0, i.frameMask(2))
+        assertEquals(0, i.frameMask(3))
+        assertEquals(CoreKey.A, i.frameMask(4))
+    }
 }

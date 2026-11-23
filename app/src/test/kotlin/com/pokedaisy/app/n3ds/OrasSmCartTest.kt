@@ -48,6 +48,7 @@ class OrasSmCartTest {
         assertEquals(Gen6Reader.Scene.UNMAPPED, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "Object\nAppDemo\nSequencePlayer"))
         assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "HeroSelect"))
         assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "StrInput\nHeroSelect"))
+        assertEquals(Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, "StrInput"))
         assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_MOON_USA, ""))
         assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_SUN_USA, "LangSelect"))
     }

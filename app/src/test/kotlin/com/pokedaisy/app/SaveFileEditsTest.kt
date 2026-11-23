@@ -2,11 +2,14 @@ package com.pokedaisy.app
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import kotlin.random.Random
+import com.pokedaisy.app.n3ds.N3dsCart
 
 class SaveFileEditsTest {
 
@@ -15,6 +18,24 @@ class SaveFileEditsTest {
 
     private val before = Random(1).nextBytes(131088)
     private val after = before.copyOf().also { it[100] = (it[100] + 1).toByte() }
+
+    private fun n3dsCart(titleId: Long, name: String): File {
+        val bytes = ByteArray(0x4200)
+        "NCSD".toByteArray().copyInto(bytes, 0x100)
+        repeat(8) { bytes[0x108 + it] = (titleId ushr (8 * it)).toByte() }
+        bytes[0x120] = 0x20
+        "NCCH".toByteArray().copyInto(bytes, 0x4100)
+        bytes[0x418F] = 0x04
+        return tmp.newFile(name).apply { writeBytes(bytes) }
+    }
+
+    @Test
+    fun onlyPokemonXYUsesTheGen6SaveEditor() {
+        assertTrue(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_X_USA, "pokemon-x.3ds")))
+        assertTrue(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_Y_USA, "pokemon-y.3ds")))
+        assertFalse(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_ULTRA_MOON_USA, "ultra-moon.3ds")))
+        assertFalse(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_ULTRA_SUN_USA, "ultra-sun.3ds")))
+    }
 
     @Test
     fun writesOverTheSaveAfterBackingItUp() {

@@ -541,12 +541,22 @@ class PokeDaisyActivity : Activity() {
     private var forceFixtureDump = false
 
     /** Backs the bottom-screen "States" tab. */
+    private val n3dsSlotIndex = androidx.compose.runtime.mutableIntStateOf(0)
     private val stateSlots = object : com.pokedaisy.app.companion.StateSlots {
-        override fun list() = if (::engine.isInitialized) engine.stateSlotList() else emptyList()
-        override val currentIndex get() = if (::engine.isInitialized) engine.currentSlot else 0
-        override fun requestSave(index: Int) { if (n3ds != null) return n3dsSaveSlot(index); if (::engine.isInitialized && !coopRefuses()) engine.requestSaveState(index) }
-        override fun requestLoad(index: Int) { if (n3ds != null) return n3dsLoadSlot(index); if (::engine.isInitialized && !coopRefuses()) engine.requestLoadState(index) }
-        override fun requestDelete(index: Int) { if (n3ds != null) {
+        override fun list() = if (romIs3ds) states?.allSlots()?.map { slot ->
+            com.pokedaisy.app.companion.StateSlots.Slot(
+                index = slot.slot,
+                present = slot.present,
+                savedAtMillis = slot.savedAt,
+                thumbPath = slot.thumb?.path,
+                thumbModifiedMillis = slot.thumb?.lastModified() ?: 0L,
+            )
+        }.orEmpty() else if (::engine.isInitialized) engine.stateSlotList() else emptyList()
+        override val currentIndex get() = if (romIs3ds) n3dsSlotIndex.intValue else if (::engine.isInitialized) engine.currentSlot else 0
+        override val undoSupported get() = !romIs3ds
+        override fun requestSave(index: Int) { if (romIs3ds) return n3dsSaveSlot(index); if (::engine.isInitialized && !coopRefuses()) engine.requestSaveState(index) }
+        override fun requestLoad(index: Int) { if (romIs3ds) return n3dsLoadSlot(index); if (::engine.isInitialized && !coopRefuses()) engine.requestLoadState(index) }
+        override fun requestDelete(index: Int) { if (romIs3ds) {
             val s = states ?: return
             if (index !in SaveStates.SLOT_MIN..SaveStates.SLOT_MAX) return
             val state = s.stateFile(index)
@@ -1075,7 +1085,7 @@ class PokeDaisyActivity : Activity() {
     private val quickActions: com.pokedaisy.app.companion.ui.GameQuickActions by lazy {
         com.pokedaisy.app.companion.ui.GameQuickActions(
             quickMenu, Prefs(this), companionSettings, { telemetry.snapshot.value }, { itemUse }, { flyAction },
-            ::handleHotkey, { showHud(it) }, active = { ::engine.isInitialized && !isDestroyed },
+            ::handleHotkey, { showHud(it) }, active = { (romIs3ds || ::engine.isInitialized) && !isDestroyed },
             // HEAL: the party's bars filling up (HealedAnimation), not a notice.
             healed = { before -> healShow.value = com.pokedaisy.app.companion.ui.HealShow(before) },
             extra = object : com.pokedaisy.app.companion.ui.QuickActions {
@@ -1117,6 +1127,19 @@ class PokeDaisyActivity : Activity() {
     private fun runQuickAction(action: com.pokedaisy.app.companion.QuickAction) = quickActions.run(action)
 
     private fun runPlatformQuickAction(action: com.pokedaisy.app.companion.QuickAction) {
+        if (romIs3ds) {
+            when (action) {
+                com.pokedaisy.app.companion.QuickAction.TOUCH_SCREEN -> toggleDsTouch()
+                com.pokedaisy.app.companion.QuickAction.COMPANION -> toggleGameCompanion()
+                com.pokedaisy.app.companion.QuickAction.TURBO -> {
+                    input.turboLatch = if (input.turboLatch != 0) 0 else com.pokedaisy.app.companion.data.CoreKey.A
+                    showHud(com.pokedaisy.app.companion.i18n.tr("TURBO A") + ": " +
+                        com.pokedaisy.app.companion.i18n.tr(if (input.turboLatch != 0) "ON" else "OFF"))
+                }
+                else -> Unit
+            }
+            return
+        }
         if (!::engine.isInitialized) return
         val snap = telemetry.snapshot.value
         when (action) {
@@ -1783,11 +1806,13 @@ class PokeDaisyActivity : Activity() {
         com.pokedaisy.app.companion.data.activeGame !in com.pokedaisy.app.companion.data.DayNight.OWN_DAY_NIGHT
     /** The game running is a DS cart (melonDS): two screens, touch, X / Y ([loadRom]). */
     @Volatile private var romIsNds = false
-    /** The game running is a 3DS cart (Azahar, [n3ds]): no EmulatorEngine game (the engine stays idle), DS LAYOUT for
-     * its two screens ([load3ds], docs/3DS_GAMES_PLAN.md). */
+    /** The game running is a 3DS cart (Azahar, [n3ds]): it owns its native session, while shared UI/actions stay in this
+     * activity and the Companion. Its screen layout follows DS LAYOUT ([load3ds], docs/3DS_GAMES_PLAN.md). */
     @Volatile private var romIs3ds = false
     /** The 3DS game: Azahar's thread, its two surfaces, input, states, the companion's snapshot. */
     private var n3ds: com.pokedaisy.app.n3ds.N3dsSession? = null
+    /** Core-neutral game actions belong to the loaded 3DS game, not an idle mGBA/melonDS engine. */
+    private var n3dsGameActions: com.pokedaisy.app.companion.GameActions? = null
     /** ONE SCREEN's 3DS touch screen is up, over a dim of the game (L2, the TOUCH button). */
     private val n3dsFloating = androidx.compose.runtime.mutableStateOf(false)
     private lateinit var n3dsDim: View
@@ -2056,6 +2081,7 @@ class PokeDaisyActivity : Activity() {
         override fun setFfToggled(on: Boolean) {
             if (romIs3ds) {
                 n3dsFfOn = on
+                stored.setFfToggled(on)
                 n3ds?.setSpeed(if (on) N3DS_FF_PERCENT else 100)
                 if (::touchControls.isInitialized) touchControls.ffOn = on
             } else if (::engine.isInitialized) engine.setFastForwardToggled(on)
@@ -2064,7 +2090,7 @@ class PokeDaisyActivity : Activity() {
             stored.setFfMusicMode(mode)
             if (::engine.isInitialized) engine.ffMusicMode = mode
         }
-        override val rewindSupported get() = !romIsNds
+        override val rewindSupported get() = !romIsNds && !romIs3ds
         override fun setRewind(on: Boolean) {
             stored.setRewind(on)
             if (::engine.isInitialized) {
@@ -3515,7 +3541,12 @@ class PokeDaisyActivity : Activity() {
     /** Starts the loaded ROM's engine, resuming where it was left; false with no ROM. */
     private fun startGame(): Boolean {
         val r = rom ?: return false
-        n3ds?.let { Log.i("pokedaisy/n3ds", "activity startGame: ${r.name}"); it.start(); return true }
+        n3ds?.let {
+            Log.i("pokedaisy/n3ds", "activity startGame: ${r.name}")
+            it.setSpeed(if (n3dsFfOn) N3DS_FF_PERCENT else 100)
+            it.start()
+            return true
+        }
         val st = states ?: return false
         AudioEffects.load(Prefs(this))
         AudioEffectsTrack.open(this)
@@ -3663,7 +3694,7 @@ class PokeDaisyActivity : Activity() {
         val now = android.os.SystemClock.uptimeMillis()
         val dt = (now - playTick).coerceIn(0L, 60_000L)
         playTick = now
-        if (::engine.isInitialized && engine.running && !engine.sleeping) {
+        if ((::engine.isInitialized && engine.running && !engine.sleeping) || (romIs3ds && n3ds?.isRunning == true)) {
             val prefs = Prefs(this)
             prefs.playMillis += dt
         }
@@ -3671,7 +3702,8 @@ class PokeDaisyActivity : Activity() {
 
     /** Everything onPause does: the game stops (or holds, asleep), its listeners and the second screen go. */
     private fun pauseGame() {
-        if (::engine.isInitialized) gameActions.cancelTouch()
+        gameActionsIfAvailable()?.cancelTouch()
+        gameActionsIfAvailable()?.cancelHardware()
         stopPlayClock()
         AudioEffectsTrack.close(this)
         keyCapture.cancel()
@@ -4043,7 +4075,7 @@ class PokeDaisyActivity : Activity() {
         return NdsBottomHost(
             ctx, companion, Prefs(this).dsBottomCompanion, onSwitch = { on -> Prefs(this).dsBottomCompanion = on },
             fill = Prefs(this).dsTouchFill, screen = screen, releaseTouch = { n3ds?.releaseTouch() ?: MgbaCore.pkNdsTouch(false, 0, 0) },
-        ).also { dsBottom = it }
+        ).also { dsBottom = it; attachN3dsTouchTransitionOverlay() }
     }
 
     /** The companion as this activity's content (the stage then goes to the second screen); for a DS game its touch
@@ -4160,11 +4192,11 @@ class PokeDaisyActivity : Activity() {
         if (!::stage.isInitialized || !::dsBackdropView.isInitialized) return
         val on = dsStageOn
         val chosen = Prefs(this).dsLayout.forGame(com.pokedaisy.app.companion.DsLayout.followed(romCode) || romOrigin || romIs3ds)
-        // A menu screen (the party, the bag, the Pokédex...) has something to say on both screens: side by side then, not
-        // the touch screen over the top one (whose 4:3 left bars beside it in EXPAND).
+        // DS menu pages may temporarily request both screens. 3DS always honors the selected layout and opens its touch
+        // output as the shared floating window when the mapped scene requests it.
         val n3dsScene = n3ds?.scene
         val layout = if (romIs3ds && n3dsScene != null)
-            n3dsStageLayout(n3dsScene, chosen)
+            n3dsStageLayout(chosen)
         else dsStageLayout(romIs3ds, dsMenuUp, chosen)
         // EXPAND / STRETCH fill the screen only where EXPAND has the scene to widen; elsewhere the backdrop's beside it.
         val fill = aspect != GameAspect.ORIGINAL && (dsWide || aspect == GameAspect.STRETCH)
@@ -4276,9 +4308,9 @@ class PokeDaisyActivity : Activity() {
 
     /**
      * A 3DS cart in place of [loadRom]'s GBA / DS set-up: none of their ROM scans (the cart is gigabytes, never read
-     * whole), keyed by its title id. The engine is made but never started (the activity's guards and settings rows keep
-     * working, idle); Azahar draws into [com.pokedaisy.app.n3ds.N3dsSession]'s two surfaces: the top screen laid exactly
-     * over the game's box ([GameViewportView.gameCover]), the touch screen in DS LAYOUT's touch box ([dsTouchView]).
+     * whole), keyed by its title id. Azahar owns the native session; the activity supplies shared input, slot actions,
+     * Companion telemetry, and the same stage policy used by DS. Its two surfaces are the game box and DS LAYOUT's
+     * touch box ([dsTouchView]).
      */
     private fun load3ds(romFile: File) {
         val header = com.pokedaisy.app.n3ds.N3dsCart.header(romFile)
@@ -4292,7 +4324,17 @@ class PokeDaisyActivity : Activity() {
             showHud(com.pokedaisy.app.companion.i18n.tr("This 3DS game can't start here."))
             return
         }
-        when (val ready = com.pokedaisy.app.n3ds.N3dsSaves.prepare(this, header.titleId)) {
+        val gamePrefs = Prefs(this)
+        val saveReady = try {
+            com.pokedaisy.app.n3ds.N3dsSaves.prepare(this, header.titleId, romFile, gamePrefs)
+        } catch (error: Exception) {
+            Log.e("pokedaisy/n3ds", "couldn't prepare the save for ${romFile.name}", error)
+            showHud(com.pokedaisy.app.companion.i18n.tr(
+                "The 3DS save couldn't be prepared. Check the save folder and try again.",
+            ))
+            return
+        }
+        when (val ready = saveReady) {
             is com.pokedaisy.app.n3ds.N3dsSaves.Ready.Refused -> { showHud(ready.reason); return }
             com.pokedaisy.app.n3ds.N3dsSaves.Ready.Ok -> Unit
         }
@@ -4302,6 +4344,7 @@ class PokeDaisyActivity : Activity() {
         romIsGameBoy = false
         romCode = ""
         romBlocked = null
+        n3dsFfOn = Prefs(this).ffToggled
         input.ds = true
         if (::portraitPanel.isInitialized) portraitPanel.ds = false
         val key = "%016x".format(header.titleId)
@@ -4309,29 +4352,49 @@ class PokeDaisyActivity : Activity() {
         // AUTO language: the title id names none (its 4th character is a digit); the session sets the save's.
         com.pokedaisy.app.companion.i18n.L10n.apply(Prefs(this).appLanguage, key)
         states = SaveStates(getExternalFilesDir(null) ?: filesDir, key)
-        engine = EmulatorEngine(input, states!!, FfMusicCache(getExternalFilesDir(null) ?: filesDir, key), com.pokedaisy.app.companion.GameBattleInput(telemetry, null, 0, input = input), Prefs(this), telemetry)
+        n3dsSlotIndex.intValue = 0
+        n3dsGameActions = com.pokedaisy.app.companion.GameActions(
+            companionSettings,
+            stateSlots,
+            selectSlot = ::selectN3dsSlot,
+            hold = ::holdGameAction,
+            companion = ::toggleGameCompanion,
+        )
         val session = when (n3dsBackend) {
             com.pokedaisy.app.companion.N3dsBackend.AZAHAR -> com.pokedaisy.app.n3ds.N3dsSession(
-                this, romFile, header.titleId, input,
+                this, romFile, header.titleId,
+                com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(this, gamePrefs, romFile, header.titleId), input,
                 onSnapshot = { telemetry.publish(it) },
-                onEnded = { status -> if (status != 0 && n3ds != null) showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped.")) },
+                onEnded = { status ->
+                    if (n3ds != null) when (status) {
+                        com.pokedaisy.app.n3ds.N3dsSession.SAVE_SYNC_FAILED -> showHud(com.pokedaisy.app.companion.i18n.tr(
+                            "The 3DS save couldn't be synced. The Azahar copy is still in its user-data folder.",
+                        ))
+                        0 -> Unit
+                        else -> showHud(com.pokedaisy.app.companion.i18n.tr("The 3DS game stopped."))
+                    }
+                },
                 // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
                 wantsTouchSurface = {
                     val chosen = Prefs(this).dsLayout.forGame(followed = true)
-                    val effective = n3ds?.scene?.let { n3dsStageLayout(it, chosen) } ?: chosen
+                    val effective = n3dsStageLayout(chosen)
                     val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
                         n3dsTouchVisibleForLayout(effective, n3dsFloating.value, n3dsTouchAutoWanted)
                     n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
                 },
                 onScene = { onN3dsScene(it) },
+                onTransitionFrame = { setN3dsTransitionFrame(it) },
                 onFieldShot = { n3dsFieldShot.value = it.asImageBitmap() },
                 onFieldHeld = { n3dsFieldHeld.value = it },
             )
         }
         n3ds = session
-        // The idle engine's GL view stays laid out (the stage measures it) but draws nothing: its surface goes.
+        // Keep the host game view as the stage's layout anchor; Azahar draws into its own top-screen surface.
         view.visibility = View.INVISIBLE
         stage.viewport.addView(session.topView, stage.viewport.indexOfChild(view) + 1, FrameLayout.LayoutParams(-1, -1))
+        n3dsTopTransitionOverlay = transitionImageView().also {
+            stage.viewport.addView(it, FrameLayout.LayoutParams(-1, -1))
+        }
         // The battle strip's picture: the top screen's box in the HUD's coordinates (the stage's area under the bar).
         session.topView.addOnLayoutChangeListener { v, l, t, r, b, _, _, _, _ ->
             val dx = fieldHudBounds.left - (stage.frames?.game?.left ?: 0f)
@@ -4343,6 +4406,9 @@ class PokeDaisyActivity : Activity() {
         // Keep the touch view gone until syncGameScreen applies ONE SCREEN's native two-window routing and transparency.
         dsTouchView.visibility = View.GONE
         dsTouchView.addView(session.touchView, FrameLayout.LayoutParams(-1, -1))
+        n3dsTouchTransitionOverlay = transitionImageView().also {
+            dsTouchView.addView(it, FrameLayout.LayoutParams(-1, -1))
+        }
         stage.viewport.aspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
         if (::touchControls.isInitialized) {
             touchControls.shoulders = true
@@ -4358,6 +4424,8 @@ class PokeDaisyActivity : Activity() {
     /** The 3DS game stopped and its views gone (another game, the activity leaving). */
     private fun endN3ds() {
         val session = n3ds ?: return
+        n3dsGameActions?.close()
+        n3dsGameActions = null
         n3ds = null
         n3dsTouchPolicyScene = null
         n3dsTouchAutoDismissed = false
@@ -4372,6 +4440,10 @@ class PokeDaisyActivity : Activity() {
         session.stop()
         (session.topView.parent as? android.view.ViewGroup)?.removeView(session.topView)
         (session.touchView.parent as? android.view.ViewGroup)?.removeView(session.touchView)
+        n3dsTopTransitionOverlay?.let { (it.parent as? android.view.ViewGroup)?.removeView(it) }
+        n3dsTouchTransitionOverlay?.let { (it.parent as? android.view.ViewGroup)?.removeView(it) }
+        n3dsTopTransitionOverlay = null
+        n3dsTouchTransitionOverlay = null
         if (::stage.isInitialized) stage.viewport.gameCover = null
         if (::dsTouchView.isInitialized) dsTouchView.getChildAt(0)?.visibility = View.VISIBLE
         view.visibility = View.VISIBLE
@@ -4387,6 +4459,47 @@ class PokeDaisyActivity : Activity() {
 
     /** The 3DS game's field a moment ago: behind the native screen and app overlays. */
     private val n3dsFieldShot = androidx.compose.runtime.mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
+
+    /** A Vulkan-captured pair held above the live Azahar surfaces until the scene debounce settles. */
+    private var n3dsTopTransitionOverlay: android.widget.ImageView? = null
+    private var n3dsTouchTransitionOverlay: android.widget.ImageView? = null
+
+    private fun transitionImageView() = android.widget.ImageView(this).apply {
+        scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+        isClickable = false
+        isFocusable = false
+        visibility = View.GONE
+    }
+
+    /** Keep the frozen touch screen alongside the live TextureView, including when it moves to a second display. */
+    private fun attachN3dsTouchTransitionOverlay() {
+        val screen = n3ds?.touchView ?: return
+        val overlay = n3dsTouchTransitionOverlay ?: return
+        val parent = screen.parent as? FrameLayout ?: return
+        if (overlay.parent === parent) return
+        (overlay.parent as? android.view.ViewGroup)?.removeView(overlay)
+        val params = (screen.layoutParams as? FrameLayout.LayoutParams)?.let { FrameLayout.LayoutParams(it) }
+            ?: FrameLayout.LayoutParams(-1, -1)
+        parent.addView(overlay, parent.indexOfChild(screen) + 1, params)
+    }
+
+    /** The reader calls this on the UI thread; null drops the two bitmaps and releases the live surfaces. */
+    private fun setN3dsTransitionFrame(frame: com.pokedaisy.app.n3ds.N3dsSession.TransitionFrame?) {
+        val top = n3dsTopTransitionOverlay ?: return
+        val touch = n3dsTouchTransitionOverlay ?: return
+        if (frame == null) {
+            top.setImageDrawable(null)
+            touch.setImageDrawable(null)
+            top.visibility = View.GONE
+            touch.visibility = View.GONE
+            return
+        }
+        attachN3dsTouchTransitionOverlay()
+        top.setImageBitmap(frame.top)
+        touch.setImageBitmap(frame.touch)
+        top.visibility = View.VISIBLE
+        touch.visibility = View.VISIBLE
+    }
 
     /** The verified game scene controls app overlays and automatic 3DS touch-screen presentation. */
     private fun onN3dsScene(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene) {
@@ -4479,6 +4592,7 @@ class PokeDaisyActivity : Activity() {
                 dsTouchView.addView(v, FrameLayout.LayoutParams(-1, -1))
             }
         }
+        attachN3dsTouchTransitionOverlay()
         val touchVisible = n3dsTouchOnSecond || on &&
             (n3dsTouchScreenVisible(layout, n3dsFloating.value) || n3dsTouchAutoWanted)
         // Alpha alone still leaked the lower output in an API 36 Ultra Moon capture; hide the TextureView itself while
@@ -4551,10 +4665,17 @@ class PokeDaisyActivity : Activity() {
 
     /** The hotkeys a 3DS game answers its own way (Azahar's speed and states); true = taken. */
     /** A 3DS game's state into / out of [slot] (Azahar's own state, between two frames): the hotkeys and STATES. */
+    private fun selectN3dsSlot(slot: Int) {
+        if (slot !in SaveStates.SLOT_MIN..SaveStates.SLOT_MAX) return
+        n3dsSlotIndex.intValue = slot
+        val text = if (states?.exists(slot) == true) tr("Slot {0} (used)", slot) else tr("Slot {0} (empty)", slot)
+        showHud(text)
+    }
+
     private fun n3dsSaveSlot(slot: Int) {
         val session = n3ds ?: return
         val st = states ?: return
-        engine.cycleSlot(slot - engine.currentSlot)
+        selectN3dsSlot(slot)
         session.saveState(st.stateFile(slot)) { ok ->
             if (ok) session.writeThumb(st.thumbFile(slot))
             showHud(if (ok) tr("Saved slot {0}", slot) else tr("Slot {0}: save failed", slot))
@@ -4564,7 +4685,7 @@ class PokeDaisyActivity : Activity() {
     private fun n3dsLoadSlot(slot: Int) {
         val session = n3ds ?: return
         val st = states ?: return
-        engine.cycleSlot(slot - engine.currentSlot)
+        selectN3dsSlot(slot)
         session.loadState(st.stateFile(slot)) { ok ->
             showHud(if (ok) tr("Loaded slot {0}", slot) else tr("Slot {0}: nothing to load", slot))
         }
@@ -4574,17 +4695,12 @@ class PokeDaisyActivity : Activity() {
         val session = n3ds ?: return false
         if (states == null) return false
         when (e.action) {
-            Hotkeys.Action.SAVE_STATE -> if (e.pressed) n3dsSaveSlot(engine.currentSlot)
-            Hotkeys.Action.LOAD_STATE -> if (e.pressed) n3dsLoadSlot(engine.currentSlot)
+            Hotkeys.Action.SAVE_STATE -> if (e.pressed) n3dsSaveSlot(n3dsSlotIndex.intValue)
+            Hotkeys.Action.LOAD_STATE -> if (e.pressed) n3dsLoadSlot(n3dsSlotIndex.intValue)
             // Let go: back to the toggle's speed.
             Hotkeys.Action.FF_HOLD -> session.setSpeed(if (e.pressed || n3dsFfOn) N3DS_FF_PERCENT else 100)
-            Hotkeys.Action.FF_TOGGLE -> if (e.pressed) {
-                n3dsFfOn = !n3dsFfOn
-                session.setSpeed(if (n3dsFfOn) N3DS_FF_PERCENT else 100)
-                if (::touchControls.isInitialized) touchControls.ffOn = n3dsFfOn
-            }
             Hotkeys.Action.ZOOM -> if (e.pressed) n3dsZoomNext()
-            Hotkeys.Action.REWIND_HOLD, Hotkeys.Action.SOFT_RESET, Hotkeys.Action.UNDO_SAVE, Hotkeys.Action.UNDO_LOAD,
+            Hotkeys.Action.REWIND_HOLD, Hotkeys.Action.SOFT_RESET,
             Hotkeys.Action.SPEED_CYCLE, Hotkeys.Action.SLOWMO_HOLD -> Unit
             else -> return false
         }
@@ -5288,7 +5404,8 @@ class PokeDaisyActivity : Activity() {
     /** Touch extras and hotkeys share their action policy. Android retains the extra menu and native key delivery. */
     private fun onTouchAction(button: com.pokedaisy.app.companion.TouchButton, down: Boolean) {
         if (down && touchEditor.isOpen) return
-        if (!::engine.isInitialized || gameActions.touch(button, down)) return
+        if (gameActionsIfAvailable()?.touch(button, down) == true) return
+        if (!romIs3ds && !::engine.isInitialized) return
         when (button) {
             com.pokedaisy.app.companion.TouchButton.QUICK_MENU -> if (down) handleHotkey(Hotkeys.Event(Hotkeys.Action.QUICK_MENU, true))
             com.pokedaisy.app.companion.TouchButton.ZOOM -> if (down) handleHotkey(Hotkeys.Event(Hotkeys.Action.ZOOM, true))
@@ -5339,7 +5456,7 @@ class PokeDaisyActivity : Activity() {
     private fun openTouchEditor() {
         if (touchEditor.isOpen) return
         val measured = measuredTouchStage() ?: return
-        if (::engine.isInitialized) gameActions.cancelTouch()
+        gameActionsIfAvailable()?.cancelTouch()
         if (::sidePanel.isInitialized) sidePanel.closeWindow()
         input.setTouchBits(0)
         touchEditor.open(measured)
@@ -5782,7 +5899,7 @@ class PokeDaisyActivity : Activity() {
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
-        if (::engine.isInitialized) {
+        if (romIs3ds || ::engine.isInitialized) {
             val rt = maxOf(
                 event.getAxisValue(MotionEvent.AXIS_RTRIGGER),
                 event.getAxisValue(MotionEvent.AXIS_GAS),
@@ -5841,19 +5958,19 @@ class PokeDaisyActivity : Activity() {
 
     /** Replacing the parser cannot retain an action owned by its old chords. Touch extras keep their own holds. */
     private fun reloadHotkeys() {
-        if (::engine.isInitialized) gameActions.cancelHardware()
+        gameActionsIfAvailable()?.cancelHardware()
         hotkeys = Hotkeys.load(controlsDir)
     }
 
     /** A companion rebind started / ended: its popup over the game, and nothing left held - the game's keys, a held
      * FF / slow-mo / rewind, a half-pressed chord, the right stick's look-around - since their releases go to it. */
     private fun onKeyCapture(on: Boolean) {
-        if (::engine.isInitialized) gameActions.cancelTouch()
+        gameActionsIfAvailable()?.cancelTouch()
         keyCaptureShown = on
         input.releaseAll()
         rtDown = false; ltDown = false
         if (::view.isInitialized) { view.camera.stickX = 0f; view.camera.stickY = 0f }
-        if (::engine.isInitialized) gameActions.clear()
+        gameActionsIfAvailable()?.clear()
         reloadHotkeys()
     }
 
@@ -5864,10 +5981,19 @@ class PokeDaisyActivity : Activity() {
         reloadHotkeys()
     }
 
-    private val gameActions get() = engine.playback.actions ?:
-        engine.playback.bindActions(companionSettings, stateSlots,
+    private fun gameActionsIfAvailable(): com.pokedaisy.app.companion.GameActions? = when {
+        romIs3ds -> n3dsGameActions
+        !::engine.isInitialized -> null
+        else -> engine.playback.actions ?: engine.playback.bindActions(
+            companionSettings,
+            stateSlots,
             selectSlot = { index -> engine.cycleSlot(index - engine.currentSlot) },
-            hold = ::holdGameAction, companion = ::toggleGameCompanion)
+            hold = ::holdGameAction,
+            companion = ::toggleGameCompanion,
+        )
+    }
+
+    private val gameActions get() = checkNotNull(gameActionsIfAvailable()) { "No game actions for the loaded game" }
 
     private fun holdGameAction(action: Hotkeys.Action, down: Boolean) {
         if (romIs3ds) { n3dsHotkey(Hotkeys.Event(action, down)); return }
@@ -5904,9 +6030,9 @@ class PokeDaisyActivity : Activity() {
     }
 
     private fun handleHotkey(e: Hotkeys.Event) {
-        if (!::engine.isInitialized) return
-        if (romIs3ds && e.action != Hotkeys.Action.FF_HOLD && e.action != Hotkeys.Action.FF_TOGGLE && n3dsHotkey(e)) return
-        if (gameActions.hotkey(e)) {
+        if (!romIs3ds && !::engine.isInitialized) return
+        if (romIs3ds && e.action != Hotkeys.Action.FF_HOLD && n3dsHotkey(e)) return
+        if (gameActionsIfAvailable()?.hotkey(e) == true) {
             if (e.action == Hotkeys.Action.MUTE && e.pressed)
                 showHud(com.pokedaisy.app.companion.i18n.tr(if (GameVolume.muted) "Game muted" else "Game sound on"))
             return
@@ -6336,7 +6462,7 @@ class PokeDaisyActivity : Activity() {
         private val N3DS_CAMERA_PULLS = floatArrayOf(1f, 1.35f, 1.75f)
         private const val N3DS_FLOAT_HEIGHT = 0.82f
         /** ... and at most this share of its width. */
-        private const val N3DS_FLOAT_WIDTH = 0.94f
+        private const val N3DS_FLOAT_WIDTH = 0.70f
         /** FF in a 3DS game: Azahar's frame limit, percent. */
         private const val N3DS_FF_PERCENT = 300
         /** The overworld's picture over the black between a menu and the field fades out over this once the game is back. */

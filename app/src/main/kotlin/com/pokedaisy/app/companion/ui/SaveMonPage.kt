@@ -164,7 +164,7 @@ private fun TabsPane(
             mon.isEgg || mon.isBadEgg -> OptionListWindow(small, pane) {}
             state.detailTab == PcBoxesState.DetailTab.INFO -> InfoTab(state, mon, level, at, editable, small, pane)
             state.detailTab == PcBoxesState.DetailTab.STATS -> StatsTab(state, mon, level, at, editable, small, pane)
-            else -> MovesTab(state, mon, at, editable, small, pane)
+            else -> MovesTab(state, mon, at, editable && state.editor.canEditMoves, small, pane)
         }
     }
 }
@@ -181,19 +181,19 @@ private fun InfoTab(state: PcBoxesState, mon: SaveMon, level: Int, at: MonRef, e
             )
             val rename = e.canWriteNames && e.isOwn(mon) && (mon as? com.pokedaisy.app.companion.data.save.Gen3BoxMon)?.language != 1
             row(tk("NICKNAME"), monLabel(mon), if (rename) ({ state.editing = PcBoxesState.Editing.Nickname(at) }) else null)
-            row(tk("LEVEL"), "$level", if (level < 100 || e.levelAsRead(at) < level) ({ state.editing = PcBoxesState.Editing.Level(at) }) else null)
-            row(tk("NATURE"), natureLabel(mon.nature), { state.editing = PcBoxesState.Editing.Nature(at) })
+            row(tk("LEVEL"), if (level > 0) "$level" else "—", if (e.canEditLevel && level in 1..100 && (level < 100 || e.levelAsRead(at) < level)) ({ state.editing = PcBoxesState.Editing.Level(at) }) else null)
+            row(tk("NATURE"), natureLabel(mon.nature), if (e.canEditTraits) ({ state.editing = PcBoxesState.Editing.Nature(at) }) else null)
             val two = mon.game.abilities(mon.species).size == 2
-            row(tk("ABILITY"), mon.game.abilityName(mon.ability), if (two) ({ state.editing = PcBoxesState.Editing.Ability(at) }) else null)
+            row(tk("ABILITY"), mon.game.abilityName(mon.ability), if (two && e.canEditTraits) ({ state.editing = PcBoxesState.Editing.Ability(at) }) else null)
             val gender = when (mon.gender) { Gen3Gender.MALE -> tk("MALE"); Gen3Gender.FEMALE -> tk("FEMALE"); Gen3Gender.GENDERLESS -> tk("NONE") }
-            row(tk("GENDER"), gender, if (mon.game.hasBothGenders(mon.species)) ({
+            row(tk("GENDER"), gender, if (e.canEditTraits && mon.game.hasBothGenders(mon.species)) ({
                 val other = if (mon.gender == Gen3Gender.MALE) Gen3Gender.FEMALE else Gen3Gender.MALE
                 state.edit { reroll(at, gender = other) }
             }) else null)
-            row(tk("SHINY"), if (mon.isShiny) tk("YES") else tk("NO"), { state.edit { reroll(at, shiny = !mon.isShiny) } })
+            row(tk("SHINY"), if (mon.isShiny) tk("YES") else tk("NO"), if (e.canEditTraits) ({ state.edit { reroll(at, shiny = !mon.isShiny) } }) else null)
             row(tk("ITEM"), if (mon.heldItem == 0) tk("NONE") else itemLabel(mon.game, mon.heldItem),
                 if (e.canEditItems && !mon.game.isMail(mon.heldItem)) ({ state.editing = PcBoxesState.Editing.HeldItem(at) }) else null)
-            row(tk("FRIENDSHIP"), "${mon.friendship}", { state.editing = PcBoxesState.Editing.Friendship(at) })
+            row(tk("FRIENDSHIP"), "${mon.friendship}", if (e.canEditFriendship) ({ state.editing = PcBoxesState.Editing.Friendship(at) }) else null)
             row(tk("POKéRUS"), when {
                 mon.pokerus == 0 -> tk("NONE")
                 mon.pokerus and 0xF == 0 -> tk("CURED")
@@ -228,14 +228,14 @@ private fun StatsTab(state: PcBoxesState, mon: SaveMon, level: Int, at: MonRef, 
                     GbaText(statLabel(i) + mark, if (mark.isNotEmpty()) OptionColors.value else OptionColors.label,
                         if (mark.isNotEmpty()) OptionColors.valueShadow else OptionColors.labelShadow, m, Modifier.weight(0.34f))
                     StatCell("${base[i]}", m, null)
-                    StatCell("${ivs[i]}", m, if (editable) ({ state.editing = PcBoxesState.Editing.Stat(at, i, ev = false) }) else null)
-                    StatCell("${evs[i]}", m, if (editable) ({ state.editing = PcBoxesState.Editing.Stat(at, i, ev = true) }) else null)
+                    StatCell("${ivs[i]}", m, if (editable && state.editor.canEditStats) ({ state.editing = PcBoxesState.Editing.Stat(at, i, ev = false) }) else null)
+                    StatCell("${evs[i]}", m, if (editable && state.editor.canEditStats) ({ state.editing = PcBoxesState.Editing.Stat(at, i, ev = true) }) else null)
                     StatCell("${stats[i]}", m, null, strong = true)
                 }
             }
             Spacer(Modifier.height(m.u * 2))
             GbaText(tr("EVs {0} of {1}", evs.sum(), Gen3StatLimits.EV_TOTAL), OptionColors.label, OptionColors.labelShadow, m)
-            if (editable) {
+            if (editable && state.editor.canEditStats) {
                 Spacer(Modifier.height(m.u * 2))
                 Row(horizontalArrangement = Arrangement.spacedBy(m.u * 3)) {
                     OptionButton(tk("MAX IVs"), m, onClick = { state.edit { setIvs(at, IntArray(6) { Gen3StatLimits.IV_MAX }) } },
@@ -287,7 +287,7 @@ private fun MovesTab(state: PcBoxesState, mon: SaveMon, at: MonRef, editable: Bo
                 )
             }
             if (editable && moves.size < 4) {
-                OptionLine(tr("ADD MOVE"), null, selected = false, m, chevron = true) { state.editing = PcBoxesState.Editing.Move(at, moves.size) }
+                OptionLine(tr("ADD MOVE"), null, selected = false, m, chevron = editable) { if (editable) state.editing = PcBoxesState.Editing.Move(at, moves.size) }
             }
             if (editable) {
                 GbaText(

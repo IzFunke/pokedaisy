@@ -22,6 +22,9 @@ interface StateSlots {
     /** The slot the hardware save/load hotkeys currently target. */
     val currentIndex: Int
 
+    /** Whether this core has the transactional undo snapshots shown beside its slots. */
+    val undoSupported: Boolean get() = true
+
     fun requestSave(index: Int)
     fun requestLoad(index: Int)
 

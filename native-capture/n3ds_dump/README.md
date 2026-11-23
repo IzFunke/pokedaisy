@@ -36,11 +36,11 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | `bench N` | N frames flat out, then ms a frame. |
 | `modules` | The loaded CRO modules, as the app reads them (`DllField DllUSC02 ...`). |
 | `waitmod M [N]` / `waitnomod M [N]` | Frames until module M is loaded (or gone), at most N (3000). |
-| `pressuntil K M [N]` | K for 2 frames every 60 until module M is loaded, at most N frames. |
+| `pressuntil K M [N] [EVERY]` | K for 2 frames every EVERY until module M is loaded, at most N frames; EVERY defaults to 60. |
 | `watchw ADDR [N] [LEN]` | N frames (2) with ADDR's page watched: who wrote its LEN bytes (4), as PC / LR / value, counted (our Azahar patch's `Memory::pk_watch_write`). |
 | `frames` | Frames run so far. |
 | `findcrs` | Every page whose +0x80 reads "CRO0", with its chain: the static module's header for a new game. |
-| `modroot ADDR` | Where `modules` starts (each known game's is set at boot: X / Y 0x012B6000, OR / AS 0x01307000, Sun / Moon 0x00869000). |
+| `modroot ADDR` | Where `modules` starts (each known game's is set at boot: X / Y 0x012B6000, OR / AS 0x01307000, Sun / Moon 0x00869000, Ultra Moon 0x008B2000). |
 | `echo TEXT` | Prints TEXT: a marker for a script fed live (stdin from `tail -f` on a file you append to). |
 | `peekf ADDR` / `hex ADDR [LEN]` | A float; LEN bytes (0x40) as 16-byte lines. |
 | `search32 V [MAX]` | Every aligned word equal to V in the game's memory (64 at most). |

@@ -43,12 +43,13 @@ class DsStagePolicyTest {
     }
 
     @Test fun startupWaitUsesTheEffectiveSceneLayoutForOneScreenGames() {
-        val setupLayout = n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.ONE_SCREEN)
-        assertEquals(DsLayout.SIDE_BY_SIDE, setupLayout)
-        assertTrue(n3dsTouchVisibleForLayout(setupLayout, manuallyOpened = false, autoWanted = false))
+        val setupLayout = n3dsStageLayout(DsLayout.ONE_SCREEN)
+        assertEquals(DsLayout.ONE_SCREEN, setupLayout)
+        assertFalse(n3dsTouchVisibleForLayout(setupLayout, manuallyOpened = false, autoWanted = false))
+        assertTrue(n3dsTouchVisibleForLayout(setupLayout, manuallyOpened = false, autoWanted = true))
         assertTrue(n3dsTouchSurfaceRequired(stageOn = true, onSecondDisplay = false, touchVisible = true))
 
-        val fieldLayout = n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, DsLayout.ONE_SCREEN)
+        val fieldLayout = n3dsStageLayout(DsLayout.ONE_SCREEN)
         assertEquals(DsLayout.ONE_SCREEN, fieldLayout)
         assertFalse(n3dsTouchVisibleForLayout(fieldLayout, manuallyOpened = false, autoWanted = false))
         assertTrue(n3dsTouchVisibleForLayout(fieldLayout, manuallyOpened = false, autoWanted = true))
@@ -87,12 +88,8 @@ class DsStagePolicyTest {
         assertFalse(n3dsAutoTouchCanDismiss(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, bag))
     }
 
-    @Test fun threeDsPagesThatNeedBothScreensTemporarilyUseTheDsPairedLayout() {
-        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.ONE_SCREEN))
-        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.PICTURE_IN_PICTURE))
-        assertEquals(DsLayout.LARGE_SMALL, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN, DsLayout.LARGE_SMALL))
-        assertEquals(DsLayout.ONE_SCREEN, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD, DsLayout.ONE_SCREEN))
-        assertEquals(DsLayout.PICTURE_IN_PICTURE, n3dsStageLayout(com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU, DsLayout.PICTURE_IN_PICTURE))
+    @Test fun threeDsScenesPreserveThePlayersChosenLayout() {
+        for (layout in DsLayout.entries) assertEquals(layout, n3dsStageLayout(layout))
     }
 
     @Test fun threeDsBootDoesNotWaitForHiddenTouchSurfaceButWaitsWhenVisible() {

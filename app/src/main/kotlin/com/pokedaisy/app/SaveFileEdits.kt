@@ -75,6 +75,14 @@ object SaveFileEdits {
         return code.take(3) in setOf("IRB", "IRA", "IRE", "IRD")
     }
 
+    /** Pokémon X and Y use the Gen 6 XY save format. Other 3DS Pokémon games have different layouts. */
+    fun isGen6Xy(rom: File): Boolean =
+        rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS &&
+            com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId in setOf(
+                com.pokedaisy.app.n3ds.N3dsCart.POKEMON_X_USA,
+                com.pokedaisy.app.n3ds.N3dsCart.POKEMON_Y_USA,
+            )
+
     /** Writes [edited] over [rom]'s save, which must still be [expected]. Blocking: off the UI thread. */
     fun commit(context: Context, prefs: Prefs, rom: File, expected: ByteArray, edited: ByteArray): Result {
         val save = SavesLocation.saveFor(context, prefs, rom)

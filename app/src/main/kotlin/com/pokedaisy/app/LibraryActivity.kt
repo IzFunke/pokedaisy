@@ -280,7 +280,7 @@ class LibraryActivity : ComponentActivity() {
         return cardFacts.getOrPut(rom.absolutePath) {
             CardFacts(
                 label = romLabel(rom),
-                hasSave = SavesLocation.saveFor(this, prefs, rom).exists(),
+                hasSave = SavesLocation.hasSave(this, prefs, rom),
                 isNew = RomAdded.isNew(this, rom),
                 hasCover = coverFile(rom).let { it.isFile && it.length() > 0 },
                 category = GameTitles.category(this, rom),
@@ -995,6 +995,7 @@ class LibraryActivity : ComponentActivity() {
 
     /** What a game's menu offers, in order (DELETE last). */
     private fun romMenuItems(rom: File, onRename: () -> Unit, onDelete: () -> Unit): List<RomMenuItem> {
+        val is3ds = rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS
         return buildList {
             if (rom.absolutePath in prefs.favoriteRoms) {
                 add(RomMenuItem(tr("UNFAVORITE"), LibraryIcons.StarBorder, pixel = com.pokedaisy.app.companion.ui.PixelIcons.starOutline) { setFavorite(rom, false) })
@@ -1009,34 +1010,38 @@ class LibraryActivity : ComponentActivity() {
                 add(RomMenuItem(tr("RESET COVER"), Icons.Filled.Refresh) { resetCover(rom) })
             }
             // Two to four GBA games on one link cable (LinkActivity): trades, battles, record mixing between them.
-            if (rom.extension.lowercase() !in setOf("gb", "gbc", "nds")) {
+            if (!is3ds && rom.extension.lowercase() !in setOf("gb", "gbc", "nds")) {
                 add(RomMenuItem(tr("LINK PLAY"), LibraryIcons.Link, opens = true) {
                     startActivity(Intent(this@LibraryActivity, LinkActivity::class.java).putExtra(LinkActivity.EXTRA_ROM, rom.absolutePath))
                 })
             }
-            add(RomMenuItem(tr("LOAD SAVE"), LibraryIcons.FileOpen, opens = true) {
-                saveImports.begin(rom)?.let { pick -> savePick = pick; pickSaveFile.launch(arrayOf("*/*")) }
-            })
-            add(RomMenuItem(tr("RESTORE BACKUP"), LibraryIcons.History, opens = true) { showBackups(rom) })
+            if (!is3ds) {
+                add(RomMenuItem(tr("LOAD SAVE"), LibraryIcons.FileOpen, opens = true) {
+                    saveImports.begin(rom)?.let { pick -> savePick = pick; pickSaveFile.launch(arrayOf("*/*")) }
+                })
+                add(RomMenuItem(tr("RESTORE BACKUP"), LibraryIcons.History, opens = true) { showBackups(rom) })
+            }
             // The save's party and PC boxes, read (and edited) from the file: Gen 3's, Diamond / Pearl / Platinum / HeartGold /
             // SoulSilver's and Black / White's (with their sequels).
-            if (rom.extension.lowercase() !in setOf("gb", "gbc", "nds") || SaveFileEdits.isDsEditable(rom) || SaveFileEdits.isGen5(rom)) {
+            if (!is3ds && (rom.extension.lowercase() !in setOf("gb", "gbc", "nds") || SaveFileEdits.isDsEditable(rom) || SaveFileEdits.isGen5(rom))) {
                 add(RomMenuItem(tr("SAVE EDITOR"), LibraryIcons.Inventory2, opens = true) {
                     startActivity(Intent(this@LibraryActivity, SaveEditorActivity::class.java).putExtra(SaveEditorActivity.EXTRA_ROM, rom.absolutePath))
                 })
             }
             // This game's saves in a folder of its own (another emulator's), or back to the usual search.
-            add(RomMenuItem(tr("SAVE FOLDER"), LibraryIcons.Folder, opens = true) {
-                if (!StorageAccess.hasAllFilesAccess(this@LibraryActivity)) {
-                    StorageAccess.requestAllFilesAccess(this@LibraryActivity)
-                    Toast.makeText(this@LibraryActivity, tr("Grant \"All files access\", then tap the button again"), Toast.LENGTH_LONG).show()
-                } else {
-                    saveFolderTarget = rom
-                    pickGameSaveFolder.launch(null)
+            if (!is3ds) {
+                add(RomMenuItem(tr("SAVE FOLDER"), LibraryIcons.Folder, opens = true) {
+                    if (!StorageAccess.hasAllFilesAccess(this@LibraryActivity)) {
+                        StorageAccess.requestAllFilesAccess(this@LibraryActivity)
+                        Toast.makeText(this@LibraryActivity, tr("Grant \"All files access\", then tap the button again"), Toast.LENGTH_LONG).show()
+                    } else {
+                        saveFolderTarget = rom
+                        pickGameSaveFolder.launch(null)
+                    }
+                })
+                if (prefs.romSaveDir(rom) != null) {
+                    add(RomMenuItem(tr("DEFAULT SAVE FOLDER"), LibraryIcons.FolderOff) { setGameSaveFolder(rom, null) })
                 }
-            })
-            if (prefs.romSaveDir(rom) != null) {
-                add(RomMenuItem(tr("DEFAULT SAVE FOLDER"), LibraryIcons.FolderOff) { setGameSaveFolder(rom, null) })
             }
             // The game's cheats, on Settings' CHEATS page.
             add(RomMenuItem(tr("CHEATS"), LibraryIcons.Code, opens = true) {
@@ -1831,7 +1836,7 @@ class LibraryActivity : ComponentActivity() {
         return LauncherFacts(
             label = romLabel(rom),
             lastPlayed = played,
-            hasSave = SavesLocation.saveFor(this, prefs, rom).exists(),
+            hasSave = SavesLocation.hasSave(this, prefs, rom),
             signedIn = prefs.screenScraperAccount != null,
         )
     }

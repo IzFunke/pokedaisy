@@ -248,3 +248,28 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - `:app:testDevUnitTest --tests=com.pokedaisy.app.DsStagePolicyTest --tests=com.pokedaisy.app.n3ds.Gen6Test --tests=com.pokedaisy.app.companion.N3dsCoreTest --offline --no-daemon --console=plain` — PASS, 28 tests, 0 failures, 0 errors, 8 ROM-dependent skips.
 - The APK was installed to the Galaxy S25 Ultra's `com.pokedaisy.app.dev` via `adb install -r`. Device reports `versionName=1.6.2-beta.1`, `versionCode=23`, and updated `lastUpdateTime`; the package data was not cleared. The `pokedaisy.xml` SHA-256 matched before and immediately after installation. On app launch, `LibraryActivity` resumed and `setup_done` / `last_rom` keys were present. The app's normal launch wrote the preferences file afterward, so its post-launch hash differs; their values were not dumped or changed manually.
 - This was a library-start smoke check only. No ROM was launched; no gameplay, Ultra Moon scene mapping, or S25 touch interaction was verified.
+
+## 2026-11-23 feature-enabled quick Dev unit suite
+
+- Command: `./gradlew --project-prop=pokedaisy.n3ds=true -Pquick :app:testDevUnitTest --offline --no-daemon --console=plain` (run through the installed Git Bash wrapper on Windows).
+- Result: PASS, 982 tests across 157 suites; 0 failures, 0 errors, 48 skipped.
+- This compiles the current Dev Kotlin sources with N3DS enabled and runs the quick unit subset. It does not build/package native Azahar or replace S25 gameplay validation. `git diff --check` also passed; Git printed only existing LF/CRLF conversion warnings.
+
+## 2026-11-23 Windows translation and generated-data checks
+
+- Fixed `scripts/check_translations.py` to read Kotlin sources as UTF-8 explicitly; the host's default cp1252 had raised `UnicodeDecodeError` before the checker examined translation content.
+- `python scripts/check_translations.py` — PASS on Windows without `-X utf8`: 2,126 entries, 1,808 used keys, 0 problems.
+- `python -X utf8 scripts/gen_gamedata.py --check` — PASS: 5 generated files up to date, 125 configs, 336 records.
+
+## 2026-11-23 full feature-enabled Dev unit suite
+
+- Command: `./gradlew --project-prop=pokedaisy.n3ds=true :app:testDevUnitTest --offline --no-daemon --console=plain` (Git Bash wrapper on Windows).
+- Result: PASS, 4,249 tests across 198 suites; 0 failures, 0 errors, 62 skipped.
+- This is the full `app:testDevUnitTest` task with the N3DS feature property. It does not run Android-device gameplay or package native Azahar.
+
+## 2026-11-23 S25 Ultra Dev update
+
+- `:app:assembleDev` with `pokedaisy.n3ds=true` — PASS; APK SHA-256 `953E6B3BD062421DE78BD2EC7AFFD70748ADA02AB9F57FB8E3CFB1ACAD27BD35`.
+- Installed to `com.pokedaisy.app.dev` using `adb install -r`; Android kept version code 23 / version name `1.6.2-beta.1` and recorded the new update time.
+- The app was not running before installation. `shared_prefs/pokedaisy.xml` SHA-256 was identical before and after (`5dd6ce9f0a29bc38b8b7fb81c9474bdf9f13565fbea8d7ac2121225caa98151a`), confirming the existing preference file was preserved byte-for-byte by installation.
+- Device remained Dozing with keyguard shown, so no app launch or gameplay input was sent. Pokémon Y / Ultra Moon runtime validation on the S25 remains pending an unlocked session.

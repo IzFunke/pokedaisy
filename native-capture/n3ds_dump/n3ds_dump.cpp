@@ -178,6 +178,7 @@ constexpr ModuleRoot MODULE_ROOTS[] = {
     {0x000400000011C500, 0x01307000}, // Alpha Sapphire
     {0x0004000000164800, 0x00869000}, // Sun
     {0x0004000000175E00, 0x00869000}, // Moon
+    {0x00040000001B5100, 0x008B2000}, // Ultra Moon (root verified on the S25 Ultra)
 };
 
 // The static module's (CRS) header, where the loaded modules' chain starts: Pokemon X / Y's by default, `modroot`
@@ -379,12 +380,14 @@ int main(int argc, char** argv) {
             std::printf("%s %s %s after %u frames:%s\n", cmd.c_str(), a[0].c_str(), n < most ? "ok" : "TIMED OUT", n,
                 moduleNames(mem, modRoot).c_str());
         } else if (cmd == "pressuntil") {
-            // pressuntil KEYS MODULE [N]: KEYS for 2 frames every 60 until MODULE is loaded, at most N frames (3000).
+            // pressuntil KEYS MODULE [N] [EVERY]: KEYS for 2 frames every EVERY until MODULE loads, at most N frames.
+            // Default cadence is 60 frames; a shorter cadence helps advance dialogue-heavy setup screens headlessly.
             const std::string want = ' ' + a.at(1) + ' ';
             const u32 most = a.size() > 2 ? number(a[2]) : 3000;
+            const u32 every = a.size() > 3 ? std::max(3u, number(a[3])) : 60;
             u32 n = 0;
             for (; n < most && (moduleNames(mem, modRoot) + ' ').find(want) == std::string::npos; n++) {
-                setKeys(n % 60 < 2 ? a[0] : "NONE");
+                setKeys(n % every < 2 ? a[0] : "NONE");
                 runFrames(1);
                 // Long software-rendered intro probes can take several minutes; make bounded progress observable
                 // without waiting for the final module/timeout line, and include the current module chain.

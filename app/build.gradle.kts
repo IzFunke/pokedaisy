@@ -238,7 +238,36 @@ tasks.withType<KotlinCompile>().configureEach {
 // Settings > LICENSES: NOTICE, then the license text of everything the APK carries, as one asset
 // (licenses.txt; a line "=== <name>" starts each part).
 val licensesAsset by tasks.registering {
-    val parts = listOf(
+    // The core is optional and CI intentionally builds without the Azahar submodule. Keep every 3DS license
+    // reference conditional so the normal APK and the no-3DS CI checkout don't require that tree.
+    val azaharParts = if (featureFlag("n3ds")) listOf(
+        "Azahar core 2126.2 (pinned commit 219d743a) - GNU GPL v2" to "third_party/azahar/license.txt",
+        "Dynarmic (Azahar) - permissive license" to "third_party/azahar/externals/dynarmic/LICENSE.txt",
+        "MCL (Dynarmic) - MIT" to "third_party/azahar/externals/dynarmic/externals/mcl/LICENSE",
+        "Robin-map (Dynarmic) - MIT" to "third_party/azahar/externals/dynarmic/externals/robin-map/LICENSE",
+        "Oaknut (Dynarmic) - MIT" to "third_party/azahar/externals/dynarmic/externals/oaknut/LICENSE",
+        "ENet (Azahar) - MIT-style license" to "third_party/azahar/externals/enet/LICENSE",
+        "LibreSSL (Azahar) - ISC and original OpenSSL notices" to "third_party/azahar/externals/libressl/COPYING",
+        "lodepng (Azahar) - zlib license" to "third_party/azahar/externals/lodepng/lodepng/LICENSE",
+        "FAAD2 (Azahar) - GPL v2" to "third_party/azahar/externals/faad2/faad2/COPYING",
+        "SoundTouch (Azahar) - GNU LGPL v2.1" to "third_party/azahar/externals/soundtouch/COPYING.TXT",
+        "Teakra (Azahar) - MIT" to "third_party/azahar/externals/teakra/LICENSE",
+        "cubeb (Azahar) - ISC-style license" to "third_party/azahar/externals/cubeb/LICENSE",
+        "Sirit (Azahar) - BSD 3-Clause" to "third_party/azahar/externals/sirit/sirit/LICENSE.txt",
+        "glslang (Azahar) - bundled component licenses" to "third_party/azahar/externals/glslang/LICENSE.txt",
+        "SPIR-V Tools (Azahar) - Apache 2.0" to "third_party/azahar/externals/spirv-tools/LICENSE",
+        "SPIR-V Headers (Azahar) - Khronos license notices" to "third_party/azahar/externals/spirv-headers/LICENSE",
+        "Boost (Azahar) - Boost Software License 1.0" to "third_party/azahar/externals/boost/LICENSE_1_0.txt",
+        "Crypto++ (Azahar) - public-domain and attribution notices" to "third_party/azahar/externals/cryptopp/LICENSE",
+        "fmt (Azahar) - MIT" to "third_party/azahar/externals/fmt/LICENSE",
+        "zstd (Azahar) - BSD-style license" to "third_party/azahar/externals/zstd/LICENSE",
+        "xxHash (Azahar) - BSD 2-Clause" to "third_party/azahar/externals/xxHash/LICENSE",
+        "dds-ktx (Azahar) - BSD 2-Clause" to "third_party/azahar/externals/dds-ktx/LICENSE",
+        "nihstro (Azahar) - BSD 3-Clause" to "third_party/azahar/externals/nihstro/license.txt",
+        "Vulkan Memory Allocator (Azahar) - MIT" to "third_party/azahar/externals/vma/LICENSE.txt",
+        "Game mode client header (Azahar) - BSD 3-Clause" to "third_party/azahar/externals/gamemode/include/gamemode_client.h",
+    ) else emptyList()
+    val parts = (listOf(
         "PokeDaisy (NOTICE)" to "NOTICE",
         "GNU General Public License v3 (PokeDaisy)" to "LICENSE",
         "mGBA - Mozilla Public License 2.0" to "third_party/mgba/LICENSE",
@@ -269,7 +298,7 @@ val licensesAsset by tasks.registering {
         "Apache Commons - NOTICE" to "third_party/licenses/Apache-Commons-NOTICE.txt",
         "XZ for Java - BSD Zero Clause" to "third_party/licenses/XZ-Java-0BSD.txt",
         "Bouncy Castle (co-op) - MIT" to "third_party/licenses/BouncyCastle-MIT.txt",
-    ).map { (name, path) -> name to rootProject.file(path) }
+    ) + azaharParts).map { (name, path) -> name to rootProject.file(path) }
     inputs.files(parts.map { it.second })
     val out = layout.buildDirectory.file("generated/licenses/licenses.txt")
     outputs.file(out)

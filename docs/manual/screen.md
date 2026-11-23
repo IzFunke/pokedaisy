@@ -70,6 +70,10 @@ A few things worth knowing:
 - **It applies when a DS game starts.** Change it in the companion while a game is running and it takes effect at `RESTART GAME` or the next time you open the game.
 - **Save in the game before you switch.** Each emulator only reads its own save states. When you switch, the game starts from your save file, and the place you left it on the other emulator is kept: switch back and the game picks up there again, as long as you haven't saved in the game since. Save states you made in `STATES` load only on the emulator that made them.
 
+## 3DS core
+
+`3DS CORE` selects the emulator used to start 3DS games. `AUTO` chooses an available core; this build includes Azahar, so the setting shows `AUTO: AZAHAR`. `AZAHAR` selects it directly. The choice takes effect the next time a game starts.
+
 ## DS resolution: sharper 3D
 
 The DS games (Platinum, HeartGold and SoulSilver) draw their world in 3D, and the DS drew it small: 256 by 192 pixels, so on a big screen the edges look jagged. `DS RESOLUTION` draws that 3D at more pixels instead.

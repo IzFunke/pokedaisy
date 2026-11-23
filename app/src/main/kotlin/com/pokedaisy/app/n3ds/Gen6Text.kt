@@ -294,7 +294,7 @@ class RomFs(cart: File) : AutoCloseable {
  * +2 category, +3 power, +4 accuracy, +5 PP). Kept per cart.
  */
 object Gen6Moves {
-    class Move(val type: Int, val category: Int, val power: Int)
+    class Move(val type: Int, val category: Int, val power: Int, val pp: Int)
 
     /** The types by their Gen 6 numbers, as the companion names them (its colours and chart go by these). */
     val TYPES = listOf(
@@ -313,7 +313,10 @@ object Gen6Moves {
                 val files = fs.read(layout.movesPath)?.let { Gen6Text.garcFiles(it) } ?: return@use null
                 val records = if (layout.movesPacked) files.firstOrNull()?.let(Gen6Text::packed) ?: return@use null else files
                 records.map { f ->
-                    if (f.size < 6) Move(0, 0, 0) else Move(f[0].toInt() and 0xFF, f[2].toInt() and 0xFF, f[3].toInt() and 0xFF)
+                    if (f.size < 6) Move(0, 0, 0, 0) else Move(
+                        f[0].toInt() and 0xFF, f[2].toInt() and 0xFF,
+                        f[3].toInt() and 0xFF, f[5].toInt() and 0xFF,
+                    )
                 }
             }
         }.getOrNull()?.also { cache[key] = it }
@@ -325,18 +328,24 @@ object Gen6Moves {
  * the two types by [Gen6Moves.TYPES], the same twice for one type). Kept per cart.
  */
 object Gen6Personal {
-    private val cache = HashMap<String, List<IntArray>>()
+    private val cache = HashMap<String, List<ByteArray>>()
 
     fun load(cart: File, layout: N3dsLayout = N3dsLayout.XY): List<IntArray>? = synchronized(cache) {
+        loadRecords(cart, layout)?.map { row ->
+            if (row.size < 8) intArrayOf(0, 0) else intArrayOf(row[6].toInt() and 0xFF, row[7].toInt() and 0xFF)
+        }
+    }
+
+    /** Full personal records from the game's own RomFS, for features that need the exact species data (save editor,
+     * level calculations). Records are copied so callers cannot mutate the cache. */
+    fun loadRecords(cart: File, layout: N3dsLayout = N3dsLayout.XY): List<ByteArray>? = synchronized(cache) {
         val key = "${cart.absolutePath}:${cart.length()}"
         cache[key] ?: runCatching {
             RomFs(cart).use { fs ->
-                fs.read(layout.personalPath)?.let { Gen6Text.garcFiles(it) }?.map { f ->
-                    if (f.size < 8) intArrayOf(0, 0) else intArrayOf(f[6].toInt() and 0xFF, f[7].toInt() and 0xFF)
-                }
+                fs.read(layout.personalPath)?.let { Gen6Text.garcFiles(it) }
             }
         }.getOrNull()?.also { cache[key] = it }
-    }
+    }?.map { it.copyOf() }
 }
 
 /** Gen 6's type chart (18 types, Fairy included), by [Gen6Moves.TYPES]' numbers: how hard a move's type hits. */

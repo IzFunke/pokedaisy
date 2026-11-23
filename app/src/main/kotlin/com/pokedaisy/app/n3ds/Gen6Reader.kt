@@ -100,6 +100,12 @@ object Gen6Reader {
         return if (inHeap(a)) a + path.last() else null
     }
 
+    /** A directly mapped field-hold word as captured in a frame-boundary observation; null means unreadable. */
+    fun fieldHeld(word: ByteArray?, mask: Int): Boolean? {
+        if (word == null || word.size < 4) return null
+        return (ByteBuffer.wrap(word).order(ByteOrder.LITTLE_ENDIAN).getInt(0) and mask) != 0
+    }
+
     /**
      * Where a game keeps its field camera's settings and how: the word at [root] is an object, then each of [path]
      * is the next pointer's offset in the last, and the settings sit [setupAt] past the last object. In them the
@@ -412,7 +418,9 @@ object Gen6Reader {
         return if (names.any { it in ULTRA_MOON_SETUP_SCREENS }) Scene.SCREEN else Scene.UNMAPPED
     }
 
-    private val ULTRA_MOON_SETUP_SCREENS = setOf("LangSelect", "HeroSelect")
+    // StrInput owns the 3DS name-entry keyboard: the upper display keeps Kukui's dialogue while the lower display
+    // shows the keyboard. It can be recognized independently of HeroSelect while that page is active.
+    private val ULTRA_MOON_SETUP_SCREENS = setOf("LangSelect", "HeroSelect", "StrInput")
 
     /** One party Pokemon, decoded. [species] 0 = an empty slot (never returned). */
     data class Mon(

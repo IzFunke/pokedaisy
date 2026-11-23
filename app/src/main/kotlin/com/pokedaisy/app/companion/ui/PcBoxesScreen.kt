@@ -385,7 +385,7 @@ private fun BoxWindow(state: PcBoxesState, data: MonSave, m: GbaTextMetrics, cel
             val t = rememberGbaTextMetrics(textScale = 1f)
             OptionButton(null, t, onClick = { state.editing = PcBoxesState.Editing.Search }, pixelIcon = PixelIcons.search,
                 sidePadding = 4, modifier = Modifier.semantics { contentDescription = tr("Search the boxes") })
-            OptionButton(tk("SORT"), t, onClick = { state.editing = PcBoxesState.Editing.SortBox(state.box) }, sidePadding = 4)
+            if (state.editor.canSortBoxes) OptionButton(tk("SORT"), t, onClick = { state.editing = PcBoxesState.Editing.SortBox(state.box) }, sidePadding = 4)
             if (state.editor.canWriteNames) {
                 OptionButton(tk("RENAME"), t, onClick = { state.editing = PcBoxesState.Editing.RenameBox(state.box) }, sidePadding = 4)
             }
@@ -410,6 +410,10 @@ private fun PreviewCard(state: PcBoxesState, data: MonSave, m: GbaTextMetrics, i
             return@OptionListWindow
         }
         val (mon, level) = found
+        val canChange = editableMon(mon) && (
+            state.editor.canWriteNames || state.editor.canEditItems || state.editor.canEditLevel || state.editor.canEditTraits ||
+                state.editor.canEditFriendship || state.editor.canEditStats || state.editor.canEditMoves
+            )
         Column(Modifier.fillMaxSize().padding(horizontal = m.u * 4, vertical = m.u * 2)) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 MonHeader(mon, level, m, icons, Modifier.fillMaxWidth())
@@ -425,10 +429,10 @@ private fun PreviewCard(state: PcBoxesState, data: MonSave, m: GbaTextMetrics, i
             Row(horizontalArrangement = Arrangement.spacedBy(m.u * 3)) {
                 val movable = !mon.isBadEgg
                 OptionButton(
-                    if (editableMon(mon)) tk("CHANGE") else tk("SEE"), m, onClick = { state.detail = sel; state.detailTab = PcBoxesState.DetailTab.INFO },
+                    if (canChange) tk("CHANGE") else tk("SEE"), m, onClick = { state.detail = sel; state.detailTab = PcBoxesState.DetailTab.INFO },
                     emphasis = true, enabled = !mon.isBadEgg, modifier = Modifier.weight(1f), sidePadding = 2,
                 )
-                OptionButton(tk("MOVE"), m, onClick = { state.moving = sel; state.notice = null }, enabled = movable, modifier = Modifier.weight(1f), sidePadding = 2)
+                OptionButton(tk("MOVE"), m, onClick = { state.moving = sel; state.notice = null }, enabled = movable && state.editor.canMoveFrom(sel), modifier = Modifier.weight(1f), sidePadding = 2)
                 if (sel is MonRef.Pc) {
                     OptionButton(tk("RELEASE"), m, onClick = { state.editing = PcBoxesState.Editing.Release(sel.at) },
                         enabled = !mon.isEgg && !mon.isBadEgg, modifier = Modifier.weight(1f), sidePadding = 2)

@@ -44,20 +44,26 @@ class SavesLocationTest {
         assertEquals(File(saves, "FireRed.sav"), SavesLocation.saveIn(null, listOf(saves), rom))
     }
 
-    @Test fun aDsGamesSaveIsBesideItsRomLikeMelonDs() {
+    @Test fun aDsGamesSaveUsesThePokeDaisyFolderByDefault() {
         val roms = dir("nds")
         val ds = File(roms, "Platinum.nds")
         val saves = dir("ds-saves")
-        // A new save goes beside the ROM; one there wins over the saves folder's.
-        assertEquals(File(roms, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(saves)), ds))
+        assertEquals(File(saves, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(saves)), ds))
         File(saves, "Platinum.sav").writeText("app")
         File(roms, "Platinum.sav").writeText("melonDS")
-        assertEquals(File(roms, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(saves)), ds))
-        // A save the app made elsewhere before still loads while there's none beside the ROM.
-        File(roms, "Platinum.sav").delete()
         assertEquals(File(saves, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(saves)), ds))
         // A GBA game is unchanged.
         assertEquals(listOf(saves), SavesLocation.dirsFor(rom, false, listOf(saves)))
+    }
+
+    @Test fun anOldDsSaveIsCopiedIntoTheStandardFolderAndKeptBesideTheRom() {
+        val roms = dir("nds-migration")
+        val old = File(roms, "Platinum.sav").also { it.writeText("old melonDS save") }
+        val target = File(dir("pokedaisy-saves"), "Platinum.sav")
+
+        assertEquals(true, SavesLocation.migrateLegacyDsSave(target, listOf(old)))
+        assertEquals(old.readText(), target.readText())
+        assertEquals("old melonDS save", old.readText())
     }
 
     @Test fun aSharedDsFolderWinsAndDoesNotFallBackToTheRomFolder() {
@@ -70,7 +76,7 @@ class SavesLocationTest {
         assertEquals(File(shared, "Platinum.sav"), SavesLocation.saveIn(null, SavesLocation.dirsFor(ds, true, listOf(generic), shared), ds))
     }
 
-    @Test fun aSharedDsFolderOverridesAStoredPerGameFolderUntilItIsReset() {
+    @Test fun theStandardDsFolderOverridesStoredPerGameFoldersToo() {
         val roms = dir("nds-per-game-test")
         val ds = File(roms, "Platinum.nds")
         val perGame = dir("platinum-save-folder").also { File(it, "Platinum.sav").writeText("old") }
@@ -81,7 +87,8 @@ class SavesLocationTest {
         val activeGlobal = SavesLocation.ownFolderFor(nds = true, sharedDsFolder = shared, own = perGame)
         assertEquals(File(shared, "Platinum.sav"), SavesLocation.saveIn(activeGlobal, selected, ds))
 
-        val afterReset = SavesLocation.ownFolderFor(nds = true, sharedDsFolder = null, own = perGame)
-        assertEquals(File(perGame, "Platinum.sav"), SavesLocation.saveIn(afterReset, selected, ds))
+        val standard = dir("pokedaisy-standard-saves")
+        val afterReset = SavesLocation.ownFolderFor(nds = true, sharedDsFolder = standard, own = perGame)
+        assertEquals(File(standard, "Platinum.sav"), SavesLocation.saveIn(afterReset, listOf(standard, generic), ds))
     }
 }

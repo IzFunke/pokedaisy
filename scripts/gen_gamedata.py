@@ -29,6 +29,11 @@ RECORDS_OUT = os.path.join(DATA, "GameDataRecordsGen.kt")
 RECORDS = os.path.join(GAMEDATA, "gen3", "records")
 TARGETS = os.path.join(GAMEDATA, "targets")
 
+
+def display_path(path, start=ROOT):
+    """A stable path for generated comments and diagnostics, independent of the host OS."""
+    return os.path.relpath(path, start).replace(os.sep, "/")
+
 SCHEMA_VERSION = 1
 CONFIG_SCHEMA = "gen3_config"
 GROUP_ORDER = ["retail", "ports", "hacks"]
@@ -118,7 +123,7 @@ def skip_ws(text, pos):
 
 def read_toml(path):
     """[(table name, {lead, entries: [(key, value, lead, trail, line)], end, line})], checked against tomllib."""
-    rel = os.path.relpath(path, ROOT)
+    rel = display_path(path)
     # tomllib is the authority on the syntax; this reader must agree with it (checked at the end).
     try:
         with open(path, "rb") as fh:
@@ -272,7 +277,7 @@ def new_schema(name, kt_file, cls):
     path = os.path.join(SCHEMAS, name + ".toml")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")
-    print(f"gen_gamedata: wrote {os.path.relpath(path, ROOT)}")
+    print(f"gen_gamedata: wrote {display_path(path)}")
 
 
 # --- schemas ---
@@ -285,7 +290,7 @@ def load_schema(name):
     if name in _schemas:
         return _schemas[name]
     path = os.path.join(SCHEMAS, name + ".toml")
-    rel = os.path.relpath(path, ROOT)
+    rel = display_path(path)
     if not os.path.exists(path):
         raise GameDataError(f"no schema {rel}")
     tables = read_toml(path)
@@ -336,7 +341,7 @@ def load_configs(schema):
     paths = [p for p in glob.glob(os.path.join(GAMEDATA, "gen3", "**", "*.toml"), recursive=True)
              if not p.startswith(RECORDS + os.sep) and os.path.basename(p) != "area_maps.toml"]
     for path in sorted(paths, key=file_rank):
-        rel = os.path.relpath(path, ROOT)
+        rel = display_path(path)
         tables = read_toml(path)
         if tables[0]["entries"]:
             fail(f"{rel}:{tables[0]['entries'][0][4]}", "keys before the first [config.*]")
@@ -618,7 +623,7 @@ def load_records():
     another record with `base`) and [list.NAME] (`of` = Int / Long, `items` = numbers or Kotlin names)."""
     records = {}
     for path in sorted(glob.glob(os.path.join(RECORDS, "*.toml"))):
-        rel = os.path.relpath(path, ROOT)
+        rel = display_path(path)
         tables = read_toml(path)
         if tables[0]["entries"]:
             fail(f"{rel}:{tables[0]['entries'][0][4]}", "keys before the first [record.*] / [list.*]")
@@ -1161,7 +1166,7 @@ def c_text(texts, rel):
 
 
 def c_target(path, configs, records, schema):
-    rel = os.path.relpath(path, ROOT)
+    rel = display_path(path)
     tables = read_toml(path)
     top = {k: v for k, v, *_ in tables[0]["entries"]}
     names, parts, wanted, texts = {}, {}, [], {}
@@ -1360,7 +1365,7 @@ def main():
         sys.exit(f"gen_gamedata: {e}")
     summary = f"{len(configs)} configs, {len(records)} records"
     if "--check" in sys.argv:
-        stale = [os.path.relpath(path, ROOT) for path, text in outputs
+        stale = [display_path(path) for path, text in outputs
                  if (open(path, encoding="utf-8").read() if os.path.exists(path) else "") != text]
         if stale:
             sys.exit(f"gen_gamedata: {', '.join(stale)} stale or edited by hand - run `make gamedata` and commit the result")
@@ -1369,7 +1374,7 @@ def main():
     for path, text in outputs:
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(text)
-    print(f"gen_gamedata: {summary} -> {', '.join(os.path.relpath(p, ROOT) for p, _ in outputs)}")
+    print(f"gen_gamedata: {summary} -> {', '.join(display_path(p) for p, _ in outputs)}")
 
 
 if __name__ == "__main__":

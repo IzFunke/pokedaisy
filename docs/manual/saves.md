@@ -23,6 +23,8 @@ Losing a 40-hour save is the worst thing an emulator can do, so PokeDaisy is car
 
 A game finds its save by the ROM's file name: `Pokemon Emerald.gba` uses `Pokemon Emerald.sav` (or `.srm`). For a zipped game, it's the name of the ROM inside the archive, the same as RetroArch.
 
+On Android, Nintendo 3DS saves use this same naming rule in `GAME SAVES` (or the folder selected under `3DS GAME SAVES`): for example, `Pokemon Y.3ds` uses `Pokemon Y.sav`. Azahar keeps a working copy in its user-data folder while the shared `.sav` is the copy PokeDaisy shows and the X/Y save editor reads and updates. Pokémon X/Y are supported by that editor; Ultra Moon's save format still needs its own editor support.
+
 PokeDaisy looks for a game's save in this order, and uses the first place that has one:
 
 1. **The game's own save folder**, if you gave it one (`SAVE FOLDER` in its library menu).

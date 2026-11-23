@@ -53,6 +53,14 @@ class Gen6Test {
         return b.array()
     }
 
+    @Test fun fieldHoldWordUsesTheConfiguredBitsAndRejectsShortReads() {
+        val bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(0x3D3).array()
+        assertEquals(true, Gen6Reader.fieldHeld(bytes, Gen6Reader.FIELD_HELD))
+        assertEquals(false, Gen6Reader.fieldHeld(bytes, 1 shl 10))
+        assertNull(Gen6Reader.fieldHeld(byteArrayOf(1, 2, 3), Gen6Reader.FIELD_HELD))
+        assertNull(Gen6Reader.fieldHeld(null, Gen6Reader.FIELD_HELD))
+    }
+
     @Test fun decodesWhatTheGameStores() {
         for (ec in intArrayOf(0x011DE1FB, 0x53E9935E, 0x9564DDE7.toInt(), 0x7FFFE000)) {
             val m = Gen6Reader.decode(encrypt(mon(ec)))!!
@@ -315,5 +323,20 @@ class Gen6Test {
         assertNull(scene("", null))
         assertNull(scene("DllTitle\nDllBackGround\nDllSequence", null))
         assertNull(scene("DllStartMenu", null))
+    }
+
+    @Test
+    fun ultraMoonSetupMapsOnlyObservedDualScreenPages() {
+        val ultraMoon = N3dsCart.POKEMON_ULTRA_MOON_USA
+        for (module in listOf("LangSelect", "HeroSelect", "StrInput")) {
+            assertEquals(module, Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(ultraMoon, module))
+        }
+        // The live headless intro reached Kukui's German dialogue under AppDemo/SequencePlayer/Object.
+        // Its screen behavior is not yet verified, so it must stay on the neutral/manual policy.
+        assertEquals(
+            Gen6Reader.Scene.UNMAPPED,
+            Gen6Reader.startupSceneOf(ultraMoon, "AppDemo\nSequencePlayer\nObject"),
+        )
+        assertNull(Gen6Reader.startupSceneOf(N3dsCart.POKEMON_ULTRA_SUN_USA, "HeroSelect"))
     }
 }

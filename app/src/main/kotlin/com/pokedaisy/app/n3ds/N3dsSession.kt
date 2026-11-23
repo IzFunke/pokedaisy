@@ -30,6 +30,7 @@ class N3dsSession(
     context: Context,
     val rom: File,
     val titleId: Long,
+    private val sharedSave: File,
     private val input: GbaInput,
     /** The companion's snapshot, on the UI thread. */
     private val onSnapshot: (SnapshotView) -> Unit,
@@ -39,6 +40,8 @@ class N3dsSession(
     private val wantsTouchSurface: () -> Boolean = { true },
     /** The game's scene changed ([scene]), on the UI thread. */
     private val onScene: (Gen6Reader.Scene) -> Unit = {},
+    /** A paired snapshot frozen while a verified scene transition is being debounced; null releases it. */
+    private val onTransitionFrame: (TransitionFrame?) -> Unit = {},
     /** The battle's state changed ([battle]: its menu, the battlers), on the UI thread. */
     private val onBattle: (Gen6Reader.Battle?) -> Unit = {},
     /** The top screen in the field, about once a second (the backdrop of the game's own screens), on the UI thread. */
@@ -46,6 +49,8 @@ class N3dsSession(
     /** [fieldHeld] changed (the UI thread). */
     private val onFieldHeld: (Boolean) -> Unit = {},
 ) {
+    data class TransitionFrame(val top: android.graphics.Bitmap, val touch: android.graphics.Bitmap)
+
     val topView = SurfaceView(context)
     /** Over the top screen when it floats in (ONE SCREEN); TextureView alpha composes in the app window. */
     val touchView = TextureView(context)
@@ -61,8 +66,11 @@ class N3dsSession(
     private var thread: Thread? = null
     @Volatile private var running = false
     @Volatile private var paused = false
+    @Volatile private var nativeReady = false
+    @Volatile private var speedPercent = 100
 
     val started get() = thread != null
+    val isRunning get() = running
 
     init {
         topView.holder.addCallback(surfaceCallback(0) { topReady = it })
@@ -138,9 +146,31 @@ class N3dsSession(
             snapshotGeneration = snapshotGate.begin()
             val generation = snapshotGeneration
             thread = Thread({
-                N3dsNative.init(userDir)
-                N3dsNative.setResolution(RESOLUTION)
-                val result = N3dsNative.run(rom.absolutePath, ONE_SURFACE_LAYOUT)
+                var saveSyncSucceeded = true
+                val nativeResult = try {
+                    Log.i(TAG, "initializing Azahar")
+                    if (!N3dsNative.init(userDir)) {
+                        Log.e(TAG, "Azahar initialization failed")
+                        -1
+                    } else {
+                        nativeReady = true
+                        Log.i(TAG, "Azahar initialized; setting resolution and starting ${rom.name}")
+                        N3dsNative.setResolution(RESOLUTION)
+                        N3dsNative.setSpeed(speedPercent)
+                        N3dsNative.setPaused(paused)
+                        N3dsNative.run(rom.absolutePath, ONE_SURFACE_LAYOUT)
+                    }
+                } catch (error: LinkageError) {
+                    Log.e(TAG, "Azahar JNI entry point is unavailable", error)
+                    -1
+                } catch (error: RuntimeException) {
+                    Log.e(TAG, "Azahar failed while initializing or running ${rom.name}", error)
+                    -1
+                } finally {
+                    nativeReady = false
+                    saveSyncSucceeded = N3dsSaves.syncFromAzahar(File(userDir), titleId, sharedSave)
+                }
+                val result = if (saveSyncSucceeded) nativeResult else SAVE_SYNC_FAILED
                 running = false
                 Log.i(TAG, "game ended: $result")
                 ui.post {
@@ -148,7 +178,7 @@ class N3dsSession(
                         onSnapshot(
                             SnapshotView(
                                 connected = false,
-                                error = "3DS game stopped",
+                                error = "The 3DS game stopped.",
                                 game = N3dsCart.kindOf(titleId),
                             ),
                         )
@@ -167,7 +197,7 @@ class N3dsSession(
 
     fun setPaused(p: Boolean) {
         paused = p
-        if (started) N3dsNative.setPaused(p)
+        if (nativeReady) N3dsNative.setPaused(p)
     }
 
     /** Stops the game for good (the activity leaves it); joins Azahar and its workers before returning. */
@@ -267,10 +297,11 @@ class N3dsSession(
     private val pump = Thread({
         var last = -1
         var pass = 0
+        var gameFrame = 0L
         var tap = 0
         while (running) {
-            if (pass++ % 4 == 0) tap = input.tapMask()
-            val now = buttons(input.mask or hatBits or tap)
+            if (pass++ % 4 == 0) { tap = input.tapMask(); gameFrame++ }
+            val now = buttons(input.frameMask(gameFrame) or hatBits or tap)
             if (now != last) { N3dsNative.setButtons(now); last = now }
             // The circle pad turned as the camera is ([stickTurn]): up walks away from it, as in a modern game.
             val turn = Math.toRadians((stickTurn * STICK_TURN_SIGN).toDouble())
@@ -304,7 +335,8 @@ class N3dsSession(
 
     /** Fast-forward at [percent] of real time (100 = normal, 0 = flat out). */
     fun setSpeed(percent: Int) {
-        if (started) N3dsNative.setSpeed(percent)
+        speedPercent = percent
+        if (nativeReady) N3dsNative.setSpeed(percent)
     }
 
     /** Off the UI thread: Azahar takes / loads it between two frames. [done] on the UI thread. */
@@ -346,6 +378,7 @@ class N3dsSession(
 
     /** What the game's screens show now ([Gen6Reader.sceneOf]), read ten times a second; [onScene] hears a change. */
     private val sceneConfig = Gen6Reader.configFor(titleId)
+    @Volatile private var combinedObservationAvailable = true
     private val sceneModuleRoot = sceneConfig?.staticModule?.takeIf { it != 0 }
         ?: Gen6Reader.startupSceneModuleRoot(titleId)
     // A mapped game starts with both displays until the scene reader identifies the field (setup screens need touch).
@@ -356,7 +389,10 @@ class N3dsSession(
         else -> Gen6Reader.Scene.FIELD
     }
         private set
-    private var sceneTold = false
+    private val sceneTransition = N3dsSceneTransition(scene)
+    private var lastStableTransitionFrame: TransitionFrame? = null
+    private var stablePairReads = 0
+    @Volatile private var pairCaptureDisabled = false
 
     /** The field camera may be pulled back (the app's ZOOM): the game is on its field (its module loaded, not the
      * title's default FIELD), the X menu over it included. */
@@ -371,54 +407,61 @@ class N3dsSession(
     private val scenes = Thread({
         val config = sceneConfig
         var lastModules: String? = null
-        // A change counts once two reads in a row agree (between two screens the modules come and go). Out of one of
-        // the game's screens, the field counts only after a second of it: on the way back to the X menu the field's
-        // module loads about a second before the menu is set again (the window went away and came back).
-        var seen: Gen6Reader.Scene? = null
-        var streak = 0
+        var lastSceneError: String? = null
         var pass = 0
         while (running && sceneModuleRoot != 0) {
             if (!paused) {
-                val modules = N3dsNative.modules(sceneModuleRoot)
+                try {
+                // Keep directly mapped scene controls in the same frame-boundary observation as CROs and battle UI.
+                // Pointer-chained Sun/Moon values still need their guarded follow-up read; X/ORAS field-hold does not.
+                val battleUiBytes = config?.battleUi?.takeIf { it != 0 }?.let { Gen6Reader.BATTLE_UI_BYTES } ?: 0
+                val directFieldHold = config?.takeIf { it.fieldHold != 0 && (it.fieldHoldPath == null || it.fieldHoldPath.isEmpty()) }
+                val observationRanges = buildList {
+                    config?.battleUi?.takeIf { it != 0 }?.let { add(it); add(Gen6Reader.BATTLE_UI_BYTES) }
+                    directFieldHold?.let { add(it.fieldHold); add(4) }
+                }.toIntArray()
+                val observation = if (combinedObservationAvailable) {
+                    try {
+                        N3dsNative.readObservation(sceneModuleRoot, observationRanges)
+                    } catch (error: UnsatisfiedLinkError) {
+                        // An app/native-library mismatch must not take down the emulator's scene thread. The older
+                        // per-read JNI calls still provide a reduced, non-atomic fallback for scene and battle reads.
+                        combinedObservationAvailable = false
+                        Log.e(TAG, "combined observation JNI is unavailable; using separate reads", error)
+                        null
+                    }
+                } else null
+                // If an optional range isn't mapped in a particular build, keep scene detection alive through its
+                // modules-only path; the battle UI is consumed only from a successful combined observation.
+                val modules = observation?.modules ?: N3dsNative.modules(sceneModuleRoot)
                 if (modules != null) {
                     if (modules != lastModules) { Log.d(TAG, "modules: ${modules.replace('\n', ',')}"); lastModules = modules }
                     if (config == null) {
-                        // USUM: only LangSelect has been verified. Unknown modules return to the neutral/manual policy.
+                        // USUM: only the observed setup modules have a verified paired-screen policy. Intro/cutscene
+                        // modules stay neutral/manual until their actual screen behavior is observed.
                         val now = Gen6Reader.startupSceneOf(titleId, modules)
-                        streak = if (now == seen) streak + 1 else 1
-                        if (now != null && (now != scene || !sceneTold) && streak >= 2) {
-                            scene = now
-                            sceneTold = true
-                            Log.i(TAG, "startup scene: $now")
-                            ui.post { onScene(now) }
-                        }
-                        seen = now
+                        observeScene(now, startup = true)
                     } else {
                         val onField = modules.split('\n').contains(config.fieldModule)
                         val menu = if (onField) fieldMenu(config) else null
                         val now = Gen6Reader.sceneOf(modules, menu, config)
-                        streak = if (now == seen) streak + 1 else 1
-                        val needed = when {
-                            scene == Gen6Reader.Scene.SCREEN && now == Gen6Reader.Scene.FIELD -> SCREEN_TO_FIELD_READS
-                            // Save's question going (back to the menu) leaves the menu unset for a read or two.
-                            scene == Gen6Reader.Scene.MENU && now == Gen6Reader.Scene.FIELD -> 3
-                            else -> 2
-                        }
-                        // (The first scene read is told too: the field is the default, so it wouldn't be a change.)
-                        if (now != null && (now != scene || !sceneTold) && streak >= needed) {
-                            scene = now
-                            sceneTold = true
-                            Log.i(TAG, "scene: $now")
-                            ui.post { onScene(now) }
-                        }
-                        seen = now
+                        observeScene(now, startup = false)
                         // The game holding the player (talking, a scene, a door): the HUD's bottom row steps away at
                         // once and comes back after a few free reads (no blink between two lines or through a door).
-                        val holdAt = if (onField && config.fieldHold != 0)
-                            Gen6Reader.chained(config.fieldHold, config.fieldHoldPath, ::readInt) else null
-                        val heldNow = holdAt != null &&
-                            (N3dsNative.readMemory(intArrayOf(holdAt, 4))?.takeIf { it.size == 4 }
-                                ?.let { it[0].toInt() and config.fieldHoldMask != 0 } == true)
+                        val directHoldBytes = if (directFieldHold != null && observation != null) {
+                            val at = battleUiBytes
+                            observation.memory.takeIf { it.size >= at + 4 }?.copyOfRange(at, at + 4)
+                        } else null
+                        val holdAt = if (onField && config.fieldHold != 0 &&
+                            (directFieldHold == null || observation == null)
+                        ) Gen6Reader.chained(config.fieldHold, config.fieldHoldPath, ::readInt) else null
+                        val heldNow = onField && when {
+                            directHoldBytes != null -> Gen6Reader.fieldHeld(directHoldBytes, config.fieldHoldMask) == true
+                            holdAt != null -> Gen6Reader.fieldHeld(
+                                N3dsNative.readMemory(intArrayOf(holdAt, 4)), config.fieldHoldMask,
+                            ) == true
+                            else -> false
+                        }
                         freeReads = if (heldNow) 0 else freeReads + 1
                         val held = heldNow || freeReads < FIELD_FREE_READS
                         if (held != fieldHeld) { fieldHeld = held; ui.post { onFieldHeld(held) } }
@@ -426,16 +469,94 @@ class N3dsSession(
                         val canZoom = onField &&
                             (scene == Gen6Reader.Scene.FIELD || scene == Gen6Reader.Scene.MENU)
                         zoomable = canZoom
-                        readBattle(config, if (modules.split('\n').contains(config.battleModule)) modules else null)
+                        readBattle(
+                            config,
+                            if (modules.split('\n').contains(config.battleModule)) modules else null,
+                            observation?.memory?.takeIf { battleUiBytes != 0 }?.copyOfRange(0, battleUiBytes),
+                        )
                     }
                 }
                 val dumpTurn = pass++ % FIELD_SHOT_EVERY == 0
                 if (config != null && dumpTurn && scene == Gen6Reader.Scene.FIELD) fieldShot()
                 if (com.pokedaisy.app.BuildConfig.DEBUG) debugCommands(dumpTurn)
+                    lastSceneError = null
+                } catch (error: LinkageError) {
+                    combinedObservationAvailable = false
+                    pairCaptureDisabled = true
+                    val signature = "${error::class.java.name}:${error.message}"
+                    if (signature != lastSceneError) Log.e(TAG, "scene observer lost a native entry point", error)
+                    lastSceneError = signature
+                } catch (error: RuntimeException) {
+                    val signature = "${error::class.java.name}:${error.message}"
+                    if (signature != lastSceneError) Log.e(TAG, "scene observer failed; the game will keep running", error)
+                    lastSceneError = signature
+                }
             }
             try { Thread.sleep(SCENE_MS) } catch (_: InterruptedException) { break }
         }
     }, "pokedaisy-n3ds-scene")
+
+    /** Apply the scene gate's one-frame capture and stable-scene events on the Azahar reader's worker thread. */
+    private fun observeScene(now: Gen6Reader.Scene?, startup: Boolean) {
+        val event = sceneTransition.observe(now)
+        if (event.capturePair) showTransitionFrame()
+        if (event.cachePair) {
+            if (++stablePairReads >= STABLE_PAIR_READS) {
+                stablePairReads = 0
+                captureStableTransitionFrame()
+            }
+        } else {
+            stablePairReads = 0
+        }
+        val reported = event.report
+        if (reported != null) {
+            scene = reported
+            Log.i(TAG, if (startup) "startup scene: $reported" else "scene: $reported")
+        }
+        if (reported != null || event.releasePair) ui.post {
+            reported?.let(onScene)
+            if (event.releasePair) onTransitionFrame(null)
+        }
+    }
+
+    /** Keep the last lit pair ready so a module change never freezes a frame from the middle of its fade. */
+    private fun captureStableTransitionFrame() {
+        lastStableTransitionFrame = capturePairFrame() ?: lastStableTransitionFrame
+    }
+
+    /** Show the cached pair from before the scene changed; only the first startup transition needs a live fallback. */
+    private fun showTransitionFrame() {
+        val frame = lastStableTransitionFrame ?: capturePairFrame() ?: return
+        ui.post { onTransitionFrame(frame) }
+    }
+
+    /** One Azahar request captures both screens from the same Vulkan render target and frame. */
+    private fun capturePairFrame(): TransitionFrame? {
+        if (pairCaptureDisabled) return null
+        val pixels = try {
+            synchronized(shotLock) { N3dsNative.screenshotPair() }
+        } catch (error: LinkageError) {
+            pairCaptureDisabled = true
+            Log.e(TAG, "paired transition capture JNI is unavailable; continuing without frozen frames", error)
+            return null
+        } catch (error: RuntimeException) {
+            pairCaptureDisabled = true
+            Log.e(TAG, "paired transition capture failed; continuing without frozen frames", error)
+            return null
+        } catch (error: OutOfMemoryError) {
+            pairCaptureDisabled = true
+            Log.e(TAG, "not enough memory for paired transition capture; continuing without frozen frames", error)
+            return null
+        } ?: return null
+        if (pixels.size != PAIR_WIDTH * PAIR_HEIGHT) return null
+        val top = runCatching {
+            android.graphics.Bitmap.createBitmap(pixels, 0, PAIR_WIDTH, TOP_WIDTH, PAIR_HEIGHT, android.graphics.Bitmap.Config.ARGB_8888)
+        }.getOrNull() ?: return null
+        val touch = runCatching {
+            android.graphics.Bitmap.createBitmap(pixels, TOP_WIDTH, PAIR_WIDTH, TOUCH_WIDTH, PAIR_HEIGHT, android.graphics.Bitmap.Config.ARGB_8888)
+        }.getOrNull() ?: return null
+        return TransitionFrame(top, touch)
+    }
 
     /**
      * Debug builds: also `files/n3ds-debug/n3ds_cmd`, lines of `poke <hex address> <hex bytes>` (written into the game's
@@ -674,15 +795,14 @@ class N3dsSession(
 
     /** The scene thread's battle read: its controller, then (with a command panel) the two battlers' records; Sun /
      * Moon's from their menu bytes and their battler pointers ([Gen6Reader.Config.battleMenu]). */
-    private fun readBattle(config: Gen6Reader.Config, battleModules: String?) {
+    private fun readBattle(config: Gen6Reader.Config, battleModules: String?, battleUi: ByteArray?) {
         val now = when {
             battleModules == null -> null
             config.battleUi != 0 -> {
-                val ui = N3dsNative.readMemory(intArrayOf(config.battleUi, Gen6Reader.BATTLE_UI_BYTES))
-                val panel = Gen6Reader.commandPanel(ui)
+                val panel = Gen6Reader.commandPanel(battleUi)
                 val (player, foe) = if (panel != 0) battlers(config, panel + config.panelPlayer, panel + config.panelFoe)
                     else battle?.player to battle?.foe
-                Gen6Reader.Battle(Gen6Reader.battleInput(ui), player, foe)
+                Gen6Reader.Battle(Gen6Reader.battleInput(battleUi), player, foe)
             }
             config.battleMenu != 0 -> {
                 val menuAt = Gen6Reader.chained(config.battleMenu, config.battleMenuPath, ::readInt)
@@ -842,7 +962,7 @@ class N3dsSession(
             postSnapshot(
                 SnapshotView(
                     connected = false,
-                    error = "3DS companion data is not mapped yet",
+                    error = "3DS companion data isn't mapped yet. Open the touch screen with TOUCH SCREEN.",
                     game = N3dsCart.kindOf(titleId),
                 ),
             )
@@ -932,6 +1052,7 @@ class N3dsSession(
 
     companion object {
         private const val TAG = "pokedaisy/n3ds"
+        const val SAVE_SYNC_FAILED = Int.MIN_VALUE
         private const val STOP_JOIN_TIMEOUT_NS = 5_000_000_000L
         /** Free reads (100 ms each) before the HUD's bottom row comes back. */
         private const val FIELD_FREE_READS = 3
@@ -969,8 +1090,8 @@ class N3dsSession(
         private const val SCENE_MS = 100L
         /** The field's picture every this many scene reads (a second), at the 3DS's own top-screen size. */
         private const val FIELD_SHOT_EVERY = 10
-        /** Scene reads the field must hold coming out of one of the game's screens (see the scene thread). */
-        private const val SCREEN_TO_FIELD_READS = 11
+        // Cache the stable pair once a second; the screenshot allocates both screens and is only a transition fallback.
+        private const val STABLE_PAIR_READS = 10
         /** [screenshot]'s tries, a frame or so apart. */
         private const val SHOT_TRIES = 3
         private const val SHOT_RETRY_MS = 20L
@@ -978,5 +1099,9 @@ class N3dsSession(
         private const val FIELD_SHOT_DARK = 24
         private const val FIELD_SHOT_W = 400
         private const val FIELD_SHOT_H = 240
+        private const val TOP_WIDTH = 400
+        private const val TOUCH_WIDTH = 320
+        private const val PAIR_WIDTH = TOP_WIDTH + TOUCH_WIDTH
+        private const val PAIR_HEIGHT = 240
     }
 }

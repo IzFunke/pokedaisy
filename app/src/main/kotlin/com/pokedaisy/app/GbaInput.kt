@@ -115,6 +115,9 @@ class GbaInput : Hotkeys.GameKeys, ScriptInput {
      * none while a script steers. */
     val turboMask: Int get() = if (scriptExclusive) 0 else turboBits or touchTurboBits or latchedHeld
 
+    /** The emulated game's button mask for [frame], shared by the frame-driven DS/GBA loop and Azahar's input pump. */
+    fun frameMask(frame: Long): Int = mask or (if ((frame / 2) % 2L == 0L) turboMask else 0)
+
     @Volatile private var touchTurboBits = 0
 
     /** The touch controls' GBA buttons held ([bits]) and their TURBO A / B ([turbo], pulsed like [turboMask]). */

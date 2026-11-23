@@ -26,26 +26,69 @@ object SavesLocation {
      * ([Prefs.extraSaveDirs], Settings > FOLDERS) that holds a save for it - so a save another
      * emulator keeps (RetroArch's per-core folders) is played and written where it is; else a
      * new save in the saves folder. Only the folders themselves are looked in, never below. A configured shared DS
-     * folder takes precedence over both a per-game SAVE FOLDER and the ROM directory while selected; without it, a
-     * per-game folder wins, then a writable DS ROM directory comes first ([dirsFor]).
+     * folder takes precedence over both a per-game SAVE FOLDER and the ROM directory while selected. DS games otherwise
+     * use PokeDaisy's standard saves folder and import an older beside-ROM save there on first access.
      */
     fun saveFor(context: Context, prefs: Prefs, rom: File): File {
+        // 3DS archives have their own configurable shared directory and are migrated from Azahar's
+        // title-id / `main` names here. Keep every caller (library, save editor, backup flow) on
+        // the same ROM-basename `.sav` path.
+        if (rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS) {
+            val titleId = com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId
+                ?: return com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(context, prefs, rom, 0L)
+            return com.pokedaisy.app.n3ds.N3dsSaves.saveFile(context, prefs, rom, titleId)
+                ?: com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(context, prefs, rom, titleId)
+        }
         val nds = RomIdentity.isNds(rom)
         val dirs = searchDirs(context, prefs)
-        val dsFolder = prefs.dsSavesDirOverride?.takeIf { nds && it.isNotBlank() }?.let(::File)
+        val dsFolder = if (nds) prefs.dsSavesDirOverride?.takeIf { it.isNotBlank() }?.let(::File) ?: dirs.first() else null
         val search = dirsFor(rom, nds, dirs, dsFolder)
         val configuredOwn = prefs.romSaveDir(rom)?.let(::File)
         val own = ownFolderFor(nds, dsFolder, configuredOwn)?.apply { mkdirs() }
+        if (nds) {
+            val target = own ?: dsFolder ?: dirs.first()
+            migrateDsSave(rom, target, listOfNotNull(configuredOwn, rom.absoluteFile.parentFile) + dirs)
+        }
         return saveIn(own, search, rom)
     }
 
-    /** [dirs] for [rom]: a configured shared DS folder first, then the ordinary save/search folders. This deliberately
-     * overrides melonDS's legacy beside-ROM save location. Without that override, a writable DS ROM directory comes
-     * first, then the ordinary folders so a save made elsewhere before still loads. */
+    /** Import an old DS save into the all-games location without removing the original or overwriting a newer target. */
+    private fun migrateDsSave(rom: File, targetDir: File, oldDirs: List<File>) {
+        val target = resolve(targetDir, rom)
+        if (target.isFile) return
+        val oldFiles = oldDirs.asSequence().distinctBy { it.absolutePath }
+            .map { resolve(it, rom) }
+            .filter { it.isFile && it.absolutePath != target.absolutePath }.toList()
+        migrateLegacyDsSave(target, oldFiles)
+    }
+
+    internal fun migrateLegacyDsSave(target: File, oldFiles: List<File>): Boolean {
+        if (target.isFile) return false
+        val old = oldFiles.firstOrNull { it.isFile && it.absolutePath != target.absolutePath } ?: return false
+        target.parentFile?.mkdirs()
+        return runCatching { old.copyTo(target, overwrite = false); true }.getOrDefault(false)
+    }
+
+    /** A 3DS save is present in the selected shared save folder, after importing Azahar's `main` archive if needed. */
+    fun hasSave(context: Context, prefs: Prefs, rom: File): Boolean {
+        if (rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS) {
+            val titleId = com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId ?: return false
+            return com.pokedaisy.app.n3ds.N3dsSaves.hasSave(context, prefs, rom, titleId)
+        }
+        if (!RomIdentity.isNds(rom)) return saveFor(context, prefs, rom).exists()
+        val dirs = searchDirs(context, prefs)
+        val shared = prefs.dsSavesDirOverride?.takeIf { it.isNotBlank() }?.let(::File) ?: dirs.first()
+        if (resolve(shared, rom).isFile) return true
+        val legacy = listOfNotNull(prefs.romSaveDir(rom)?.let(::File), rom.absoluteFile.parentFile) + dirs
+        return legacy.any { resolve(it, rom).isFile }
+    }
+
+    /** DS defaults to PokeDaisy's save folder; an older beside-ROM save is imported there by [saveFor]. */
     fun dirsFor(rom: File, nds: Boolean, dirs: List<File>, sharedDsFolder: File? = null): List<File> {
         if (nds && sharedDsFolder != null) return (listOf(sharedDsFolder) + dirs).distinctBy { it.absolutePath }
         val beside = rom.absoluteFile.parentFile ?: return dirs
         if (!nds || !(beside.canWrite() || resolve(beside, rom).exists())) return dirs
+        if (nds) return (dirs + beside).distinctBy { it.absolutePath }
         return (listOf(beside) + dirs).distinctBy { it.absolutePath }
     }
 

@@ -3,8 +3,11 @@ package com.pokedaisy.app.n3ds
 import android.content.Context
 import android.util.Log
 import java.io.File
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -49,11 +52,61 @@ object N3dsSaves {
         prefs.n3dsUserDirOverride?.takeIf { it.isNotBlank() }?.let(::File)
             ?: File(context.getExternalFilesDir(null) ?: context.filesDir, "n3ds")
 
-    fun saveFolder(context: Context, titleId: Long): File {
+    /** The durable PokeDaisy save location. Azahar gets a working copy in its SD tree when the game starts. */
+    fun sharedSaveRoot(context: Context, prefs: com.pokedaisy.app.Prefs = com.pokedaisy.app.Prefs(context)): File =
+        prefs.n3dsSavesDirOverride?.takeIf { it.isNotBlank() }?.let(::File)
+            ?: com.pokedaisy.app.SavesLocation.dir(context, prefs)
+
+    /** The archive uses the ROM's basename, matching PokeDaisy's other game saves. */
+    fun sharedSavePath(context: Context, prefs: com.pokedaisy.app.Prefs, rom: File, titleId: Long): File =
+        File(sharedSaveRoot(context, prefs), sharedSaveName(rom))
+
+    internal fun sharedSaveName(rom: File): String = "${com.pokedaisy.app.RomArchive.baseName(rom)}.sav"
+
+    internal fun archiveFileName(titleId: Long): String =
+        java.lang.Long.toHexString(titleId).padStart(16, '0')
+
+    fun saveFolder(context: Context, titleId: Long): File = saveFolder(root(context), titleId)
+
+    /** Resolve the cart archive under every SD profile Azahar has in this user-data root. Older code only
+     * checked the all-zero test profile, so a save made under a real id0/id1 was invisible to PokeDaisy. */
+    internal fun saveFolder(root: File, titleId: Long): File {
         val high = String.format(Locale.US, "%08x", (titleId ushr 32).toInt())
         val low = String.format(Locale.US, "%08x", titleId.toInt())
-        return File(root(context), "sdmc/Nintendo 3DS/$ZEROS/$ZEROS/title/$high/$low/data/00000001")
+        val profiles = File(root, "sdmc/Nintendo 3DS").listFiles()?.filter { it.isDirectory }
+            .orEmpty().sortedBy { it.name }
+        val candidates = profiles.flatMap { id0 ->
+            id0.listFiles()?.filter { it.isDirectory }.orEmpty().sortedBy { it.name }.map { id1 ->
+                File(id1, "title/$high/$low/data/00000001")
+            }
+        }
+        return candidates.firstOrNull { folder -> folder.listFiles()?.any { it.isFile } == true }
+            ?: candidates.firstOrNull()
+            ?: File(root, "sdmc/Nintendo 3DS/$ZEROS/$ZEROS/title/$high/$low/data/00000001")
     }
+
+    /** The canonical archive in PokeDaisy's save folder; migrate the old Azahar copy the first time it's discovered. */
+    fun saveFile(context: Context, prefs: com.pokedaisy.app.Prefs, rom: File, titleId: Long): File? {
+        val shared = sharedSavePath(context, prefs, rom, titleId)
+        if (shared.isFile && shared.length() > 0L) return shared
+        val oldShared = File(sharedSaveRoot(context, prefs), "${archiveFileName(titleId)}.3ds-save")
+        if (oldShared.isFile && oldShared.length() > 0L) {
+            return copyArchiveToShared(oldShared, shared)
+        }
+        val legacy = File(saveFolder(context, titleId), "main")
+        if (!legacy.isFile || legacy.length() == 0L) return null
+        return copyArchiveToShared(legacy, shared)
+    }
+
+    /** Import Azahar's archive into the ROM-named `.sav` path without removing the source copy. */
+    internal fun copyArchiveToShared(source: File, shared: File): File = runCatching {
+        if (shared.isFile && shared.length() > 0L) return shared
+        replaceAtomically(source, shared)
+        shared
+    }.getOrElse { source }
+
+    fun hasSave(context: Context, prefs: com.pokedaisy.app.Prefs, rom: File, titleId: Long): Boolean =
+        saveFile(context, prefs, rom, titleId) != null
 
     private fun metadata(folder: File) = File(folder.parentFile, "00000001.metadata")
 
@@ -67,8 +120,22 @@ object N3dsSaves {
      * Before a boot: a save without its format file gets the game's format written (or, for a game whose format isn't
      * known, the boot is refused: it would format the save away), and a save there is copied to `backups/` first.
      */
-    fun prepare(context: Context, titleId: Long): Ready {
+    fun prepare(context: Context, titleId: Long, rom: File, prefs: com.pokedaisy.app.Prefs = com.pokedaisy.app.Prefs(context)): Ready {
+        // Migrate the prior title-ID filename or Azahar's legacy `main` before staging.
+        saveFile(context, prefs, rom, titleId)
         val folder = saveFolder(context, titleId)
+        val main = File(folder, "main")
+        val shared = sharedSavePath(context, prefs, rom, titleId)
+        if (shared.isFile && (!main.isFile || shared.lastModified() > main.lastModified())) {
+            main.parentFile?.mkdirs()
+            main.takeIf { it.isFile }?.let { backup(context, titleId, listOf(it)) }
+            shared.copyTo(main, overwrite = true)
+            Log.i(TAG, "staged shared save for ${java.lang.Long.toHexString(titleId)}")
+        } else if (main.isFile && (!shared.isFile || !main.readBytes().contentEquals(shared.readBytes()))) {
+            shared.parentFile?.mkdirs()
+            main.copyTo(shared, overwrite = true)
+            Log.i(TAG, "imported Azahar save into PokeDaisy's save folder for ${java.lang.Long.toHexString(titleId)}")
+        }
         val files = folder.listFiles()?.filter { it.isFile }.orEmpty()
         if (files.isEmpty()) return Ready.Ok // a new game: the game formats its own save
         if (!metadata(folder).isFile) {
@@ -79,6 +146,37 @@ object N3dsSaves {
         }
         backup(context, titleId, files)
         return Ready.Ok
+    }
+
+    /** Copy Azahar's latest saved archive back into PokeDaisy's shared save folder after the core exits. */
+    fun syncFromAzahar(userDir: File, titleId: Long, shared: File): Boolean = try {
+        val main = File(saveFolder(userDir, titleId), "main")
+        if (main.isFile && main.length() > 0L &&
+            (!shared.isFile || !main.readBytes().contentEquals(shared.readBytes()))
+        ) {
+            replaceAtomically(main, shared)
+        }
+        // PokeDaisy's shared save folder is the canonical copy; retain Azahar's working copy for crash recovery.
+        true
+    } catch (error: Exception) {
+        runCatching { Log.e(TAG, "couldn't sync the Azahar save into PokeDaisy's shared save folder", error) }
+        false
+    }
+
+    /** Replace a save only after its complete temporary copy is ready; both files stay on the same filesystem. */
+    private fun replaceAtomically(source: File, target: File) {
+        val parent = target.parentFile ?: throw IOException("save path has no parent folder: ${target.path}")
+        if (!parent.isDirectory && !parent.mkdirs()) throw IOException("couldn't create save folder: ${parent.path}")
+        val temp = File.createTempFile("${target.name}.", ".tmp", parent)
+        try {
+            source.copyTo(temp, overwrite = true)
+            Files.move(
+                temp.toPath(), target.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING,
+            )
+        } finally {
+            if (temp.exists()) temp.delete()
+        }
     }
 
     private fun writeFormat(file: File, f: Format) {

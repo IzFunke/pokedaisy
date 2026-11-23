@@ -108,19 +108,28 @@ class GameInfo(
                 add("SHA1" to (sha1 ?: pending))
             }
 
-            val save = SavesLocation.saveFor(context, prefs, rom)
+            val n3dsTitleId = if (rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS)
+                com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId else null
+            val n3dsSave = n3dsTitleId?.let { titleId ->
+                com.pokedaisy.app.n3ds.N3dsSaves.saveFile(context, prefs, rom, titleId)
+                    ?: com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(context, prefs, rom, titleId)
+            }
+            val save = n3dsSave ?: SavesLocation.saveFor(context, prefs, rom)
             val savesDir = save.parentFile ?: SavesLocation.dir(context, prefs)
-            val backups = GameSaves.backups(savesDir, save.nameWithoutExtension)
+            val backups = if (n3dsTitleId != null) emptyList() else GameSaves.backups(savesDir, save.nameWithoutExtension)
             val saveRows = buildList {
                 if (save.isFile) {
                     add(tr("FILE") to save.absolutePath)
-                    add(tr("SIZE") to (sizeLabel(save.length()) + (GameSaves.kind(save.length())?.let { " · $it" } ?: "")))
+                    val kind = if (n3dsTitleId == null) GameSaves.kind(save.length()) else null
+                    add(tr("SIZE") to (sizeLabel(save.length()) + (kind?.let { " · $it" } ?: "")))
                     add(tr("MODIFIED") to dateLabel(save.lastModified()))
                 } else {
                     add(tr("FILE") to tr("None yet - made by the game's first save"))
                     add(tr("WILL BE") to save.absolutePath)
                 }
-                add(tr("BACKUPS") to if (backups.isEmpty()) tr("None") else tr("{0} · newest {1}", backups.size, backups.first().name))
+                if (n3dsTitleId == null) {
+                    add(tr("BACKUPS") to if (backups.isEmpty()) tr("None") else tr("{0} · newest {1}", backups.size, backups.first().name))
+                }
             }
 
             val stateRows = buildList {

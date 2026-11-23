@@ -873,10 +873,15 @@ class Prefs(
         get() = p.getString("saves_dir_override", null)
         set(v) = p.edit().putString("saves_dir_override", v).apply()
 
-    /** Settings > FOLDERS > DS GAME SAVES: shared destination for DS saves. Null keeps the legacy beside-ROM rule. */
+    /** Settings > FOLDERS > DS GAME SAVES: optional shared folder; the PokeDaisy save folder is the default. */
     var dsSavesDirOverride: String?
         get() = p.getString("ds_saves_dir_override", null)
         set(v) = p.edit().putString("ds_saves_dir_override", v).apply()
+
+    /** Settings > FOLDERS > 3DS GAME SAVES: optional root for Azahar's `main` archive copies. */
+    var n3dsSavesDirOverride: String?
+        get() = p.getString("n3ds_saves_dir_override", null)
+        set(v) = p.edit().putString("n3ds_saves_dir_override", v).apply()
 
     /** Root of Azahar's user data tree (`sdmc/`, NAND, config); null keeps the app-private default. */
     var n3dsUserDirOverride: String?

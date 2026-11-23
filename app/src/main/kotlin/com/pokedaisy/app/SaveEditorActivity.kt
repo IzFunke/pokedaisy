@@ -62,10 +62,12 @@ class SaveEditorActivity : ComponentActivity() {
         val file: Gen3SaveFile?,
         val ds: Pair<com.pokedaisy.app.companion.data.save.Gen4SaveFile, com.pokedaisy.app.companion.data.save.Gen4GameData>? = null,
         val gen5: Pair<com.pokedaisy.app.companion.data.save.Gen5SaveFile, com.pokedaisy.app.companion.data.save.Gen5GameData>? = null,
+        val xyEditor: com.pokedaisy.app.companion.data.save.MonSaveEditor? = null,
     ) {
         fun editor(): com.pokedaisy.app.companion.data.save.MonSaveEditor = file?.let { Gen3SaveEditor(it) }
             ?: ds?.let { (f, g) -> com.pokedaisy.app.companion.data.save.Gen4SaveEditor(f, g) }
-            ?: gen5!!.let { (f, g) -> com.pokedaisy.app.companion.data.save.Gen5SaveEditor(f, g) }
+            ?: gen5?.let { (f, g) -> com.pokedaisy.app.companion.data.save.Gen5SaveEditor(f, g) }
+            ?: requireNotNull(xyEditor)
     }
 
     /** A Black / White (or sequel) save as read: POKé TRANSFER's receiving side. */
@@ -316,9 +318,9 @@ class SaveEditorActivity : ComponentActivity() {
     private fun pickToEdit() {
         page = Page.Picking
         Thread {
-            val list = readableGames(gen5 = true)
+            val list = readableGames(gen5 = true, gen6Xy = true)
             runOnUiThread {
-                if (list.isEmpty()) page = Page.Message(tr("SAVE EDITOR needs a game with a save it can read: FireRed, LeafGreen, Emerald, Ruby, Sapphire, HeartGold, SoulSilver, Platinum, Black, White, Black 2 or White 2, saved once in the game."))
+                if (list.isEmpty()) page = Page.Message(tr("SAVE EDITOR needs a supported game's save, saved once in that game."))
                 else editPick = list
             }
         }.start()
@@ -370,6 +372,8 @@ class SaveEditorActivity : ComponentActivity() {
         except: File? = null, with: File? = null, onlyDs: Boolean? = null,
         /** Black / White and their sequels too (the editor and COLLECTION; they don't trade here yet). */
         gen5: Boolean = false,
+        /** X/Y's editor is enabled for the direct SAVE EDITOR picker, not trade/transfer tools. */
+        gen6Xy: Boolean = false,
     ): List<Pair<File, String>> {
         // A Black / White save trades with the others of its generation alone.
         if (with != null && SaveFileEdits.isGen5(with)) {
@@ -382,7 +386,8 @@ class SaveEditorActivity : ComponentActivity() {
             .filter {
                 it.absolutePath != except?.absolutePath &&
                     when (ds) {
-                        null -> SaveFileEdits.formatFor(it) != null || SaveFileEdits.isDsEditable(it) || (gen5 && SaveFileEdits.isGen5(it))
+                        null -> SaveFileEdits.formatFor(it) != null || SaveFileEdits.isDsEditable(it) ||
+                            (gen5 && SaveFileEdits.isGen5(it)) || (gen6Xy && SaveFileEdits.isGen6Xy(it))
                         true -> SaveFileEdits.isDsEditable(it)
                         false -> SaveFileEdits.formatFor(it) != null
                     } &&
@@ -545,6 +550,7 @@ class SaveEditorActivity : ComponentActivity() {
 
     /** [rom]'s save as an [Opened], or why there's none (a String). Blocking. */
     private fun open(rom: File): Any {
+        if (SaveFileEdits.isGen6Xy(rom)) return openGen6Xy(rom)
         if (SaveFileEdits.isDsEditable(rom)) return openDs(rom)
         if (SaveFileEdits.isGen5(rom)) return openGen5Editor(rom)
         val format = SaveFileEdits.formatFor(rom)
@@ -560,6 +566,39 @@ class SaveEditorActivity : ComponentActivity() {
                 else Opened(rom, GameTitles.label(this, prefs, rom), RomIdentity.gameCode(rom).orEmpty(), bytes, parsed.save)
             }
         }
+    }
+
+    /** Pokémon X/Y uses its verified Gen 6 main-save and PK6 editor behind the shared PC-box screen. */
+    private fun openGen6Xy(rom: File): Any {
+        val save = SavesLocation.saveFor(this, prefs, rom)
+        if (!save.isFile) return tr("No save yet - save once in the game first.")
+        val bytes = runCatching { save.readBytes() }.getOrNull() ?: return tr("Can't read the save {0}", save.path)
+        val parsed = when (val result = com.pokedaisy.app.companion.data.save.Gen6XySave.parse(bytes)) {
+            is com.pokedaisy.app.companion.data.save.Gen6XySave.Parsed.Failed -> return result.reason
+            is com.pokedaisy.app.companion.data.save.Gen6XySave.Parsed.Ok -> result.save
+        }
+        val cart = RomArchive.playable(rom, cacheDir) ?: rom
+        val language = xyLanguage(parsed)
+        val editor = runCatching {
+            com.pokedaisy.app.n3ds.Gen6XySaveEditor(parsed, cart, language)
+        }.getOrElse { return tr("Can't read Pokémon X/Y's localized data from this ROM: {0}", it.message ?: it.toString()) }
+        return Opened(rom, GameTitles.label(this, prefs, rom), "", bytes, null, xyEditor = editor)
+    }
+
+    /** Use an explicit app language when set; AUTO follows a valid Pokémon record's language, then English. */
+    private fun xyLanguage(save: com.pokedaisy.app.companion.data.save.Gen6XySave): Int {
+        val explicit = com.pokedaisy.app.companion.i18n.AppLanguage.ofCode(prefs.appLanguage)
+        val language = when (explicit) {
+            com.pokedaisy.app.companion.i18n.AppLanguage.JA -> 1
+            com.pokedaisy.app.companion.i18n.AppLanguage.EN -> 2
+            com.pokedaisy.app.companion.i18n.AppLanguage.FR -> 3
+            com.pokedaisy.app.companion.i18n.AppLanguage.IT -> 4
+            com.pokedaisy.app.companion.i18n.AppLanguage.DE -> 5
+            com.pokedaisy.app.companion.i18n.AppLanguage.ES -> 7
+            com.pokedaisy.app.companion.i18n.AppLanguage.KO -> 8
+            else -> save.languageHint() ?: 2
+        }
+        return language
     }
 
     /** A HeartGold / SoulSilver or Platinum save as an [Opened] (the cart's own tables read for it), or why there's none. Blocking. */
@@ -594,6 +633,8 @@ class SaveEditorActivity : ComponentActivity() {
     /** [rom]'s party icons from the ROM file: a DS cart's own archive (NdsArt.monIcons), a GBA ROM's tables when they're
      * known and check out (RomMonIcons); and a GBA ROM's 64x64 front pictures (RomMonSprites). Blocking; once per ROM. */
     private fun loadIcons(rom: File) {
+        // These DS / GBA art readers hash and inspect their own cart formats; don't scan a 3DS ROM as a GBA image.
+        if (SaveFileEdits.isGen6Xy(rom)) return
         // A GBA ROM's front pictures, when its dex tables are known and check out. Looked for once per ROM: hashing a
         // ROM reads the whole file (an archive unpacked), and COLLECTION / MISSING call this for every save.
         val gba = !RomIdentity.isNds(rom)
@@ -725,8 +766,10 @@ class SaveEditorActivity : ComponentActivity() {
                 }
                 PcBoxesScreen(
                     s, gameName, m, onBack = { if (!backToCollection()) finish() }, onSave = { save(p) }, saving = saving,
-                    icons = icons[rom.absolutePath], sprites = sprites[rom.absolutePath], onTrade = { pickPartner() },
-                    onMissing = { loadMissing(p) }, onGet = { getMissing(p, it) },
+                    icons = icons[rom.absolutePath], sprites = sprites[rom.absolutePath],
+                    onTrade = if (p.opened.xyEditor == null) ({ pickPartner() }) else null,
+                    onMissing = if (p.opened.xyEditor == null) ({ loadMissing(p) }) else null,
+                    onGet = if (p.opened.xyEditor == null) ({ getMissing(p, it) }) else null,
                 )
             }
             is Page.Trade -> {

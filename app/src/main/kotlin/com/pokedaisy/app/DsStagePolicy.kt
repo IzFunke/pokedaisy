@@ -48,9 +48,8 @@ internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Sc
             com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN,
         )
 
-/** A page rendered on both 3DS screens uses the same temporary paired layout as a DS menu page. */
-internal fun n3dsStageLayout(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, chosen: DsLayout): DsLayout =
-    if (chosen.floats && scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN) DsLayout.SIDE_BY_SIDE else chosen
+/** 3DS scenes never override the player's selected presentation; automatic touch-screen scenes float over ONE SCREEN. */
+internal fun n3dsStageLayout(chosen: DsLayout): DsLayout = chosen
 
 /** A closed ONE SCREEN has no frame; PIP keeps its always-visible inset framed, like the DS touch layout. */
 internal fun n3dsTouchWindowFramed(layout: DsLayout, windowOpen: Boolean): Boolean =

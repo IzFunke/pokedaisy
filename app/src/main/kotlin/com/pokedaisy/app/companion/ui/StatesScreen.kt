@@ -100,8 +100,8 @@ fun StatesScreen(slots: StateSlots?, tick: Long) {
         OptionTitleWindow(tr("SAVE STATES"), m, trailing = tr("SLOT {0}", slots.currentIndex))
         Spacer(Modifier.height(m.u * 4))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(m.u * 4)) {
-            OptionButton(tr("UNDO SAVE"), m, onClick = { slots.requestUndoSave(); requests++ }, enabled = deleting == null, rainbow = false, modifier = Modifier.weight(1f))
-            OptionButton(tr("UNDO LOAD"), m, onClick = { slots.requestUndoLoad() }, enabled = deleting == null, rainbow = false, modifier = Modifier.weight(1f))
+            OptionButton(tr("UNDO SAVE"), m, onClick = { slots.requestUndoSave(); requests++ }, enabled = deleting == null && slots.undoSupported, rainbow = false, modifier = Modifier.weight(1f))
+            OptionButton(tr("UNDO LOAD"), m, onClick = { slots.requestUndoLoad() }, enabled = deleting == null && slots.undoSupported, rainbow = false, modifier = Modifier.weight(1f))
         }
         Spacer(Modifier.height(m.u * 4))
         BoxWithConstraints(Modifier.fillMaxSize()) {

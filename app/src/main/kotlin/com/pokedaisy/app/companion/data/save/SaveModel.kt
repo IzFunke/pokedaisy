@@ -73,7 +73,15 @@ enum class BoxSort { DEX, LEVEL, NAME }
  * or an [IllegalArgumentException] for a value the screens never offer. [build] gives the whole file to write.
  */
 /** An editor's working copies at one moment ([MonSaveEditor.snapshot]). */
-class EditorSnapshot internal constructor(internal val parts: List<ByteArray>)
+class EditorSnapshot internal constructor(internal val parts: List<ByteArray>) {
+    /** Make an opaque snapshot for a save adapter outside the shared module. */
+    companion object {
+        fun of(parts: List<ByteArray>): EditorSnapshot = EditorSnapshot(parts.map { it.copyOf() })
+    }
+
+    /** A defensive copy of one opaque snapshot part. */
+    fun copyPart(index: Int): ByteArray = parts[index].copyOf()
+}
 
 interface MonSaveEditor {
     val data: MonSave
@@ -92,6 +100,15 @@ interface MonSaveEditor {
 
     /** Box names and nicknames can be written ([renameBox], [setNickname]). */
     val canWriteNames: Boolean
+    /** Independent edit capabilities; generations can expose the shared pages without offering unsupported operations. */
+    val canEditLevel: Boolean get() = true
+    val canEditTraits: Boolean get() = true
+    val canEditFriendship: Boolean get() = true
+    val canEditStats: Boolean get() = true
+    val canEditMoves: Boolean get() = true
+    val canSortBoxes: Boolean get() = true
+    /** Whether this slot may be the source of MOVE. */
+    fun canMoveFrom(at: MonRef): Boolean = true
     /** The most characters a nickname of the Pokémon at [at] takes, and a box name. */
     fun nicknameMax(at: MonRef): Int
     val boxNameMax: Int

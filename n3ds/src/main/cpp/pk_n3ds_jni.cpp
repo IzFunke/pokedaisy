@@ -16,6 +16,7 @@
 #include <condition_variable>
 #include <cstdio>
 #include <cstdint>
+#include <exception>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -169,8 +170,8 @@ bool initialized = false;
 struct ReadJob {
     std::vector<std::pair<u32, u32>> ranges; // address, length
     std::vector<u8> out;
-    // Non-zero: instead of ranges, the names of the modules (CROs) loaded after this static module (CRS), its header's
-    // "next" chain, joined by '\n' into [modules].
+    // Non-zero: names of the modules (CROs) loaded after this static module (CRS), its header's "next" chain, joined
+    // by '\n' into [modules]. Can be combined with [ranges] for one consistent frame-boundary observation.
     u32 moduleRoot = 0;
     std::string modules;
     // Written before anything is read (debug builds' pokes: N3dsNative.writeMemory).
@@ -219,12 +220,7 @@ void runReads(Core::System& system) {
                 system.Memory().WriteBlock(*process, addr, data.data(), data.size());
     }
     readJob.writes.clear();
-    if (readJob.moduleRoot != 0) {
-        if (process) readJob.modules = moduleNames(system, *process, readJob.moduleRoot);
-        readJob.pending = false;
-        requestDone.notify_all();
-        return;
-    }
+    if (process && readJob.moduleRoot != 0) readJob.modules = moduleNames(system, *process, readJob.moduleRoot);
     if (!process) {
         readJob.pending = false;
         requestDone.notify_all();
@@ -361,7 +357,10 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSurface(JNIEnv*
                                                                         jobject surface) {
     if (which < 0 || which > 1) return;
     std::scoped_lock lock(surfaceMutex);
-    if (surfaces[which]) ANativeWindow_release(surfaces[which]);
+    // Acquire the replacement before releasing the old window. PkWindow uses pointer identity to decide whether its
+    // render surface changed; releasing first can let Android reuse the old ANativeWindow address for a new surface,
+    // making a detach/reattach look unchanged and leaving Vulkan attached to the old swapchain.
+    ANativeWindow* const previous = surfaces[which];
     surfaces[which] = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
     surfaceCv.notify_all();
     // TOUCH SCREEN attaches this surface on demand in ONE SCREEN. Create its renderer on the game thread at a frame
@@ -372,6 +371,7 @@ JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSurface(JNIEnv*
         auto& system = Core::System::GetInstance();
         if (system.IsPoweredOn() && surfaces[which]) system.GPU().Renderer().NotifySurfaceChanged(which == 1);
     }
+    if (previous) ANativeWindow_release(previous);
 }
 
 // Boots path and runs it on this thread until stop(); returns Core::System::ResultStatus (0 = stopped normally).
@@ -563,6 +563,65 @@ JNIEXPORT jbyteArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_readMemory(J
     return result;
 }
 
+// A game's loaded modules and a small set of related memory ranges from the same frame boundary. This keeps screen
+// detection and battle-controller reads coherent and avoids queuing a second synchronous JNI request during battle.
+JNIEXPORT jobjectArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_readObservationNative(JNIEnv* env, jclass, jint root,
+                                                                                       jintArray jranges) {
+    const jsize n = jranges ? env->GetArrayLength(jranges) : 0;
+    constexpr jsize maxRanges = 256;
+    constexpr u64 maxBytes = 32ull * 1024 * 1024;
+    if (n < 0 || (n & 1) != 0 || n / 2 > maxRanges || root <= 0) return nullptr;
+    std::vector<jint> r(static_cast<size_t>(n));
+    if (n != 0) env->GetIntArrayRegion(jranges, 0, n, r.data());
+    u64 totalBytes = 0;
+    for (jsize i = 0; i < n; i += 2) {
+        const u64 len = static_cast<u32>(r[i + 1]);
+        const u64 end = static_cast<u64>(static_cast<u32>(r[i])) + len;
+        if (r[i + 1] <= 0 || len > (1u << 20) || end > static_cast<u64>(std::numeric_limits<u32>::max()) + 1)
+            return nullptr;
+        totalBytes += len;
+        if (totalBytes > maxBytes) return nullptr;
+    }
+    std::string modules;
+    std::vector<u8> out;
+    {
+        std::scoped_lock caller(readCallers);
+        std::unique_lock lock(requestMutex);
+        if (!Core::System::GetInstance().IsPoweredOn() || stopRun) return nullptr;
+        readJob.ranges.clear();
+        readJob.moduleRoot = static_cast<u32>(root);
+        for (jsize i = 0; i + 1 < n; i += 2)
+            readJob.ranges.emplace_back(static_cast<u32>(r[i]), static_cast<u32>(r[i + 1]));
+        readJob.pending = true;
+        pauseCv.notify_all();
+        requestDone.wait(lock, [] { return !readJob.pending || stopRun; });
+        readJob.moduleRoot = 0;
+        if (readJob.pending || !readJob.ok) return nullptr;
+        modules.swap(readJob.modules);
+        out.swap(readJob.out);
+    }
+    jclass byteArrayClass = env->FindClass("[B");
+    if (byteArrayClass == nullptr) return nullptr;
+    jobjectArray result = env->NewObjectArray(2, byteArrayClass, nullptr);
+    if (result == nullptr) return nullptr;
+    const auto toJava = [env](const u8* bytes, size_t size) -> jbyteArray {
+        if (size > static_cast<size_t>(std::numeric_limits<jsize>::max())) return nullptr;
+        jbyteArray array = env->NewByteArray(static_cast<jsize>(size));
+        if (array != nullptr && size != 0)
+            env->SetByteArrayRegion(array, 0, static_cast<jsize>(size), reinterpret_cast<const jbyte*>(bytes));
+        return array;
+    };
+    jbyteArray moduleBytes = toJava(reinterpret_cast<const u8*>(modules.data()), modules.size());
+    jbyteArray memoryBytes = toJava(out.data(), out.size());
+    if (moduleBytes == nullptr || memoryBytes == nullptr) return nullptr;
+    env->SetObjectArrayElement(result, 0, moduleBytes);
+    env->SetObjectArrayElement(result, 1, memoryBytes);
+    env->DeleteLocalRef(moduleBytes);
+    env->DeleteLocalRef(memoryBytes);
+    env->DeleteLocalRef(byteArrayClass);
+    return result;
+}
+
 // Speed in percent of real time; 0 = as fast as it goes.
 JNIEXPORT void JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_setSpeed(JNIEnv*, jclass, jint percent) {
     Settings::values.frame_limit = static_cast<double>(std::max(percent, 0));
@@ -595,7 +654,7 @@ bool shotInvert = false;
 // The top screen of the next frame at [w] x [h] (ARGB, top row first); null without a running game, while another
 // screenshot is still pending, or when no frame came within a second (a paused game). Blocks: never the UI thread.
 extern "C" JNIEXPORT jintArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_screenshot(JNIEnv* env, jclass, jint w, jint h,
-                                                                             jboolean bottom) {
+                                                                             jboolean bottom) try {
     if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return nullptr;
     auto& system = Core::System::GetInstance();
     std::unique_lock lock(shotMutex);
@@ -624,8 +683,66 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_sc
             out[static_cast<size_t>(y) * w + x] = static_cast<jint>(shotBuf[from + x] | 0xFF000000u);
     }
     jintArray result = env->NewIntArray(static_cast<jsize>(out.size()));
+    if (!result) return nullptr;
     env->SetIntArrayRegion(result, 0, static_cast<jsize>(out.size()), out.data());
     return result;
+} catch (const std::exception& error) {
+    PKLOG("screenshot failed: %s", error.what());
+    return nullptr;
+} catch (...) {
+    PKLOG("screenshot failed with an unknown native exception");
+    return nullptr;
+}
+
+// One atomic render-target readback of both 3DS displays, laid out for a transition overlay. The 400x240 top
+// screen is left of the 320x240 touch screen; Vulkan draws both rectangles from the same emulated frame.
+extern "C" JNIEXPORT jintArray JNICALL Java_com_pokedaisy_app_n3ds_N3dsNative_screenshotPairNative(JNIEnv* env, jclass) try {
+    constexpr jint width = 720;
+    constexpr jint height = 240;
+    auto& system = Core::System::GetInstance();
+    std::unique_lock lock(shotMutex);
+    {
+        std::scoped_lock r(requestMutex);
+        if (!system.IsPoweredOn() || stopRun || paused) return nullptr;
+        auto& renderer = system.GPU().Renderer();
+        if (renderer.IsScreenshotPending()) return nullptr;
+        shotBuf.assign(static_cast<size_t>(width) * height, 0);
+        shotDone = false;
+        Layout::FramebufferLayout layout{};
+        layout.width = width;
+        layout.height = height;
+        layout.top_screen_enabled = true;
+        layout.bottom_screen_enabled = true;
+        layout.top_screen = {0, 0, 400, 240};
+        layout.bottom_screen = {400, 0, width, height};
+        layout.is_rotated = true;
+        renderer.RequestScreenshot(
+            shotBuf.data(),
+            [](bool invertY) {
+                std::scoped_lock l(shotMutex);
+                shotInvert = invertY;
+                shotDone = true;
+                shotCv.notify_all();
+            },
+            layout);
+    }
+    if (!shotCv.wait_for(lock, std::chrono::seconds(1), [] { return shotDone; })) return nullptr;
+    std::vector<jint> out(shotBuf.size());
+    for (jint y = 0; y < height; y++) {
+        const size_t from = static_cast<size_t>(shotInvert ? height - 1 - y : y) * width;
+        for (jint x = 0; x < width; x++)
+            out[static_cast<size_t>(y) * width + x] = static_cast<jint>(shotBuf[from + x] | 0xFF000000u);
+    }
+    jintArray result = env->NewIntArray(static_cast<jsize>(out.size()));
+    if (!result) return nullptr;
+    env->SetIntArrayRegion(result, 0, static_cast<jsize>(out.size()), out.data());
+    return result;
+} catch (const std::exception& error) {
+    PKLOG("paired screenshot failed: %s", error.what());
+    return nullptr;
+} catch (...) {
+    PKLOG("paired screenshot failed with an unknown native exception");
+    return nullptr;
 }
 
 // The names of the modules loaded after the static module whose header is at [root] (ReadJob::moduleRoot), one per

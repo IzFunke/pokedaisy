@@ -23,7 +23,8 @@ credits, an "About" screen or other Appropriate Legal Notices, there too.
 
 THIRD-PARTY COMPONENTS
 
-The app shows every license below in full under Settings > LICENSES.
+The app shows the full license texts for the components in that APK under
+Settings > LICENSES. Optional-build entries below say when they are included.
 
 - mGBA (third_party/mgba), Copyright (c) 2013-2022 Jeffrey Pfau and
   contributors, Mozilla Public License 2.0 - https://github.com/mgba-emu/mgba
@@ -92,6 +93,23 @@ The app shows every license below in full under Settings > LICENSES.
   Banana 2D engine (gpu2d/), over melonDS's own software 3D renderer. Its Gengis
   Engine (gengis/) is not built, nor the rest of that repository (SuperDrastic,
   MIT).
+- Optional Android 3DS build (`n3ds/`): Azahar core from `azahar-emu/azahar`,
+  tag `2126.2`, pinned commit `219d743a1e698101fe1ab8bef43e6563126c3c27`.
+  PokeDaisy's native front end is in `n3ds/src/main/cpp/`; the upstream Android
+  application is not built. `third_party/patches/apply_azahar_patch.cmake`
+  applies PokeDaisy's build-only changes to the submodule. The source tree's
+  root `license.txt` is GPL version 2, while files in the pinned tree also carry
+  other explicit notices, including GPL version 3-or-later headers. The Android
+  core statically links Dynarmic (permissive license in `externals/dynarmic/
+  LICENSE.txt`), MCL, ENet, LibreSSL, lodepng, FAAD2, SoundTouch, Teakra, cubeb,
+  Sirit, glslang, SPIR-V Tools / Headers, Boost, Crypto++, fmt, zstd, xxHash,
+  dds-ktx, nihstro, VMA, robin-map, Oaknut, and the Android game-mode header.
+  Their checked-in license texts are included in Settings > LICENSES in builds
+  with `pokedaisy.n3ds=true`. The mixed Azahar/GPL notices and FAAD2's GPL-only
+  restriction remain a distribution-compatibility review gate. The generated
+  GLAD loader has no license file in the pinned tree and also needs attribution
+  review. This notice does not assert that the combined APK is ready for
+  redistribution.
 - melonDS for BananaDS (third_party/melonds-bananads), Copyright (c) melonDS
   team, GNU GPL 3.0 - https://github.com/melonDS-emu/melonDS, at the commit
   BananaDS pins, with BananaDS's patches and PokeDaisy's
