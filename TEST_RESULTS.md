@@ -385,6 +385,8 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   touchscreen presentation. The early-game copy has no checksum-valid party members or bag entries, so it does not
   validate populated Companion cards. Its copied `main` save hash stayed
   `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2` before and after the run.
+- `Gen6Test` — PASS, 16 tests discovered, 9 ROM-dependent skips, 0 failures/errors. The new Y sample regression checks
+  that an empty early-game party and bag still produce German language and zone data rather than an invalid sample.
 - Ultra Moon's isolated `userdir20` resumed at `FieldRo`; a touchscreen tap at `(160,120)` was issued and the run
   advanced 63 frames. The module set remained `FieldRo`, `FieldMenu`, `FieldEffectCommon`. The headless screenshot
   still contains only the upper scene with a black lower area, so this run does not establish a touch-driven lower

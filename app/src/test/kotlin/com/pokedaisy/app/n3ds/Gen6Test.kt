@@ -80,6 +80,24 @@ class Gen6Test {
         assertNull(Gen6Reader.decode(stored))
     }
 
+    @Test fun pokemonYEarlyGameSampleKeepsLanguageAndZoneWhenPartyAndBagAreEmpty() {
+        val config = Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!
+        val ranges = Gen6Reader.ranges(config)
+        val partyLength = ranges[1]
+        val bagLength = ranges[5]
+        val sampleBytes = ByteArray(partyLength + 0x170 + bagLength + 2)
+        sampleBytes[partyLength + config.languageAt] = 5 // German
+        val zoneAt = partyLength + 0x170 + bagLength
+        sampleBytes[zoneAt] = 2
+
+        val sample = Gen6Reader.read(config, sampleBytes)!!
+
+        assertTrue(sample.party.isEmpty())
+        assertEquals(5, sample.language)
+        assertTrue(sample.bag.isEmpty())
+        assertEquals(2, sample.zone)
+    }
+
     /** The cart's own text, where the player's Pokemon X sits (`3ds/` beside the GBA folder): skipped without it. */
     @Test fun readsTheCartsText() {
         val cart = File(File(RETAIL_ROM_DIR).parentFile, "3ds/Pokemon X (USA) (En,Ja,Fr,De,Es,It,Ko).3ds")
