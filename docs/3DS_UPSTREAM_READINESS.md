@@ -50,9 +50,12 @@ generated system archive data, mixed GPL headers, and runtime changes in PokeDai
 build references, and unresolved obligations are recorded in [the Azahar Android license audit](3DS_AZAHAR_LICENSE_AUDIT.md).
 The source review does not establish that an APK containing the optional Azahar core is redistributable or PR-ready.
 
-The Android 3DS path also needs a reproducible CI/build check with `pokedaisy.n3ds=true`; the current default CI
-intentionally skips Azahar. That check should only become required after it can fetch and validate the pinned source
-and all required license texts without relying on a developer's local submodule state.
+The default Android CI job intentionally skips Azahar. A separate `android-3ds` job now fetches the pinned Azahar
+submodule recursively and runs `:app:testDevUnitTest` plus `:app:assembleDev -Ppokedaisy.n3ds=true` on CI, so Kotlin,
+JNI, native configuration, and packaging drift can be caught without changing the normal fast Android job. The job is
+limited to CI pull requests and pushes; it is skipped when this workflow is called by a release workflow, so it does
+not enable Azahar redistribution in signed public releases. Treat it as advisory until the native build is observed
+passing consistently on GitHub's runners and the license/provenance questions above are resolved.
 
 ## Audit limits
 
