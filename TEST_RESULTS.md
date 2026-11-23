@@ -355,6 +355,8 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   bag/party presentation remain on their existing floating path. Returning to another scene restores the selected
   layout because `Prefs.dsLayout` is never changed.
 - The player manual and parity/architecture notes describe this behavior.
+- `npm test` in `website` — PASS, 82 tests; 0 failures. This checks the edited manual source alongside the site's
+  documentation and ROM-feature parser tests.
 - `DsStagePolicyTest` — PASS, 16/16, including floating-layout promotion, preservation of explicit layouts and
   return to the chosen layout outside `SCREEN`.
 - The snapshot pipeline now reads the active session token from `N3dsSnapshotGate`; stop closes it before Azahar
@@ -373,3 +375,20 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   exception in the captured log window, but the Activity was not visible. The `pokedaisy.xml` hash then differed from
   the prior measurement; its exact before/after field diff is unavailable, so no claim is made that every preference
   remained byte-identical. No save file changed in the later hash check.
+
+## 2026-11-23 Pokémon Y and Ultra Moon headless follow-up
+
+- Pokémon Y was resumed from the isolated `pss.state` checkpoint using a copied save. The capture reports title ID
+  `0004000000055e00`, modules `DllField`, `DllUSMirror`, and `DllPssMainMenu`, and the screenshot shows the PSS
+  Friends page on the lower display. The same live sample decodes German (`language=5`) and zone 2 through the
+  existing X/Y `Gen6Reader` configuration. This confirms the Y field-plus-PSS scene signal used for automatic
+  touchscreen presentation. The early-game copy has no checksum-valid party members or bag entries, so it does not
+  validate populated Companion cards. Its copied `main` save hash stayed
+  `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2` before and after the run.
+- Ultra Moon's isolated `userdir20` resumed at `FieldRo`; a touchscreen tap at `(160,120)` was issued and the run
+  advanced 63 frames. The module set remained `FieldRo`, `FieldMenu`, `FieldEffectCommon`. The headless screenshot
+  still contains only the upper scene with a black lower area, so this run does not establish a touch-driven lower
+  screen transition or Companion mapping. Before/after checkpoints and screenshot remain under
+  `work/usum-scene-investigation/` for follow-up.
+- These captures are headless observations only. The S25 stays locked, and no claim of real-device gameplay validation
+  is made.
