@@ -41,7 +41,7 @@ function source(slug, code) {
 
 /** One language's page as GitHub Markdown: a title, the language links, links and pictures pointed at their homes. */
 function guide(slug, code, langs) {
-  const src = readFileSync(source(slug, code), 'utf8');
+  const src = readFileSync(source(slug, code), 'utf8').replace(/\r\n/g, '\n');
   const m = /^---\n([\s\S]*?)\n---\n/.exec(src);
   const meta = YAML.parse(m[1]);
   const body = src
@@ -85,7 +85,7 @@ export function installGuides() {
 /** The guides whose file on disk isn't what installGuides() makes. */
 export function staleInstallGuides() {
   return Object.entries(installGuides())
-    .filter(([path, text]) => !existsSync(join(repo, path)) || readFileSync(join(repo, path), 'utf8') !== text)
+    .filter(([path, text]) => !existsSync(join(repo, path)) || readFileSync(join(repo, path), 'utf8').replace(/\r\n/g, '\n') !== text)
     .map(([path]) => path);
 }
 

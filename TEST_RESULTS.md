@@ -297,3 +297,9 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - Ultra Moon launched and rendered its first-run language warning and selector without a process crash. Testing stopped before confirming a language or changing its existing save. Its shared `.sav` hash remained `90a3a00e0a4d9bcc05164bb54af380a996943f5ccda4800a7e7d41db35e1d725`.
 - All six canonical shared `.sav` hashes were the same after both launch checks. The current Ultra Moon screen remains at the language choice; no permanent selection was made. Screen-mode parity and Companion gameplay telemetry were not established by these startup checks.
 - Opening the app and both games naturally updated usage metadata in its preferences (`app_open_count`, `play_millis`, per-ROM last-play timestamps, the new-feature-seen timestamp, and the setup-complete flag). No manual game, layout, core, save-path, or language preference was changed. This expected app activity means the preference file hash after gameplay differs from the immediate pre/post-install comparison above.
+
+## 2026-11-23 3DS layout manual and Windows website checks
+
+- Added a 3DS screens section to `docs/manual/devices.md`, describing the shared single-screen touch-window behavior and distinguishing Ultra Moon launchability from verified Companion game data.
+- Website manual parsing assumed LF line endings; the Windows checkout uses CRLF. Normalized manual text before parsing in `website/src/lib/docs.js` and before generating/comparing GitHub install guides in `website/scripts/install-guides.mjs`.
+- `npm test` in `website` — PASS, 82 tests; 0 failures. `npm run build` — PASS, 147 static pages.
