@@ -106,10 +106,17 @@ Settings > LICENSES. Optional-build entries below say when they are included.
   dds-ktx, nihstro, VMA, robin-map, Oaknut, and the Android game-mode header.
   Their checked-in license texts are included in Settings > LICENSES in builds
   with `pokedaisy.n3ds=true`. The mixed Azahar/GPL notices and FAAD2's GPL-only
-  restriction remain a distribution-compatibility review gate. The generated
-  GLAD loader has no license file in the pinned tree and also needs attribution
-  review. This notice does not assert that the combined APK is ready for
-  redistribution.
+  restriction remain a distribution-compatibility review gate. Azahar's
+  Android `licenses.xml` identifies GLAD, links to https://github.com/Dav1dde/glad,
+  and records Copyright (C) 2013-2022 David Herberth, but gives no license
+  grant. The generated files contain no license text. GLAD v0.1.36's own README
+  says generated code may be public domain, WTFPL or CC0, while warning that
+  Khronos specification licenses may apply; the applicable terms for these
+  exact generated files therefore remain unresolved. The separate
+  `externals/glad/include/KHR/khrplatform.h` carries Khronos's own permission
+  notice. These notices need a complete license-page treatment and review
+  before distribution. This notice does not assert that the combined APK is
+  ready for redistribution.
 - melonDS for BananaDS (third_party/melonds-bananads), Copyright (c) melonDS
   team, GNU GPL 3.0 - https://github.com/melonDS-emu/melonDS, at the commit
   BananaDS pins, with BananaDS's patches and PokeDaisy's
