@@ -963,6 +963,13 @@ change to any of the places listed under "Where it's decided" updates its rows h
 
 - Battle buttons for Emerald Rogue; the POKéMON switch for Japanese Ruby / Sapphire.
 
+## Native 3DS games
+
+The matrix above tracks the per-ROM hooks used by the Game Boy, Game Boy Color, GBA and DS companion/gameplay
+features. It does not describe native 3DS title support. The native 3DS core and its companion support are audited
+separately in [3DS upstream readiness](3DS_UPSTREAM_READINESS.md), including which titles are playable and which have
+a verified companion memory map.
+
 ## Linux / 3DS companion: tabs read per hack
 
 The Linux (and 3DS) companion reads each tab from the game's own data. For the ROM hacks it draws from the player's own ROM
