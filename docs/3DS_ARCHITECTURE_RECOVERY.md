@@ -25,13 +25,14 @@ The 3DS code reuses the existing app-facing contracts and keeps Azahar-specific 
 - `N3dsNative.kt` is the JNI boundary. `readObservation()` combines loaded CRO names and requested memory ranges at one Azahar frame boundary; the observer falls back to separate legacy reads if the combined JNI symbol is unavailable. This is analogous to DS frame-boundary reads, but uses Azahar's blocking request path and separate native runtime.
 - `Gen6Reader.kt` contains title-specific memory configs and scene decoding. X/Y, ORAS and Sun/Moon have configs; Ultra Moon has only a verified startup module observation. Unknown gameplay scenes remain `UNMAPPED` rather than being guessed.
 - `DsStagePolicy.kt` is shared for presentation policy. `n3dsStageLayout()` preserves the user's chosen layout; 3DS scenes can request the lower screen in the ONE SCREEN window path without silently changing that choice. `N3dsSceneTransition` / paired captures are 3DS-specific because Azahar exposes two independently rendered surfaces and frame-paired screenshots.
+- `companion/AdaptiveTouchWindow.kt` now provides the same 4:3 fit and 92% stage-width / 88% content-height limits to both DS's `DsTouchWindow` and 3DS's floating touch screen. 3DS supplies its actual touch-screen aspect and subtracts the Azahar frame before fitting. Its explicit dual-screen layouts continue through `DsLayouts`; only the floating single-screen window uses this helper.
 - The Companion view model, `SnapshotView`, `GameActions` and `StateSlots` are shared. Azahar's run loop, JNI, surfaces and native state handling remain 3DS-specific.
 
 ## Retained, changed, and unresolved
 
 Retained: `Gen6Reader`'s verified title configs and guarded pointer chains; `N3dsSession` as Azahar lifecycle adapter; `N3dsNative` as JNI boundary; shared app input, Companion snapshot model, actions, state slots, and stage policy.
 
-Changed toward DS conventions: app actions/state-slot ownership now uses common abstractions; scene-driven presentation is routed through the existing stage policy; Companion delivery is guarded by a per-session generation token so queued callbacks from an ended game cannot replace a newer session; scene and memory observations are batched at a frame boundary where the JNI entry point is available.
+Changed toward DS conventions: app actions/state-slot ownership now uses common abstractions; scene-driven presentation is routed through the existing stage policy; Companion delivery is guarded by a per-session generation token so queued callbacks from an ended game cannot replace a newer session; scene and memory observations are batched at a frame boundary where the JNI entry point is available; and both DS / 3DS touch windows share adaptive sizing and aspect-ratio fitting.
 
 Not replaced: the DS `EmulatorEngine` remains the DS core adapter. Forcing Azahar through it would conflate a distinct native lifecycle and its two Vulkan surfaces with the DS core's thread and framebuffer contract.
 
