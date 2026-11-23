@@ -4547,25 +4547,9 @@ class PokeDaisyActivity : Activity() {
      * TextureView ready for Azahar; verified field and menu scenes can request its floating presentation.
      */
     private fun n3dsArrange(layout: com.pokedaisy.app.companion.DsLayout, w: Int, h: Int, fill: Boolean): com.pokedaisy.app.companion.DsArrangement {
-        val top = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT
-        val touch = com.pokedaisy.app.companion.DsLayouts.ASPECT
         val floating = n3dsFloating.value || n3dsTouchAutoWanted
-        if (layout == com.pokedaisy.app.companion.DsLayout.ONE_SCREEN ||
-            layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE && floating) {
-            val alone = com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch).top
-            val frame = com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density * 2f
-            val fit = com.pokedaisy.app.companion.fitTouchWindow(
-                w * com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE - frame,
-                h * com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE - frame,
-                touch,
-            )
-            val tw = fit.width.toInt()
-            val th = fit.height.toInt()
-            val x = (w - tw) / 2
-            val y = (h - th) / 2
-            return com.pokedaisy.app.companion.DsArrangement(alone, com.pokedaisy.app.companion.DsBox(x, y, x + tw, y + th))
-        }
-        return com.pokedaisy.app.companion.DsLayouts.arrange(layout, w, h, fill, top, touch)
+        val frame = com.pokedaisy.app.n3ds.N3dsWindowFrame.FRAME_DP * resources.displayMetrics.density * 2f
+        return n3dsStageArrangement(layout, w, h, fill, floating, frame)
     }
 
     /** [syncDsStage]'s part for 3DS: share DS auto/manual touch-window behavior and layout framing. */

@@ -1,6 +1,12 @@
 package com.pokedaisy.app
 
+import com.pokedaisy.app.companion.DsArrangement
+import com.pokedaisy.app.companion.DsBox
 import com.pokedaisy.app.companion.DsLayout
+import com.pokedaisy.app.companion.DsLayouts
+import com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE
+import com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE
+import com.pokedaisy.app.companion.fitTouchWindow
 
 /** Whether the app should arrange a Nintendo game's screens on this single display. */
 internal fun dsStageEnabled(
@@ -50,6 +56,36 @@ internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Sc
 
 /** 3DS scenes never override the player's selected presentation; automatic touch-screen scenes float over ONE SCREEN. */
 internal fun n3dsStageLayout(chosen: DsLayout): DsLayout = chosen
+
+/** Pure stage geometry for a 3DS game's screens; [framePx] is the total frame width/height around its touch surface. */
+internal fun n3dsStageArrangement(
+    layout: DsLayout,
+    width: Int,
+    height: Int,
+    fill: Boolean,
+    floating: Boolean,
+    framePx: Float,
+): DsArrangement {
+    val topAspect = DsLayouts.N3DS_TOP_ASPECT
+    val touchAspect = DsLayouts.ASPECT
+    if (layout == DsLayout.ONE_SCREEN || layout == DsLayout.PICTURE_IN_PICTURE && floating) {
+        val alone = DsLayouts.arrange(layout, width, height, fill, topAspect, touchAspect).top
+        val fit = fitTouchWindow(
+            width * TOUCH_WINDOW_WIDTH_SHARE - framePx,
+            height * TOUCH_WINDOW_HEIGHT_SHARE - framePx,
+            touchAspect,
+        )
+        val touchWidth = fit.width.toInt()
+        val touchHeight = fit.height.toInt()
+        val x = (width - touchWidth) / 2
+        val y = (height - touchHeight) / 2
+        return DsArrangement(
+            alone,
+            DsBox(x, y, x + touchWidth, y + touchHeight),
+        )
+    }
+    return DsLayouts.arrange(layout, width, height, fill, topAspect, touchAspect)
+}
 
 /** A closed ONE SCREEN has no frame; PIP keeps its always-visible inset framed, like the DS touch layout. */
 internal fun n3dsTouchWindowFramed(layout: DsLayout, windowOpen: Boolean): Boolean =

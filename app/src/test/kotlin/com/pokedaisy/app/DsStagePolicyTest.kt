@@ -58,6 +58,41 @@ class DsStagePolicyTest {
         assertEquals(720, oneScreen.height)
     }
 
+    @Test fun threeDsOneScreenFloatingWindowFitsPhonesAndHandheldAspectRatiosInsideItsFrame() {
+        val frame = 30f
+        val profiles = listOf(360 to 800, 800 to 360, 412 to 915, 915 to 412, 2340 to 1080)
+        for ((width, height) in profiles) {
+            val result = n3dsStageArrangement(DsLayout.ONE_SCREEN, width, height, fill = true, floating = false, framePx = frame)
+            val touch = requireNotNull(result.touch)
+            val outerWidth = touch.width + frame
+            val outerHeight = touch.height + frame
+            assertTrue("$width x $height stays within width share", outerWidth <= width * com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE + 1)
+            assertTrue("$width x $height stays within height share", outerHeight <= height * com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE + 1)
+            assertTrue("$width x $height keeps 4:3 touch output", kotlin.math.abs(touch.width.toFloat() / touch.height - 4f / 3f) < 0.01f)
+            assertTrue(kotlin.math.abs((touch.left + touch.right) - width) <= 1f)
+            assertTrue(kotlin.math.abs((touch.top + touch.bottom) - height) <= 1f)
+        }
+    }
+
+    @Test fun threeDsPipAutoOrManualOverrideFloatsWhileSideBySideStaysSelected() {
+        val base = com.pokedaisy.app.companion.DsLayouts.arrange(DsLayout.PICTURE_IN_PICTURE, 1080, 720, fill = false,
+            topAspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT)
+        val closedPip = n3dsStageArrangement(DsLayout.PICTURE_IN_PICTURE, 1080, 720, fill = false, floating = false, framePx = 30f)
+        assertEquals(base, closedPip)
+
+        for ((manual, auto) in listOf(false to true, true to false)) {
+            val floating = manual || auto
+            val window = n3dsStageArrangement(DsLayout.PICTURE_IN_PICTURE, 1080, 720, fill = false, floating = floating, framePx = 30f)
+            assertEquals(1080f, requireNotNull(window.touch).let { (it.left + it.right).toFloat() }, 1f)
+            assertEquals(720f, requireNotNull(window.touch).let { (it.top + it.bottom).toFloat() }, 1f)
+        }
+
+        val sideBySide = n3dsStageArrangement(DsLayout.SIDE_BY_SIDE, 1080, 720, fill = false, floating = true, framePx = 30f)
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(DsLayout.SIDE_BY_SIDE))
+        assertEquals(com.pokedaisy.app.companion.DsLayouts.arrange(DsLayout.SIDE_BY_SIDE, 1080, 720, fill = false,
+            topAspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT), sideBySide)
+    }
+
     @Test fun startupWaitUsesTheEffectiveSceneLayoutForOneScreenGames() {
         val setupLayout = n3dsStageLayout(DsLayout.ONE_SCREEN)
         assertEquals(DsLayout.ONE_SCREEN, setupLayout)
