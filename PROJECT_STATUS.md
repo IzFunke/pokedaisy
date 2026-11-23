@@ -203,7 +203,8 @@ The 3DS display contract is now described in `docs/manual/devices.md`. Website p
 
 An isolated headless Ultra Moon EU session loaded `FieldRo`, `FieldMenu`, and `FieldEffectCommon` while rendering a
 field scene. The `FieldRo` module now maps to `FIELD` for Ultra Moon in the existing startup-scene observer, so it can
-flow through the shared 3DS stage policy. The German trainer-language byte and trainer-card/name fields matched the
+drive field HUD/zoom handling. Automatic lower-screen presentation is now gated on a mapped field reader; Ultra Moon's
+module-only field stays manual until a touch request is validated. The German trainer-language byte and trainer-card/name fields matched the
 published PKMN-NTR candidate layout in a read-only probe. Party slots still fail PK7 checksum validation and the
 published bag/location candidates are not validated; Ultra Moon remains outside `N3dsCart.SUPPORTED` and has no
 Companion memory configuration. The isolated X-button probe did not visibly change the scene, so no menu mapping is
@@ -215,3 +216,16 @@ was built and installed to the existing S25 package with `adb install -r` (APK S
 shared `.sav` hashes matched around the update; `firstInstallTime` remained unchanged. A later launcher intent did not
 move PokeDaisy to the foreground; Netflix's account-confirmation screen remained visible, so no choice was made and no
 Pokémon title was launched. Y / Ultra Moon device rechecks remain pending a clear foreground session.
+
+## 2026-11-23 Companion pipeline integration and S25 Dev update
+
+`N3dsSession` now uses the typed `N3dsSamplingPipeline` for separate serial Azahar capture and Companion decoding,
+including the Sun/Moon pointer-chained map coordinates, generation invalidation, typed read failures, and existing
+battle/snapshot merge behavior. Focused Dev tests passed (6 pipeline, 15 stage policy, 15 Gen6 discovered with 9
+ROM-dependent skips; 0 failures/errors); the feature-enabled ARM64 Dev build succeeded. APK SHA-256:
+`33825EA5E0FA71D1004B9843B73E3CE677C0CBBBA5DA4F03B48FFE5F5DCC37F9`.
+
+The build was installed over the existing S25 Dev app using `adb install -r`. `firstInstallTime` and the Dev preference
+file hash remained unchanged. All 12 `.sav` save/backup hashes matched before and after. The phone remained locked,
+so no game was started. See `docs/3DS_ARCHITECTURE_RECOVERY.md`, `docs/USUM_SCENE_AUTOMATION_AUDIT.md`, and
+`TEST_RESULTS.md` for implementation boundaries and the Ultra Moon touch-screen evidence.

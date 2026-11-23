@@ -972,9 +972,11 @@ a verified companion memory map.
 
 Pokémon Ultra Moon (Europe) has additional read-only runtime evidence from the isolated `n3ds_dump` session: the
 `FieldRo` module appears with `FieldMenu` and `FieldEffectCommon` while the field is rendered, so the Android scene
-observer now reports that observed module as `FIELD`. This only enables the existing shared screen policy for that
-observed state. Ultra Moon still has no verified party, bag, location, battle or general Companion memory map; do not
-interpret launch or module recognition as Companion support.
+observer reports that observed module as `FIELD`. This enables field HUD/zoom scene handling, but does not by itself
+open the lower screen: Ultra Moon has no mapped field reader or verified lower-screen request, so it remains manually
+available until that behavior is observed. The isolated field capture's lower renderer buffer was black. Ultra Moon
+still has no verified party, bag, location, battle or general Companion memory map; do not interpret launch or module
+recognition as Companion support.
 
 ## Linux / 3DS companion: tabs read per hack
 

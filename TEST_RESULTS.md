@@ -323,3 +323,27 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   and after. A launcher intent was sent to `LibraryActivity`, but Netflix remained the foreground app on its
   account-confirmation screen. No Netflix choice was made, no PokeDaisy game came to the foreground, and no game input
   was sent. Direct Y / Ultra Moon runtime rechecks are therefore still pending.
+
+## 2026-11-23 N3DS Companion pipeline and Ultra Moon field policy
+
+- `N3dsSession` now captures Azahar RAM and pointer-chained Sun/Moon map coordinates through a dedicated serial capture
+  executor; a separate decode executor builds the localized `SnapshotView` and updates the existing wild/map caches.
+  The shared typed pipeline coalesces requests, distinguishes capture/decode failures, rejects stale session generations,
+  and closes before worker shutdown. Battle merge and `N3dsSnapshotHealth` remain in place.
+- Ultra Moon's verified `FieldRo` signal still reports `FIELD` for field HUD/zoom, but no longer opens the lower screen
+  automatically without a mapped field reader. The isolated lower renderer buffer is black; manual TOUCH SCREEN and
+  automatic setup `SCREEN` pages remain available. No USUM memory offsets or Companion support were enabled.
+- A follow-up on the isolated `userdir20` clone tried X for one frame and eight frames, then waited. `FieldRo` remained
+  loaded, the lower buffer stayed black, and translated menu/bag candidate reads did not change. This did not validate
+  those candidate addresses or the input path; no new gameplay signal was promoted.
+- Focused Dev unit run — PASS: `N3dsSamplingPipelineTest` 6/6; `DsStagePolicyTest` 15/15; `Gen6Test` 15 discovered,
+  9 ROM-dependent skips; 0 failures/errors. Command excluded only `:app:licensesAsset`, which fails in this checkout
+  because the optional `third_party/mgba/LICENSE` asset is missing.
+- `:app:assembleDev -Ppokedaisy.n3ds=true -x :app:licensesAsset` — PASS; the feature-enabled ARM64 APK SHA-256 is
+  `33825EA5E0FA71D1004B9843B73E3CE677C0CBBBA5DA4F03B48FFE5F5DCC37F9`.
+- Updated the existing `com.pokedaisy.app.dev` install using `adb install -r` — PASS. `versionCode=23` and
+  `firstInstallTime=2026-11-23 18:29:14` remained unchanged; final `lastUpdateTime` advanced to `20:35:26`. The
+  `pokedaisy.xml` preference SHA-256 stayed `001aaefbc37bab5564d42b7c4083c8168e7025041404206356cb9fb688935e60`.
+  All 12 `.sav` files under the PokeDaisy save directory, including backups, matched byte-for-byte before/after.
+- The device remained at the lockscreen, so I did not open games or send game input. This APK update preserves the
+  installation and settings; direct Y / Ultra Moon gameplay validation still requires an unlocked foreground session.

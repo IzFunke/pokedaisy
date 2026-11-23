@@ -113,6 +113,31 @@ class N3dsSamplingPipelineTest {
     }
 
     @Test
+    fun decodeFailureIsTypedAndDoesNotPublishSuccess() {
+        val captureExecutor = ManualExecutor()
+        val decodeExecutor = ManualExecutor()
+        val failure = IllegalArgumentException("Gen 6 sample was incomplete")
+        val outcomes = mutableListOf<N3dsSampleResult<Int>>()
+        val pipeline = N3dsSamplingPipeline(
+            sessionGeneration = 1L,
+            currentGeneration = { 1L },
+            captureExecutor = captureExecutor,
+            decodeExecutor = decodeExecutor,
+            capture = { 7 },
+            decode = { throw failure },
+            deliver = { outcomes += it },
+        )
+
+        pipeline.request()
+        captureExecutor.runNext()
+        decodeExecutor.runNext()
+
+        assertEquals(1, outcomes.size)
+        assertTrue(outcomes.single() is N3dsSampleResult.DecodeFailure)
+        assertEquals(failure, (outcomes.single() as N3dsSampleResult.DecodeFailure).cause)
+    }
+
+    @Test
     fun decodeAndDeliveryStayOrderedAcrossCoalescedSamples() {
         val captureExecutor = ManualExecutor()
         val decodeExecutor = ManualExecutor()

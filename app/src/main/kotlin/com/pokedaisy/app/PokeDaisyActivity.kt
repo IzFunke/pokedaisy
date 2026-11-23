@@ -4627,9 +4627,14 @@ class PokeDaisyActivity : Activity() {
 
     /** Field play, menus, full-screen pages, and battle bag/party request the lower display. */
     private val n3dsTouchAutoWanted: Boolean
-        get() = n3ds?.scene?.let { scene ->
-            !n3dsTouchAutoDismissed && n3dsTouchWanted(scene, telemetry.snapshot.value.battleInputState)
-        } == true
+        get() {
+            val session = n3ds ?: return false
+            return !n3dsTouchAutoDismissed && n3dsTouchWanted(
+                session.scene,
+                telemetry.snapshot.value.battleInputState,
+                fieldReaderAvailable = session.hasMappedFieldReader,
+            )
+        }
 
     /** Current scene and local dismissal state for the automatically presented field touch screen. */
     private var n3dsTouchPolicyScene: com.pokedaisy.app.n3ds.Gen6Reader.Scene? = null

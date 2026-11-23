@@ -15,6 +15,8 @@ import com.pokedaisy.app.MgbaCore
 import com.pokedaisy.app.companion.data.SnapshotView
 import com.pokedaisy.app.companion.ui.OwnItemNames
 import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * A 3DS game in the game screen (PokeDaisyActivity, docs/3DS_GAMES_PLAN.md): Azahar on a thread of its own, drawing the
@@ -118,6 +120,13 @@ class N3dsSession(
     private var lastReadiness: String? = null
     private val snapshotGate = N3dsSnapshotGate()
     @Volatile private var snapshotGeneration = 0L
+    /** Keep frame-boundary native RAM capture separate from local Companion decoding. */
+    private val sampleCaptureExecutor = Executors.newSingleThreadExecutor { task -> Thread(task, "pokedaisy-n3ds-capture") }
+    private val sampleDecodeExecutor = Executors.newSingleThreadExecutor { task -> Thread(task, "pokedaisy-n3ds-decode") }
+    @Volatile private var companionPipeline: N3dsSamplingPipeline<Gen6SampleCapture, Gen6SampleOutput>? = null
+
+    private data class Gen6SampleCapture(val memory: ByteArray, val playerPosition: ByteArray?, val frameCounter: Long)
+    private data class Gen6SampleOutput(val snapshot: SnapshotView)
 
     fun start() {
         synchronized(lifecycleLock) {
@@ -212,6 +221,9 @@ class N3dsSession(
             val core = thread
             // Stop Azahar first: its run loop releases any worker blocked on a queued memory read before returning.
             if (core != null) N3dsNative.stop()
+            companionPipeline?.close()
+            sampleCaptureExecutor.shutdownNow()
+            sampleDecodeExecutor.shutdownNow()
 
             val current = Thread.currentThread()
             val toJoin = listOfNotNull(core, pump, scenes, camera, sampler)
@@ -231,6 +243,18 @@ class N3dsSession(
                     }
                 }
             }
+            for (executor in listOf(sampleCaptureExecutor, sampleDecodeExecutor)) {
+                val executorWait = deadline - System.nanoTime()
+                if (executorWait > 0L) {
+                    try {
+                        executor.awaitTermination(executorWait, TimeUnit.NANOSECONDS)
+                    } catch (_: InterruptedException) {
+                        interrupted = true
+                    }
+                }
+            }
+            // A decode already in flight when stop began may have finished after the early reset above.
+            OwnItemNames.lookup = null
             val alive = toJoin.filter { it !== current && it.isAlive }
             if (alive.isNotEmpty()) {
                 Log.w(TAG, "threads still alive after stop timeout: ${alive.joinToString { it.name }}")
@@ -378,6 +402,8 @@ class N3dsSession(
 
     /** What the game's screens show now ([Gen6Reader.sceneOf]), read ten times a second; [onScene] hears a change. */
     private val sceneConfig = Gen6Reader.configFor(titleId)
+    /** A module-only `FIELD` classification is not enough to request its lower screen; use mapped game scene readers. */
+    val hasMappedFieldReader: Boolean get() = sceneConfig != null
     @Volatile private var combinedObservationAvailable = true
     private val sceneModuleRoot = sceneConfig?.staticModule?.takeIf { it != 0 }
         ?: Gen6Reader.startupSceneModuleRoot(titleId)
@@ -988,65 +1014,102 @@ class N3dsSession(
         var textLanguage = -1
         val zones = Gen6Zones.load(rom, layout)
         val snapshotHealth = N3dsSnapshotHealth()
-        while (running) {
-            if (!paused) {
-                val sample = N3dsNative.readMemory(Gen6Reader.ranges(config))?.let { Gen6Reader.read(config, it) }
-                if (sample != null) {
-                    snapshotHealth.onReadSuccess()
-                    // Reloaded when the language changes: a read before the save is loaded (the title) has none yet.
-                    if (text == null || sample.language != textLanguage) text = Gen6Text.load(rom, sample.language, layout)?.also { t ->
-                        textLanguage = sample.language
-                        Gen6Text.languageLetter(sample.language)?.let { l -> ui.post { com.pokedaisy.app.companion.i18n.L10n.applyGameLanguage(l) } }
-                        val names = t.items
-                        OwnItemNames.lookup = { id -> names.getOrNull(id) }
+        val sampleGeneration = snapshotGeneration
+        val pipeline = N3dsSamplingPipeline<Gen6SampleCapture, Gen6SampleOutput>(
+            sessionGeneration = sampleGeneration,
+            currentGeneration = { snapshotGeneration },
+            captureExecutor = sampleCaptureExecutor,
+            decodeExecutor = sampleDecodeExecutor,
+            capture = {
+                val memory = N3dsNative.readMemory(Gen6Reader.ranges(config))
+                    ?: throw IllegalStateException("Azahar memory read returned no sample")
+                // Sun/Moon's player position is pointer-chained. Capture the complete chain with the RAM sample so
+                // decoding never performs a later, out-of-order native read against a newer game frame.
+                val playerPosition = if (smZones != null && config.playerPos != 0) {
+                    Gen6Reader.chained(config.playerPos, config.playerPosPath, ::readInt)?.let { at ->
+                        N3dsNative.readMemory(intArrayOf(at, 12))
                     }
-                    // The HUD's WILD list follows the zone (built here, off the UI thread: the cart's zone archive).
-                    if (sample.zone != wildZone || wildLanguage != textLanguage) {
-                        wildZone = sample.zone
-                        wildLanguage = textLanguage
-                        wildHere = N3dsCompanionData.wild(Gen6Wild.load(rom, layout)?.getOrNull(sample.zone).orEmpty(), text, layout)
-                        if (townMap != null) mapHere = townSpots[sample.zone]?.let {
-                            com.pokedaisy.app.companion.ui.XyMapSpot(
-                                townMap.map, townMap.pinAsset, townMap.width, townMap.height, it.x, it.y, it.w, it.h,
-                            )
-                        }
+                } else null
+                Gen6SampleCapture(memory, playerPosition, N3dsNative.frames())
+            },
+            decode = { captured ->
+                val sample = Gen6Reader.read(config, captured.memory)
+                    ?: throw IllegalArgumentException("Azahar memory sample did not match the Gen 6 reader")
+                // Reloaded when the language changes: a read before the save is loaded (the title) has none yet.
+                if (text == null || sample.language != textLanguage) text = Gen6Text.load(rom, sample.language, layout)?.also {
+                    textLanguage = sample.language
+                    Gen6Text.languageLetter(sample.language)?.let { l ->
+                        ui.post { snapshotGate.publishIfCurrent(sampleGeneration) { com.pokedaisy.app.companion.i18n.L10n.applyGameLanguage(l) } }
                     }
-                    if (smZones != null && config.playerPos != 0) {
-                        // Outdoors: the player's position on its island's picture; indoors: the last outdoor spot there.
-                        val island = smZones.island.getOrElse(sample.zone) { 0 }
-                        if (island != 0 && smZones.outdoor[sample.zone]) {
-                            val posAt = Gen6Reader.chained(config.playerPos, config.playerPosPath, ::readInt)
-                            if (posAt != null) N3dsNative.readMemory(intArrayOf(posAt, 12))?.takeIf { it.size == 12 }?.let { pos ->
-                                val b = java.nio.ByteBuffer.wrap(pos).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                                val (x, y) = SmTownMap.spot(b.getFloat(0), b.getFloat(8))
-                                if (x in 0f..SmTownMap.SIZE.toFloat() && y in 0f..SmTownMap.SIZE.toFloat()) {
-                                    smLast = com.pokedaisy.app.companion.ui.XyMapSpot(
-                                        SmTownMap.asset(island, layout), null, SmTownMap.SIZE, SmTownMap.SIZE, x, y, 10f, 10f,
-                                    )
-                                    smLastIsland = island
-                                }
+                }
+                // The HUD's WILD list follows the zone (built here, off the UI thread: the cart's zone archive).
+                if (sample.zone != wildZone || wildLanguage != textLanguage) {
+                    wildZone = sample.zone
+                    wildLanguage = textLanguage
+                    wildHere = N3dsCompanionData.wild(Gen6Wild.load(rom, layout)?.getOrNull(sample.zone).orEmpty(), text, layout)
+                    if (townMap != null) mapHere = townSpots[sample.zone]?.let {
+                        com.pokedaisy.app.companion.ui.XyMapSpot(
+                            townMap.map, townMap.pinAsset, townMap.width, townMap.height, it.x, it.y, it.w, it.h,
+                        )
+                    }
+                }
+                if (smZones != null && config.playerPos != 0) {
+                    // Outdoors: the player's position on its island's picture; indoors: the last outdoor spot there.
+                    val island = smZones.island.getOrElse(sample.zone) { 0 }
+                    if (island != 0 && smZones.outdoor[sample.zone]) {
+                        captured.playerPosition?.takeIf { it.size >= 12 }?.let { pos ->
+                            val b = java.nio.ByteBuffer.wrap(pos).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                            val (x, y) = SmTownMap.spot(b.getFloat(0), b.getFloat(8))
+                            if (x in 0f..SmTownMap.SIZE.toFloat() && y in 0f..SmTownMap.SIZE.toFloat()) {
+                                smLast = com.pokedaisy.app.companion.ui.XyMapSpot(
+                                    SmTownMap.asset(island, layout), null, SmTownMap.SIZE, SmTownMap.SIZE, x, y, 10f, 10f,
+                                )
+                                smLastIsland = island
                             }
                         }
-                        mapHere = if (island != 0 && island == smLastIsland) smLast else null
                     }
-                    val view = SnapshotView(
-                        connected = true,
-                        game = N3dsCart.kindOf(titleId),
-                        frameCounter = N3dsNative.frames(),
-                        party = N3dsCompanionData.party(sample, text, moveData, personalData, layout),
-                        items = N3dsCompanionData.bag(sample, text),
-                        location = N3dsCompanionData.location(sample, text, zones),
-                    )
-                    synchronized(snapshotLock) {
-                        lastView = view
-                        postSnapshot(withBattle(view))
-                    }
-                } else if (snapshotHealth.onReadFailure()) {
-                    // A temporary address/read failure must not leave old party, bag, location or battle data live.
-                    clearStaleSnapshot()
+                    mapHere = if (island != 0 && island == smLastIsland) smLast else null
                 }
+                val view = SnapshotView(
+                    connected = true,
+                    game = N3dsCart.kindOf(titleId),
+                    frameCounter = captured.frameCounter,
+                    party = N3dsCompanionData.party(sample, text, moveData, personalData, layout),
+                    items = N3dsCompanionData.bag(sample, text),
+                    location = N3dsCompanionData.location(sample, text, zones),
+                )
+                Gen6SampleOutput(view)
+            },
+            deliver = { result ->
+                when (result) {
+                    is N3dsSampleResult.Success -> {
+                        snapshotHealth.onReadSuccess()
+                        text?.items?.let { names -> OwnItemNames.lookup = { id -> names.getOrNull(id) } }
+                        synchronized(snapshotLock) {
+                            lastView = result.value.snapshot
+                            postSnapshot(withBattle(result.value.snapshot))
+                        }
+                    }
+                    is N3dsSampleResult.CaptureFailure, is N3dsSampleResult.DecodeFailure -> {
+                        if (snapshotHealth.onReadFailure()) {
+                            // A temporary address/read failure must not leave stale party, bag, location or battle data live.
+                            clearStaleSnapshot()
+                        }
+                    }
+                }
+            },
+        )
+        companionPipeline = pipeline
+        try {
+            while (running) {
+                if (!paused) pipeline.request()
+                try { Thread.sleep(SAMPLE_MS) } catch (_: InterruptedException) { break }
             }
-            try { Thread.sleep(SAMPLE_MS) } catch (_: InterruptedException) { break }
+        } finally {
+            pipeline.close()
+            if (companionPipeline === pipeline) companionPipeline = null
+            sampleCaptureExecutor.shutdown()
+            sampleDecodeExecutor.shutdown()
         }
     }, "pokedaisy-n3ds-sample")
 

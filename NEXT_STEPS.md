@@ -14,11 +14,11 @@
 12. Do not run `:app:connectedDevAndroidTest` through Gradle UTP on the personal S25 install: the 2026-11-23 UTP log showed it uninstalls the target package and its app data. Use the dedicated AVD or validate a manual instrumentation invocation that leaves `com.pokedaisy.app.dev` installed.
 # Next: finish measured USUM runtime mapping
 
-The isolated language-select savestate now verifies the Ultra Moon EU root `0x008b2000` and `LangSelect` module, and the
-Dev app opens both displays automatically for that one scene. All other USUM modules still use `UNMAPPED` and the manual
-touch-screen fallback. Next, obtain a verified field module/root and game-owned live structures for field menu, party,
-and battle before adding a USUM `Gen6Reader.Config` or enabling further automatic stage changes. Preserve the stop before
-Kukui's photo selection; do not make the photo/profile choice.
+The isolated Ultra Moon run verifies the EU root `0x008b2000`, setup modules, and the playable `FieldRo` module. The
+Dev app keeps setup `SCREEN` pages automatic but leaves the module-only field lower screen manual because no touch
+request is verified and the isolated bottom buffer is black. Next, correlate runtime field/menu/battle signals with
+paired screenshots, then validate party, bag, trainer, and location reads before adding a USUM `Gen6Reader.Config`.
+Preserve the stop before Kukui's photo selection; do not make the photo/profile choice.
 
 ## Ultra Moon intro continuation (2026-11-23)
 

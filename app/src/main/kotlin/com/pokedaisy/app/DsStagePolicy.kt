@@ -32,9 +32,13 @@ internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): 
 internal fun n3dsTouchVisibleForLayout(layout: DsLayout, manuallyOpened: Boolean, autoWanted: Boolean): Boolean =
     n3dsTouchScreenVisible(layout, manuallyOpened) || autoWanted
 
-/** 3DS scenes that need Azahar's lower screen, matching the DS auto-window triggers. */
-internal fun n3dsTouchWanted(scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene, battleInput: Int): Boolean =
-    scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD ||
+/** 3DS lower-screen scenes; module-only field observations are not touch requests. */
+internal fun n3dsTouchWanted(
+    scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene,
+    battleInput: Int,
+    fieldReaderAvailable: Boolean = true,
+): Boolean =
+    (scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD && fieldReaderAvailable) ||
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.MENU ||
         // Pages rendered by the game on both screens (party, bag, main menu) also need the lower display in ONE SCREEN.
         scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN ||
