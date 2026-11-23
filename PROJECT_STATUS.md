@@ -229,3 +229,18 @@ The build was installed over the existing S25 Dev app using `adb install -r`. `f
 file hash remained unchanged. All 12 `.sav` save/backup hashes matched before and after. The phone remained locked,
 so no game was started. See `docs/3DS_ARCHITECTURE_RECOVERY.md`, `docs/USUM_SCENE_AUTOMATION_AUDIT.md`, and
 `TEST_RESULTS.md` for implementation boundaries and the Ultra Moon touch-screen evidence.
+
+## 2026-11-23 shared two-display page behavior
+
+DS and 3DS now share the same layout policy for full pages that need both displays. On 3DS, a mapped `SCREEN` scene
+temporarily turns a floating layout into `SIDE BY SIDE`; the stored layout preference is not written. The focused
+`DsStagePolicyTest` passes 16/16. The Dev APK was built and installed with `adb install -r` (SHA-256
+`A1419BC11347E7A5D8ACBD4FB87F2E754A7851680F131FCFDC43D40B108DA988`). `firstInstallTime` stayed unchanged, all 12
+save/backup hashes matched, and the preference hash stayed the same as the value captured after the earlier launcher
+smoke check. The phone is locked, so visual device validation is still pending. That earlier smoke check left
+`pokedaisy.xml` with a different hash than the pre-launch measurement; its exact byte diff is unavailable.
+
+The N3DS stop path now closes the sampling pipeline before stopping Azahar and compares queued work against the live
+snapshot-gate generation. This also guards delayed battle-clear and game-ended callbacks. Sustained memory/decode
+failures retain their cause in Logcat, which will make the reported Pokémon Y launch failure easier to diagnose when a
+gameplay session can be observed.

@@ -152,12 +152,21 @@ class DsStagePolicyTest {
         assertFalse(n3dsTouchSurfaceRequired(stageOn = false, onSecondDisplay = false, touchVisible = false))
     }
 
-    @Test fun ndsMenuTrackingNeverTurnsAThreeDsLayoutIntoDualScreen() {
-        for (layout in DsLayout.entries) {
-            assertEquals("3DS keeps $layout when NDS menu tracking is active", layout, dsStageLayout(is3ds = true, dsMenuUp = true, chosen = layout))
-        }
-        assertEquals(DsLayout.SIDE_BY_SIDE, dsStageLayout(is3ds = false, dsMenuUp = true, chosen = DsLayout.ONE_SCREEN))
-        assertEquals(DsLayout.ONE_SCREEN, dsStageLayout(is3ds = false, dsMenuUp = false, chosen = DsLayout.ONE_SCREEN))
+    @Test fun dsTwoScreenMenuPageUsesTheSharedTemporaryLayoutTransition() {
+        assertEquals(DsLayout.SIDE_BY_SIDE, dsStageLayout(twoScreenPage = true, chosen = DsLayout.ONE_SCREEN))
+        assertEquals(DsLayout.ONE_SCREEN, dsStageLayout(twoScreenPage = false, chosen = DsLayout.ONE_SCREEN))
+        assertEquals(DsLayout.SIDE_BY_SIDE, dsStageLayout(twoScreenPage = true, chosen = DsLayout.SIDE_BY_SIDE))
+    }
+
+    @Test fun threeDsTwoScreenPagesFollowTheSharedDsLayoutTransition() {
+        val screen = com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN
+        val field = com.pokedaisy.app.n3ds.Gen6Reader.Scene.FIELD
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(DsLayout.ONE_SCREEN, screen))
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(DsLayout.PICTURE_IN_PICTURE, screen))
+        assertEquals(DsLayout.SIDE_BY_SIDE, n3dsStageLayout(DsLayout.SIDE_BY_SIDE, screen))
+        assertEquals(DsLayout.LARGE_SMALL, n3dsStageLayout(DsLayout.LARGE_SMALL, screen))
+        assertEquals(DsLayout.ONE_SCREEN, n3dsStageLayout(DsLayout.ONE_SCREEN, field))
+        assertEquals(DsLayout.ONE_SCREEN, n3dsStageLayout(DsLayout.ONE_SCREEN, null))
     }
 
     @Test fun touchScreenQuickActionHotkeyAndHintAreAvailableForEitherSystem() {

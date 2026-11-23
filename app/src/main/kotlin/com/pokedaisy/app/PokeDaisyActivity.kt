@@ -4192,12 +4192,11 @@ class PokeDaisyActivity : Activity() {
         if (!::stage.isInitialized || !::dsBackdropView.isInitialized) return
         val on = dsStageOn
         val chosen = Prefs(this).dsLayout.forGame(com.pokedaisy.app.companion.DsLayout.followed(romCode) || romOrigin || romIs3ds)
-        // DS menu pages may temporarily request both screens. 3DS always honors the selected layout and opens its touch
-        // output as the shared floating window when the mapped scene requests it.
+        // A mapped 3DS page or DS menu page may temporarily request both screens; the saved layout stays unchanged.
         val n3dsScene = n3ds?.scene
         val layout = if (romIs3ds && n3dsScene != null)
-            n3dsStageLayout(chosen)
-        else dsStageLayout(romIs3ds, dsMenuUp, chosen)
+            n3dsStageLayout(chosen, n3dsScene)
+        else dsStageLayout(twoScreenPage = !romIs3ds && dsMenuUp, chosen = chosen)
         // EXPAND / STRETCH fill the screen only where EXPAND has the scene to widen; elsewhere the backdrop's beside it.
         val fill = aspect != GameAspect.ORIGINAL && (dsWide || aspect == GameAspect.STRETCH)
         stage.viewport.dsArrange = if (on) dsArranger(layout, fill) else null
@@ -4377,7 +4376,7 @@ class PokeDaisyActivity : Activity() {
                 // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
                 wantsTouchSurface = {
                     val chosen = Prefs(this).dsLayout.forGame(followed = true)
-                    val effective = n3dsStageLayout(chosen)
+                    val effective = n3dsStageLayout(chosen, n3ds?.scene)
                     val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
                         n3dsTouchVisibleForLayout(effective, n3dsFloating.value, n3dsTouchAutoWanted)
                     n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)
@@ -4554,8 +4553,7 @@ class PokeDaisyActivity : Activity() {
 
     /** [syncDsStage]'s part for 3DS: share DS auto/manual touch-window behavior and layout framing. */
     private fun syncN3dsStage(on: Boolean, layout: com.pokedaisy.app.companion.DsLayout) {
-        // ONE SCREEN's requested touch display floats in a frame. A mapped game screen that needs both displays uses
-        // SIDE BY SIDE temporarily, as DS menu pages do; field play stays top-only until a touch screen is requested.
+        // A requested touch display floats in ONE SCREEN; mapped two-display pages switch to SIDE BY SIDE as DS menus do.
         val floating = on && layout.floats
         val windowOpen = n3dsFloating.value || n3dsTouchAutoWanted
         val framed = floating && (layout == com.pokedaisy.app.companion.DsLayout.PICTURE_IN_PICTURE || windowOpen)

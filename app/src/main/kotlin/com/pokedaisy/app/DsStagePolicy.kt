@@ -20,9 +20,18 @@ internal fun dsStageEnabled(
 ): Boolean =
     (is3ds || isNds && !portrait) && !hasSecondScreen && !debugMirror && (!companionOverGame || is3ds) && !folded
 
-/** NDS scene tracking may request both screens for its menus; it must never override a 3DS player's chosen layout. */
-internal fun dsStageLayout(is3ds: Boolean, dsMenuUp: Boolean, chosen: DsLayout): DsLayout =
-    if (!is3ds && dsMenuUp && chosen.floats) DsLayout.SIDE_BY_SIDE else chosen
+/** A page that uses both displays temporarily puts a floating layout side by side, preserving [chosen]. */
+internal fun dsStageLayout(twoScreenPage: Boolean, chosen: DsLayout): DsLayout =
+    if (twoScreenPage && chosen.floats) DsLayout.SIDE_BY_SIDE else chosen
+
+/** 3DS full-screen pages use the same two-display layout transition as DS menu pages. */
+internal fun n3dsStageLayout(
+    chosen: DsLayout,
+    scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene? = null,
+): DsLayout = dsStageLayout(
+    twoScreenPage = scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN,
+    chosen = chosen,
+)
 
 /** ONE SCREEN keeps the lower 3DS render hidden until the player asks for it; other selected layouts show it. */
 internal fun n3dsTouchScreenVisible(layout: DsLayout, manuallyOpened: Boolean): Boolean =
@@ -57,9 +66,6 @@ internal fun n3dsAutoTouchCanDismiss(scene: com.pokedaisy.app.n3ds.Gen6Reader.Sc
             com.pokedaisy.app.companion.data.BATTLE_INPUT_BAG_OPEN,
             com.pokedaisy.app.companion.data.BATTLE_INPUT_PARTY_OPEN,
         )
-
-/** 3DS scenes never override the player's selected presentation; automatic touch-screen scenes float over ONE SCREEN. */
-internal fun n3dsStageLayout(chosen: DsLayout): DsLayout = chosen
 
 /** Pure stage geometry for a 3DS game's screens; [framePx] is the total frame width/height around its touch surface. */
 internal fun n3dsStageArrangement(

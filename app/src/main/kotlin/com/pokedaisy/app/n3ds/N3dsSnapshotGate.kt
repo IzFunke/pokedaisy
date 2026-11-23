@@ -18,6 +18,10 @@ internal class N3dsSnapshotGate {
         generation++
     }
 
+    /** The pipeline observes this token so session end invalidates it before close can race. */
+    @Synchronized
+    fun currentGeneration(): Long = generation
+
     /** Publish a terminal snapshot only if this is still the active session, then close its gate. */
     @Synchronized
     fun finishIfCurrent(token: Long, publish: () -> Unit): Boolean {

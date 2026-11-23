@@ -183,7 +183,7 @@ class N3dsSession(
                 running = false
                 Log.i(TAG, "game ended: $result")
                 ui.post {
-                    snapshotGate.finishIfCurrent(generation) {
+                    val currentSession = snapshotGate.finishIfCurrent(generation) {
                         onSnapshot(
                             SnapshotView(
                                 connected = false,
@@ -192,7 +192,7 @@ class N3dsSession(
                             ),
                         )
                     }
-                    onEnded(result)
+                    if (currentSession) onEnded(result)
                 }
             }, "pokedaisy-n3ds").also { it.start() }
             pump.start()
@@ -216,12 +216,12 @@ class N3dsSession(
             wanted = false
             running = false
             snapshotGate.end()
+            companionPipeline?.close()
             OwnItemNames.lookup = null
 
             val core = thread
             // Stop Azahar first: its run loop releases any worker blocked on a queued memory read before returning.
             if (core != null) N3dsNative.stop()
-            companionPipeline?.close()
             sampleCaptureExecutor.shutdownNow()
             sampleDecodeExecutor.shutdownNow()
 
@@ -884,7 +884,8 @@ class N3dsSession(
         synchronized(snapshotLock) {
             lastView = null
             battle = null
-            ui.post { onBattle(null) }
+            val generation = snapshotGeneration
+            ui.post { snapshotGate.publishIfCurrent(generation) { onBattle(null) } }
             postSnapshot(
                 SnapshotView(
                     connected = false,
@@ -1017,7 +1018,7 @@ class N3dsSession(
         val sampleGeneration = snapshotGeneration
         val pipeline = N3dsSamplingPipeline<Gen6SampleCapture, Gen6SampleOutput>(
             sessionGeneration = sampleGeneration,
-            currentGeneration = { snapshotGeneration },
+            currentGeneration = { snapshotGate.currentGeneration() },
             captureExecutor = sampleCaptureExecutor,
             decodeExecutor = sampleDecodeExecutor,
             capture = {
@@ -1092,6 +1093,11 @@ class N3dsSession(
                     }
                     is N3dsSampleResult.CaptureFailure, is N3dsSampleResult.DecodeFailure -> {
                         if (snapshotHealth.onReadFailure()) {
+                            when (result) {
+                                is N3dsSampleResult.CaptureFailure -> Log.w(TAG, "3DS Companion memory capture failed", result.cause)
+                                is N3dsSampleResult.DecodeFailure -> Log.e(TAG, "3DS Companion snapshot decode failed", result.cause)
+                                else -> Unit
+                            }
                             // A temporary address/read failure must not leave stale party, bag, location or battle data live.
                             clearStaleSnapshot()
                         }

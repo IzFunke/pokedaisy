@@ -26,9 +26,11 @@ class N3dsSnapshotGateTest {
     fun updateQueuedBeforeStopIsDroppedAfterStop() {
         val gate = N3dsSnapshotGate()
         val session = gate.begin()
+        assertEquals(session, gate.currentGeneration())
         var published = 0
 
         gate.end()
+        assertTrue(gate.currentGeneration() != session)
         gate.publishIfCurrent(session) { published++ }
 
         assertEquals(0, published)
@@ -42,6 +44,7 @@ class N3dsSnapshotGateTest {
         var laterPublishes = 0
 
         assertTrue(gate.finishIfCurrent(session) { terminalPublishes++ })
+        assertTrue(gate.currentGeneration() != session)
         assertFalse(gate.finishIfCurrent(session) { terminalPublishes++ })
         gate.publishIfCurrent(session) { laterPublishes++ }
 

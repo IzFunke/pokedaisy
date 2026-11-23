@@ -96,7 +96,7 @@ In Origin HeartGold, `ONE SCREEN` floats the touch screen in for its X menu, its
 
 ## 3DS games
 
-With a 3DS game, `ONE SCREEN` gives the main screen the whole view. When a mapped scene needs the touch screen, it opens in the same framed window as a DS game. You can also open or close it with `TOUCH SCREEN` from the HUD or quick menu, or with its hotkey. `SIDE BY SIDE`, `LARGE + SMALL` and `STACKED` keep both screens in the layout you chose. Scenes PokeDaisy has not mapped yet may need you to open the touch screen yourself.
+With a 3DS game, `ONE SCREEN` gives the main screen the whole view. When a mapped field or menu scene needs the touch screen, it opens in the same framed window as a DS game. A full-screen page that uses both displays temporarily switches a floating layout to `SIDE BY SIDE`, like a DS menu page, then returns to your chosen layout when you leave. You can also open or close the touch screen with `TOUCH SCREEN` from the HUD or quick menu, or with its hotkey. `SIDE BY SIDE`, `LARGE + SMALL` and `STACKED` keep both screens in the layout you chose. Scenes PokeDaisy has not mapped yet may need you to open the touch screen yourself.
 
 Pokémon X/Y, Omega Ruby/Alpha Sapphire and Sun/Moon have Companion game data. Ultra Sun and Ultra Moon launch, but their Companion gameplay data is not mapped yet.
 

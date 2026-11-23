@@ -347,3 +347,29 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   All 12 `.sav` files under the PokeDaisy save directory, including backups, matched byte-for-byte before/after.
 - The device remained at the lockscreen, so I did not open games or send game input. This APK update preserves the
   installation and settings; direct Y / Ultra Moon gameplay validation still requires an unlocked foreground session.
+
+## 2026-11-23 shared DS/3DS dual-display page policy
+
+- `DsStagePolicy` now uses one `twoScreenPage` rule for DS menu pages and 3DS `Scene.SCREEN`. A floating selected
+  layout temporarily becomes `SIDE_BY_SIDE` for a page that uses both displays; field, menu-overlay and battle
+  bag/party presentation remain on their existing floating path. Returning to another scene restores the selected
+  layout because `Prefs.dsLayout` is never changed.
+- The player manual and parity/architecture notes describe this behavior.
+- `DsStagePolicyTest` — PASS, 16/16, including floating-layout promotion, preservation of explicit layouts and
+  return to the chosen layout outside `SCREEN`.
+- The snapshot pipeline now reads the active session token from `N3dsSnapshotGate`; stop closes it before Azahar
+  shutdown, and delayed battle-clear/end callbacks are gated. Sustained capture/decode failures also write their cause
+  to Logcat once per failure streak.
+- Focused Dev unit run — PASS: `DsStagePolicyTest` 16/16, `N3dsSnapshotGateTest` 4/4, and
+  `N3dsSamplingPipelineTest` 6/6; 26 passed, 0 failures/errors. The command excluded only `:app:licensesAsset` because
+  the optional `third_party/mgba/LICENSE` file is absent in this checkout.
+- `:app:assembleDev -Ppokedaisy.n3ds=true -x :app:licensesAsset` — PASS; APK SHA-256
+  `A1419BC11347E7A5D8ACBD4FB87F2E754A7851680F131FCFDC43D40B108DA988`. Installed over the existing package with
+  `adb install -r`; `firstInstallTime=2026-11-23 18:29:14` stayed unchanged. All 12 `.sav` hashes matched the
+  pre-install snapshot. The preference hash remained `02bcb9b80e52c8511e9b0d76e2d469f15b1c816ee34e9c2ebdcd8c1e9662adee`,
+  the value captured after the earlier launcher smoke check, not the older pre-launch measurement. The S25 stays locked;
+  no game was opened, so visual device validation remains pending.
+- The earlier safe launcher smoke check did start `LibraryActivity` behind Android's keyguard. It produced no fatal
+  exception in the captured log window, but the Activity was not visible. The `pokedaisy.xml` hash then differed from
+  the prior measurement; its exact before/after field diff is unavailable, so no claim is made that every preference
+  remained byte-identical. No save file changed in the later hash check.
