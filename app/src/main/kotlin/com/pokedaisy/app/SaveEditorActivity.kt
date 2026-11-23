@@ -318,7 +318,7 @@ class SaveEditorActivity : ComponentActivity() {
     private fun pickToEdit() {
         page = Page.Picking
         Thread {
-            val list = readableGames(gen5 = true, gen6Xy = true)
+            val list = readableGames(gen5 = true, gen6Xy = true, gen7UsUm = true)
             runOnUiThread {
                 if (list.isEmpty()) page = Page.Message(tr("SAVE EDITOR needs a supported game's save, saved once in that game."))
                 else editPick = list
@@ -374,6 +374,7 @@ class SaveEditorActivity : ComponentActivity() {
         gen5: Boolean = false,
         /** X/Y's editor is enabled for the direct SAVE EDITOR picker, not trade/transfer tools. */
         gen6Xy: Boolean = false,
+        gen7UsUm: Boolean = false,
     ): List<Pair<File, String>> {
         // A Black / White save trades with the others of its generation alone.
         if (with != null && SaveFileEdits.isGen5(with)) {
@@ -387,7 +388,8 @@ class SaveEditorActivity : ComponentActivity() {
                 it.absolutePath != except?.absolutePath &&
                     when (ds) {
                         null -> SaveFileEdits.formatFor(it) != null || SaveFileEdits.isDsEditable(it) ||
-                            (gen5 && SaveFileEdits.isGen5(it)) || (gen6Xy && SaveFileEdits.isGen6Xy(it))
+                            (gen5 && SaveFileEdits.isGen5(it)) || (gen6Xy && SaveFileEdits.isGen6Xy(it)) ||
+                            (gen7UsUm && SaveFileEdits.isGen7UsUm(it))
                         true -> SaveFileEdits.isDsEditable(it)
                         false -> SaveFileEdits.formatFor(it) != null
                     } &&
@@ -551,6 +553,7 @@ class SaveEditorActivity : ComponentActivity() {
     /** [rom]'s save as an [Opened], or why there's none (a String). Blocking. */
     private fun open(rom: File): Any {
         if (SaveFileEdits.isGen6Xy(rom)) return openGen6Xy(rom)
+        if (SaveFileEdits.isGen7UsUm(rom)) return openGen7UsUm(rom)
         if (SaveFileEdits.isDsEditable(rom)) return openDs(rom)
         if (SaveFileEdits.isGen5(rom)) return openGen5Editor(rom)
         val format = SaveFileEdits.formatFor(rom)
@@ -582,6 +585,31 @@ class SaveEditorActivity : ComponentActivity() {
         val editor = runCatching {
             com.pokedaisy.app.n3ds.Gen6XySaveEditor(parsed, cart, language)
         }.getOrElse { return tr("Can't read Pokémon X/Y's localized data from this ROM: {0}", it.message ?: it.toString()) }
+        return Opened(rom, GameTitles.label(this, prefs, rom), "", bytes, null, xyEditor = editor)
+    }
+
+    /** USUM uses the same canonical per-ROM save routing. Its view stays read-only until MemeCrypto can be re-signed. */
+    private fun openGen7UsUm(rom: File): Any {
+        val saveFile = SavesLocation.saveFor(this, prefs, rom)
+        if (!saveFile.isFile) return tr("No save yet - save once in the game first.")
+        val bytes = runCatching { saveFile.readBytes() }.getOrNull() ?: return tr("Can't read the save {0}", saveFile.path)
+        val parsed = when (val result = com.pokedaisy.app.companion.data.save.Gen7UsUmSave.parse(bytes)) {
+            is com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Parsed.Failed -> return result.reason
+            is com.pokedaisy.app.companion.data.save.Gen7UsUmSave.Parsed.Ok -> result.save
+        }
+        val cart = RomArchive.playable(rom, cacheDir) ?: rom
+        val lang = when (com.pokedaisy.app.companion.i18n.AppLanguage.ofCode(prefs.appLanguage)) {
+            com.pokedaisy.app.companion.i18n.AppLanguage.JA -> 1
+            com.pokedaisy.app.companion.i18n.AppLanguage.EN -> 2
+            com.pokedaisy.app.companion.i18n.AppLanguage.FR -> 3
+            com.pokedaisy.app.companion.i18n.AppLanguage.IT -> 4
+            com.pokedaisy.app.companion.i18n.AppLanguage.DE -> 5
+            com.pokedaisy.app.companion.i18n.AppLanguage.ES -> 7
+            com.pokedaisy.app.companion.i18n.AppLanguage.KO -> 8
+            else -> parsed.language.takeIf { it in setOf(1, 2, 3, 4, 5, 7, 8) } ?: 2
+        }
+        val editor = runCatching { com.pokedaisy.app.n3ds.Gen7UsUmSaveEditor(parsed, cart, lang) }
+            .getOrElse { return tr("Can't read Pokémon Ultra Sun/Ultra Moon's localized data from this ROM: {0}", it.message ?: it.toString()) }
         return Opened(rom, GameTitles.label(this, prefs, rom), "", bytes, null, xyEditor = editor)
     }
 

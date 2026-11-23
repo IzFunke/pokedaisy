@@ -242,9 +242,10 @@ internal class Gen6XyGameData(
     private val abilityNames: List<String>,
     private val personal: List<ByteArray>,
     private val movePp: IntArray = IntArray(0),
+    private val nationalDexMaximum: Int = 721,
 ) : SaveGameData {
-    constructor(text: Gen6Text, personal: List<ByteArray>) : this(
-        text.species, text.moves, text.items, text.abilities, personal,
+    constructor(text: Gen6Text, personal: List<ByteArray>, nationalDexMaximum: Int = 721) : this(
+        text.species, text.moves, text.items, text.abilities, personal, nationalDexMaximum = nationalDexMaximum,
     )
 
     private fun p(species: Int): ByteArray? = personal.getOrNull(species)?.takeIf { it.size >= PERSONAL_SIZE }
@@ -252,7 +253,7 @@ internal class Gen6XyGameData(
     override fun moveName(move: Int): String? = moveNames.getOrNull(move)?.takeIf { it.isNotBlank() }
     override fun itemName(item: Int): String? = itemNames.getOrNull(item)?.takeIf { it.isNotBlank() }
     override fun abilityName(ability: Int): String = abilityNames.getOrNull(ability).orEmpty()
-    override fun nationalDex(species: Int): Int? = species.takeIf { it in 1..721 }
+    override fun nationalDex(species: Int): Int? = species.takeIf { it in 1..nationalDexMaximum }
     override fun abilities(species: Int): List<Int> = p(species)?.let { row ->
         listOf(row[0x18].toInt() and 0xFF, row[0x19].toInt() and 0xFF, row[0x1A].toInt() and 0xFF).filter { it != 0 }.distinct()
     }.orEmpty()

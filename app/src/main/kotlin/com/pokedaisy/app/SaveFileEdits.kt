@@ -83,6 +83,14 @@ object SaveFileEdits {
                 com.pokedaisy.app.n3ds.N3dsCart.POKEMON_Y_USA,
             )
 
+    /** Pokémon Ultra Sun / Ultra Moon decrypted Gen 7 `main` saves. */
+    fun isGen7UsUm(rom: File): Boolean =
+        rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS &&
+            com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId in setOf(
+                com.pokedaisy.app.n3ds.N3dsCart.POKEMON_ULTRA_SUN_USA,
+                com.pokedaisy.app.n3ds.N3dsCart.POKEMON_ULTRA_MOON_USA,
+            )
+
     /** Writes [edited] over [rom]'s save, which must still be [expected]. Blocking: off the UI thread. */
     fun commit(context: Context, prefs: Prefs, rom: File, expected: ByteArray, edited: ByteArray): Result {
         val save = SavesLocation.saveFor(context, prefs, rom)

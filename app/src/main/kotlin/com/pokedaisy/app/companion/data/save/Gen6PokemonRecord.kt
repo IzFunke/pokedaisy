@@ -1,12 +1,12 @@
 package com.pokedaisy.app.companion.data.save
 
 /**
- * Pokémon X/Y PK6 record codec (0xE8 stored, 0x104 party).
+ * PK6/PK7 record codec (0xE8 stored, 0x104 party). PKHeX confirms Gen 7 retains this Gen 6 record crypto/layout.
  *
  * The LCRNG stream, 4-block shuffle and shuffle tables are adapted from
  * PKHeX.Core's `PokeCrypto` (GPL-3.0, copyright retained by its authors).
  * This project's GPL-3.0 license is compatible. Keep this codec scoped to
- * Gen 6 record encoding; game legality and field semantics belong elsewhere.
+ * Gen 6/7 record encoding; game legality and field semantics belong elsewhere.
  */
 class Gen6PokemonRecord private constructor(
     private val decrypted: ByteArray,

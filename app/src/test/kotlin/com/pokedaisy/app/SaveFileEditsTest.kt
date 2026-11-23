@@ -35,6 +35,9 @@ class SaveFileEditsTest {
         assertTrue(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_Y_USA, "pokemon-y.3ds")))
         assertFalse(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_ULTRA_MOON_USA, "ultra-moon.3ds")))
         assertFalse(SaveFileEdits.isGen6Xy(n3dsCart(N3dsCart.POKEMON_ULTRA_SUN_USA, "ultra-sun.3ds")))
+        assertTrue(SaveFileEdits.isGen7UsUm(n3dsCart(N3dsCart.POKEMON_ULTRA_MOON_USA, "ultra-moon-check.3ds")))
+        assertTrue(SaveFileEdits.isGen7UsUm(n3dsCart(N3dsCart.POKEMON_ULTRA_SUN_USA, "ultra-sun-check.3ds")))
+        assertFalse(SaveFileEdits.isGen7UsUm(n3dsCart(N3dsCart.POKEMON_Y_USA, "pokemon-y-check.3ds")))
     }
 
     @Test
