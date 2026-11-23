@@ -970,6 +970,12 @@ features. It does not describe native 3DS title support. The native 3DS core and
 separately in [3DS upstream readiness](3DS_UPSTREAM_READINESS.md), including which titles are playable and which have
 a verified companion memory map.
 
+Pokémon Ultra Moon (Europe) has additional read-only runtime evidence from the isolated `n3ds_dump` session: the
+`FieldRo` module appears with `FieldMenu` and `FieldEffectCommon` while the field is rendered, so the Android scene
+observer now reports that observed module as `FIELD`. This only enables the existing shared screen policy for that
+observed state. Ultra Moon still has no verified party, bag, location, battle or general Companion memory map; do not
+interpret launch or module recognition as Companion support.
+
 ## Linux / 3DS companion: tabs read per hack
 
 The Linux (and 3DS) companion reads each tab from the game's own data. For the ROM hacks it draws from the player's own ROM

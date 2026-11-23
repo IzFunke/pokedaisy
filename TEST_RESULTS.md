@@ -303,3 +303,23 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - Added a 3DS screens section to `docs/manual/devices.md`, describing the shared single-screen touch-window behavior and distinguishing Ultra Moon launchability from verified Companion game data.
 - Website manual parsing assumed LF line endings; the Windows checkout uses CRLF. Normalized manual text before parsing in `website/src/lib/docs.js` and before generating/comparing GitHub install guides in `website/scripts/install-guides.mjs`.
 - `npm test` in `website` — PASS, 82 tests; 0 failures. `npm run build` — PASS, 147 static pages.
+
+## 2026-11-23 Ultra Moon field-scene recognition and S25 refresh
+
+- The isolated Ultra Moon EU headless run loaded `FieldRo`, `FieldMenu`, and `FieldEffectCommon` while rendering the
+  field. `Gen6Reader.startupSceneOf()` now reports `FIELD` for the verified Ultra Moon title when `FieldRo` is present;
+  setup screens keep their existing `SCREEN` classification and intro/unknown modules remain `UNMAPPED`.
+- A read-only probe of published PKMN-NTR candidates found the expected German language byte and trainer-card/name
+  fields at the candidate trainer address. Party candidates did not pass the existing PK7 stored-checksum decoder;
+  bag and location values remain unverified. No Ultra Moon Companion config or memory-derived gameplay data was enabled.
+- Focused N3DS Dev unit run (`OrasSmCartTest`, `N3dsSceneTransitionTest`, `DsStagePolicyTest`) — PASS, 30 tests
+  discovered, 24 passed, 6 ROM-dependent skips, 0 failures/errors. This covers the new Ultra Moon `FieldRo` scene
+  assertion and shared layout/transition regression cases.
+- `:app:assembleDev -Ppokedaisy.n3ds=true -x :app:licensesAsset` — PASS. APK SHA-256:
+  `26451E8B0A9BF67D02526796D786A0C3C87681A5A41E5873148862FFDC15880E`.
+- Installed to the existing S25 `com.pokedaisy.app.dev` package using `adb install -r`. `firstInstallTime` remained
+  2026-11-23 18:29:14 and `lastUpdateTime` advanced to 19:38:34. The preference XML SHA-256 was unchanged
+  (`3db2ab892d2e2dfa08f571327bff5a312cc5d02808f24e6d78b7904dc8c0061a`); all six shared `.sav` hashes matched before
+  and after. A launcher intent was sent to `LibraryActivity`, but Netflix remained the foreground app on its
+  account-confirmation screen. No Netflix choice was made, no PokeDaisy game came to the foreground, and no game input
+  was sent. Direct Y / Ultra Moon runtime rechecks are therefore still pending.

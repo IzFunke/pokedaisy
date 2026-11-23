@@ -408,14 +408,19 @@ object Gen6Reader {
     }
 
     /**
-     * Recognize only observed Ultra Moon setup pages that use the game's screens. The S25 trace showed
-     * `StrInput` / `HeroSelect` on the player setup page; the preceding `AppDemo` / `SequencePlayer` / `Object`
-     * narration remains unmapped. This is deliberately not a gameplay-state map.
+     * Recognize only observed Ultra Moon setup pages and its live field module. The S25 trace showed
+     * `StrInput` / `HeroSelect`; the isolated Azahar run showed `FieldRo` with `FieldMenu` and `FieldEffectCommon`
+     * while rendering the playable field. The preceding `AppDemo` / `SequencePlayer` / `Object` narration remains
+     * unmapped. This is a module-level scene signal only; it does not enable a memory reader or Companion data.
      */
     fun startupSceneOf(titleId: Long, modules: String?): Scene? {
         if (startupSceneModuleRoot(titleId) == 0 || modules.isNullOrBlank()) return null
         val names = modules.lineSequence().toSet()
-        return if (names.any { it in ULTRA_MOON_SETUP_SCREENS }) Scene.SCREEN else Scene.UNMAPPED
+        return when {
+            names.any { it in ULTRA_MOON_SETUP_SCREENS } -> Scene.SCREEN
+            "FieldRo" in names -> Scene.FIELD
+            else -> Scene.UNMAPPED
+        }
     }
 
     // StrInput owns the 3DS name-entry keyboard: the upper display keeps Kukui's dialogue while the lower display

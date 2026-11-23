@@ -198,3 +198,20 @@ The shared DS / 3DS adaptive touch-window helper is committed and pushed. Focuse
 PokeDaisy's ordinary usage metadata (open count, time played, last-play timestamps, first-seen NEW feature timestamp, setup-complete flag) advanced during the S25 runtime checks. The app's configured emulator, layout, save-path, and language preferences were not manually changed. The shared saves remained byte-identical.
 
 The 3DS display contract is now described in `docs/manual/devices.md`. Website parsing and GitHub install-guide checks normalize Windows CRLF to LF; the Windows `npm test` suite passes all 82 tests, and `npm run build` produced 147 pages. The install guides were already current; no translated manual page needed updating because `devices.md` has no localized copies.
+
+## 2026-11-23 Ultra Moon field observation and S25 Dev update
+
+An isolated headless Ultra Moon EU session loaded `FieldRo`, `FieldMenu`, and `FieldEffectCommon` while rendering a
+field scene. The `FieldRo` module now maps to `FIELD` for Ultra Moon in the existing startup-scene observer, so it can
+flow through the shared 3DS stage policy. The German trainer-language byte and trainer-card/name fields matched the
+published PKMN-NTR candidate layout in a read-only probe. Party slots still fail PK7 checksum validation and the
+published bag/location candidates are not validated; Ultra Moon remains outside `N3dsCart.SUPPORTED` and has no
+Companion memory configuration. The isolated X-button probe did not visibly change the scene, so no menu mapping is
+claimed. The checkpoint and captures remain under the ignored local `work/usum-scene-investigation/` directory.
+
+The focused N3DS suite passed 24 tests with six ROM-dependent skips and no failures. A feature-enabled ARM64 Dev APK
+was built and installed to the existing S25 package with `adb install -r` (APK SHA-256
+`26451E8B0A9BF67D02526796D786A0C3C87681A5A41E5873148862FFDC15880E`). The app's preference XML hash and all six
+shared `.sav` hashes matched around the update; `firstInstallTime` remained unchanged. A later launcher intent did not
+move PokeDaisy to the foreground; Netflix's account-confirmation screen remained visible, so no choice was made and no
+Pokémon title was launched. Y / Ultra Moon device rechecks remain pending a clear foreground session.

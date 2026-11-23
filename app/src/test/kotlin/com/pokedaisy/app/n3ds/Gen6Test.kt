@@ -326,7 +326,7 @@ class Gen6Test {
     }
 
     @Test
-    fun ultraMoonSetupMapsOnlyObservedDualScreenPages() {
+    fun ultraMoonMapsOnlyObservedSetupPagesAndFieldModule() {
         val ultraMoon = N3dsCart.POKEMON_ULTRA_MOON_USA
         for (module in listOf("LangSelect", "HeroSelect", "StrInput")) {
             assertEquals(module, Gen6Reader.Scene.SCREEN, Gen6Reader.startupSceneOf(ultraMoon, module))
