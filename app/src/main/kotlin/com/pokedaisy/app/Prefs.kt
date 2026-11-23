@@ -664,7 +664,7 @@ class Prefs(
         get() = com.pokedaisy.app.companion.DsCore.of(p.getInt("ds_core", 0))
         set(v) = p.edit().putInt("ds_core", v.id).apply()
 
-    /** SCREEN > 3DS CORE. AUTO currently resolves to Azahar, the only bundled 3DS backend. */
+    /** SCREEN > 3DS CORE. Legacy AUTO remains stored as id 0 and still resolves to the only bundled backend, Azahar. */
     var n3dsCore: com.pokedaisy.app.companion.N3dsCore
         get() = com.pokedaisy.app.companion.N3dsCore.of(p.getInt("n3ds_core", 0))
         set(v) = p.edit().putInt("n3ds_core", v.id).apply()
