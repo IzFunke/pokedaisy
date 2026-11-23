@@ -4195,7 +4195,11 @@ class PokeDaisyActivity : Activity() {
         // A mapped 3DS page or DS menu page may temporarily request both screens; the saved layout stays unchanged.
         val n3dsScene = n3ds?.scene
         val layout = if (romIs3ds && n3dsScene != null)
-            n3dsStageLayout(chosen, n3dsScene)
+            n3dsStageLayout(
+                chosen,
+                n3dsScene,
+                portrait = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT,
+            )
         else dsStageLayout(twoScreenPage = !romIs3ds && dsMenuUp, chosen = chosen)
         // EXPAND / STRETCH fill the screen only where EXPAND has the scene to widen; elsewhere the backdrop's beside it.
         val fill = aspect != GameAspect.ORIGINAL && (dsWide || aspect == GameAspect.STRETCH)
@@ -4376,7 +4380,11 @@ class PokeDaisyActivity : Activity() {
                 // Wait for the touch surface only when its 4:3 window is visible; ONE SCREEN attaches it on demand.
                 wantsTouchSurface = {
                     val chosen = Prefs(this).dsLayout.forGame(followed = true)
-                    val effective = n3dsStageLayout(chosen, n3ds?.scene)
+                    val effective = n3dsStageLayout(
+                        chosen,
+                        n3ds?.scene,
+                        portrait = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT,
+                    )
                     val touchVisible = n3dsTouchOnSecond || dsTouchView.visibility == View.VISIBLE &&
                         n3dsTouchVisibleForLayout(effective, n3dsFloating.value, n3dsTouchAutoWanted)
                     n3dsTouchSurfaceRequired(dsStageOn, n3dsTouchOnSecond, touchVisible)

@@ -20,17 +20,19 @@ internal fun dsStageEnabled(
 ): Boolean =
     (is3ds || isNds && !portrait) && !hasSecondScreen && !debugMirror && (!companionOverGame || is3ds) && !folded
 
-/** A page that uses both displays temporarily puts a floating layout side by side, preserving [chosen]. */
-internal fun dsStageLayout(twoScreenPage: Boolean, chosen: DsLayout): DsLayout =
-    if (twoScreenPage && chosen.floats) DsLayout.SIDE_BY_SIDE else chosen
+/** A page that uses both displays temporarily uses a two-screen layout, preserving [chosen]. */
+internal fun dsStageLayout(twoScreenPage: Boolean, chosen: DsLayout, portrait: Boolean = false): DsLayout =
+    if (!twoScreenPage || !chosen.floats) chosen else if (portrait) DsLayout.STACKED else DsLayout.SIDE_BY_SIDE
 
 /** 3DS full-screen pages use the same two-display layout transition as DS menu pages. */
 internal fun n3dsStageLayout(
     chosen: DsLayout,
     scene: com.pokedaisy.app.n3ds.Gen6Reader.Scene? = null,
+    portrait: Boolean = false,
 ): DsLayout = dsStageLayout(
     twoScreenPage = scene == com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN,
     chosen = chosen,
+    portrait = portrait,
 )
 
 /** ONE SCREEN keeps the lower 3DS render hidden until the player asks for it; other selected layouts show it. */

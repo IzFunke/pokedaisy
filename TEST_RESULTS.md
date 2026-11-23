@@ -350,10 +350,10 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 
 ## 2026-11-23 shared DS/3DS dual-display page policy
 
-- `DsStagePolicy` now uses one `twoScreenPage` rule for DS menu pages and 3DS `Scene.SCREEN`. A floating selected
-  layout temporarily becomes `SIDE_BY_SIDE` for a page that uses both displays; field, menu-overlay and battle
-  bag/party presentation remain on their existing floating path. Returning to another scene restores the selected
-  layout because `Prefs.dsLayout` is never changed.
+- `DsStagePolicy` applies one temporary dual-display policy to DS menu pages and 3DS `Scene.SCREEN`. Floating 3DS
+  layouts become `SIDE_BY_SIDE` in landscape and `STACKED` in portrait, where side by side had reduced both screens to
+  about 120–137 px tall on common phones. Field, menu-overlay and battle bag/party presentation remain on their existing
+  floating path. Returning to another scene restores the selected layout because `Prefs.dsLayout` is never changed.
 - The player manual and parity/architecture notes describe this behavior.
 - `npm test` in `website` — PASS, 82 tests; 0 failures. This checks the edited manual source alongside the site's
   documentation and ROM-feature parser tests.
@@ -362,15 +362,20 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
 - The snapshot pipeline now reads the active session token from `N3dsSnapshotGate`; stop closes it before Azahar
   shutdown, and delayed battle-clear/end callbacks are gated. Sustained capture/decode failures also write their cause
   to Logcat once per failure streak.
+- Follow-up `DsStagePolicyTest` — PASS, including 360×800, 412×915, 800×360, and 2340×1080 profiles; the tests verify
+  portrait stacking, landscape side-by-side sizing, touch-screen aspect, and preservation of explicit layouts.
+- Follow-up `Gen6Test` — PASS, 16 discovered, 9 ROM-dependent skips, 0 failures/errors. The Pokémon Y sample test
+  confirms empty early-game party/bag data still yields German language and zone 2.
 - Focused Dev unit run — PASS: `DsStagePolicyTest` 16/16, `N3dsSnapshotGateTest` 4/4, and
   `N3dsSamplingPipelineTest` 6/6; 26 passed, 0 failures/errors. The command excluded only `:app:licensesAsset` because
   the optional `third_party/mgba/LICENSE` file is absent in this checkout.
 - `:app:assembleDev -Ppokedaisy.n3ds=true -x :app:licensesAsset` — PASS; APK SHA-256
-  `A1419BC11347E7A5D8ACBD4FB87F2E754A7851680F131FCFDC43D40B108DA988`. Installed over the existing package with
-  `adb install -r`; `firstInstallTime=2026-11-23 18:29:14` stayed unchanged. All 12 `.sav` hashes matched the
-  pre-install snapshot. The preference hash remained `02bcb9b80e52c8511e9b0d76e2d469f15b1c816ee34e9c2ebdcd8c1e9662adee`,
-  the value captured after the earlier launcher smoke check, not the older pre-launch measurement. The S25 stays locked;
-  no game was opened, so visual device validation remains pending.
+  `7260786AE1EF7AA7B2D26000AE0792DA74FC83265F5B1F1252019CE76619CBB0`. Installed over the existing package with
+  `adb install -r`; `firstInstallTime=2026-11-23 18:29:14` stayed unchanged. The preference hash before and after this
+  install is `02bcb9b80e52c8511e9b0d76e2d469f15b1c816ee34e9c2ebdcd8c1e9662adee`, the value captured after the earlier
+  launcher smoke check, not the older pre-launch measurement. The S25 remains locked; no game was opened, so visual
+  device validation remains pending.
+- `npm test` in `website` — PASS, 82 tests; 0 failures.
 - The earlier safe launcher smoke check did start `LibraryActivity` behind Android's keyguard. It produced no fatal
   exception in the captured log window, but the Activity was not visible. The `pokedaisy.xml` hash then differed from
   the prior measurement; its exact before/after field diff is unavailable, so no claim is made that every preference

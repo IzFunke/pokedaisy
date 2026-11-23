@@ -58,6 +58,34 @@ class DsStagePolicyTest {
         assertEquals(720, oneScreen.height)
     }
 
+    @Test fun threeDsFullScreenPageUsesStackedDisplaysInPortraitAndSideBySideInLandscape() {
+        val page = com.pokedaisy.app.n3ds.Gen6Reader.Scene.SCREEN
+        val profiles = listOf(360 to 800, 412 to 915, 800 to 360, 2340 to 1080)
+        for ((width, height) in profiles) {
+            val portrait = height > width
+            val expected = if (portrait) DsLayout.STACKED else DsLayout.SIDE_BY_SIDE
+            val layout = n3dsStageLayout(DsLayout.ONE_SCREEN, page, portrait)
+            assertEquals("$width x $height", expected, layout)
+
+            val pair = com.pokedaisy.app.companion.DsLayouts.arrange(
+                layout, width, height, fill = false,
+                topAspect = com.pokedaisy.app.companion.DsLayouts.N3DS_TOP_ASPECT,
+            )
+            val touch = requireNotNull(pair.touch)
+            assertTrue("$width x $height includes both displays", pair.top.width > 0 && touch.width > 0)
+            assertTrue("$width x $height keeps touch aspect", kotlin.math.abs(touch.width.toFloat() / touch.height - 4f / 3f) < 0.01f)
+            if (portrait) {
+                assertTrue("$width x $height avoids a tiny side-by-side image", pair.top.height >= 200)
+                assertTrue(pair.top.bottom <= touch.top)
+            } else {
+                assertEquals(pair.top.top, touch.top)
+                assertTrue(pair.top.right <= touch.left)
+            }
+        }
+        assertEquals(DsLayout.LARGE_SMALL, n3dsStageLayout(DsLayout.LARGE_SMALL, page, portrait = true))
+        assertEquals(DsLayout.STACKED, n3dsStageLayout(DsLayout.STACKED, page, portrait = false))
+    }
+
     @Test fun threeDsOneScreenFloatingWindowFitsPhonesAndHandheldAspectRatiosInsideItsFrame() {
         val frame = 30f
         val profiles = listOf(360 to 800, 800 to 360, 412 to 915, 915 to 412, 2340 to 1080)
