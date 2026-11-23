@@ -309,7 +309,7 @@ were checked through this path (2026-11-15).
 
 ## Pokemon Y (2026-11-15)
 
-Y (USA, title 0004000000055E00, `CTR-P-EK2A`) plays as X does: `N3dsCart.POKEMON_Y_USA`, `GameKind.POKEMON_Y` (`isXy` for
+Y (title 0004000000055E00, product `CTR-P-EK2A`, NCCH content version 2) plays as X does: `N3dsCart.POKEMON_Y_USA`, `GameKind.POKEMON_Y` (`isXy` for
 everything X has: tabs, look, bag, battle corner, skin), X's `Gen6Reader.Config`. Checked headless with n3ds_dump on one save
 in both carts: every field address reads the same (party, MyStatus, bag, zone, the static module's chain, the field hold
 flag, the field object's root and its X menu pointer and byte, the camera chain to the same setup), and the battle, party,

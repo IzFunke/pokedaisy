@@ -50,7 +50,14 @@ object N3dsCart {
     /** The game a cart's title id is; X is a defensive fallback for an unrecognized title id. */
     fun kindOf(titleId: Long) = KINDS[titleId] ?: com.pokedaisy.app.companion.data.GameKind.POKEMON_X
 
-    class Header(val titleId: Long, val decrypted: Boolean)
+    data class Header(
+        val titleId: Long,
+        val decrypted: Boolean,
+        /** NCCH product code from the first partition, for region/product validation alongside the NCSD title ID. */
+        val productCode: String,
+        /** NCCH content version (separate from an installed update title). */
+        val contentVersion: Int,
+    )
 
     fun isCart(f: File): Boolean = f.extension.lowercase() in EXTENSIONS && header(f) != null
 
@@ -69,7 +76,14 @@ object N3dsCart {
             raf.seek(part0 * 0x200)
             raf.readFully(ncch)
             if (String(ncch, 0x100, 4, Charsets.US_ASCII) != "NCCH") return null
-            Header(titleId, decrypted = (ncch[0x18F].toInt() and 0x04) != 0)
+            val productCode = String(ncch, 0x150, 0x10, Charsets.US_ASCII).trimEnd('\u0000')
+            val contentVersion = (ncch[0x112].toInt() and 0xFF) or ((ncch[0x113].toInt() and 0xFF) shl 8)
+            Header(
+                titleId = titleId,
+                decrypted = (ncch[0x18F].toInt() and 0x04) != 0,
+                productCode = productCode,
+                contentVersion = contentVersion,
+            )
         }
     }.getOrNull()
 

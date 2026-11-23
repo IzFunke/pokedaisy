@@ -399,3 +399,10 @@ The all-DS folder must also cover games with a previously saved library `SAVE FO
   `work/usum-scene-investigation/` for follow-up.
 - These captures are headless observations only. The S25 stays locked, and no claim of real-device gameplay validation
   is made.
+
+## 2026-11-23 Pokémon Y regular-save checkpoint
+
+- Used Pokémon Y's own German save flow on the isolated `work/y-headless-input-matrix/userdir`; the game completed “Speichervorgang…” and returned to the bedroom. Its `main` is 415232 bytes with SHA-256 `D61CB2433681B9B8BEE51FAC7F93850DF73AF1E6FA0010375136152061D94706`.
+- Continued gameplay from that regular save and saved separate Azahar savestates under `work/y-runtime-companion-capture/`. The regular save remained at the same hash through movement and dialogue probes.
+- The untouched source copy `work/y-save-integration-check-20261123/main-copy` remains SHA-256 `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2`; the before-save backup has the same hash. Only the isolated emulator copy was written by the game's save function.
+- The current reproducible point is the German bedroom scene, near the mirror after the mother's instruction. No permanent personal save or app save was accessed.
