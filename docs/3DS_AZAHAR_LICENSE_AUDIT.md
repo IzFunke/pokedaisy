@@ -80,12 +80,12 @@ the exact files and confirm the distribution/source-offer obligations for the fi
 
 ### PokeDaisy's Azahar patch
 
-`NOTICE` currently describes `third_party/patches/azahar-pokedaisy.patch` as build-only. The checked-in patch also
-changes runtime code: it adds an optional memory-write watch hook in `src/core/memory.cpp`, removes a shared cache from
-`GetPhysMemRegionInfo`, and guards invalid software-renderer texture reads in
-`src/video_core/renderer_software/sw_rasterizer.cpp`. The notice should describe these runtime changes accurately and
-identify their license/attribution basis. The affected source files retain their upstream headers, while the patch
-adds PokeDaisy comments; this audit does not determine the licensing of the combined modifications.
+`NOTICE` now describes `third_party/patches/azahar-pokedaisy.patch` as both build and runtime changes: it adds an
+optional memory-write watch hook in `src/core/memory.cpp`, removes a shared cache from `GetPhysMemRegionInfo`, and
+guards invalid software-renderer texture reads in `src/video_core/renderer_software/sw_rasterizer.cpp`. The write
+observer is used by the headless capture tool and is not enabled in the app. The affected source files retain their
+upstream headers, while the patch adds PokeDaisy comments; this audit does not determine the licensing of the combined
+modifications.
 
 ## Release gates
 

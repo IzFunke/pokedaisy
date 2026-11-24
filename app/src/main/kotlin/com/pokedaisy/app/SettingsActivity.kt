@@ -390,17 +390,17 @@ class SettingsActivity : ComponentActivity() {
                         onPick = { changeDsSavesFolder(it); folderTick++ },
                         onReset = { changeDsSavesFolder(null); folderTick++ },
                         defaultPath = SavesLocation.dir(this@SettingsActivity, prefs).absolutePath,
-                        detail = "DS saves go to PokeDaisy's save folder by default. Choose a shared folder to use another location for every DS game. Existing saves are copied there.")
+                        detail = tr("DS saves go to PokeDaisy's save folder by default. Choose a shared folder to use another location for every DS game. Existing saves are copied there."))
                     Screen.N3DS_SAVES_FOLDER -> PlatformSavesFolderScreen(m, small, "3DS GAME SAVES", prefs.n3dsSavesDirOverride,
                         onPick = ::changeN3dsSavesFolder,
                         onReset = { changeN3dsSavesFolder(null) },
                         defaultPath = com.pokedaisy.app.n3ds.N3dsSaves.sharedSaveRoot(this@SettingsActivity, prefs).absolutePath,
-                        detail = "3DS save archives live here. By default, they are kept in PokeDaisy's save folder.")
+                        detail = tr("3DS save archives live here. By default, they are kept in PokeDaisy's save folder."))
                     Screen.AZAHAR_USER_FOLDER -> PlatformSavesFolderScreen(m, small, "AZAHAR USER DATA", prefs.n3dsUserDirOverride,
                         onPick = ::changeN3dsUserFolder,
                         onReset = { changeN3dsUserFolder(null) },
                         defaultPath = com.pokedaisy.app.n3ds.N3dsSaves.root(this@SettingsActivity, prefs).absolutePath,
-                        detail = "Azahar uses this as its user-data folder. The SD card save files live inside it.")
+                        detail = tr("Azahar uses this as its user-data folder. The SD card save files live inside it."))
                     Screen.SAVE_SEARCH -> AlsoLookInScreen(m, small)
                     Screen.STATES_FOLDER -> StatesFolderScreen(m, small)
                     Screen.BACKUPS -> SaveBackupsScreen(m, small)

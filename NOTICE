@@ -97,7 +97,10 @@ Settings > LICENSES. Optional-build entries below say when they are included.
   tag `2126.2`, pinned commit `219d743a1e698101fe1ab8bef43e6563126c3c27`.
   PokeDaisy's native front end is in `n3ds/src/main/cpp/`; the upstream Android
   application is not built. `third_party/patches/apply_azahar_patch.cmake`
-  applies PokeDaisy's build-only changes to the submodule. The source tree's
+  applies PokeDaisy's submodule patch at configure time. It adjusts build paths
+  and makes runtime changes to memory-write observation, concurrent memory-region
+  lookup and bounds-checked software texture reads; the write observer is only
+  used by the headless capture tool, not enabled in the app. The source tree's
   root `license.txt` is GPL version 2, while files in the pinned tree also carry
   other explicit notices, including GPL version 3-or-later headers. The Android
   core statically links Dynarmic (permissive license in `externals/dynarmic/
