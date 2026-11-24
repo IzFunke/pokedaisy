@@ -44,11 +44,13 @@ folded into the older matrix.
 
 ## Distribution and pull request gates
 
-The pinned Azahar source has since been inspected at commit `219d743a1e698101fe1ab8bef43e6563126c3c27`. That inspection
-found additional concrete notice and provenance questions, including bundled cpp-httplib, GLAD's generated output,
-generated system archive data, mixed GPL headers, and runtime changes in PokeDaisy's patch. The detailed source paths,
-build references, and unresolved obligations are recorded in [the Azahar Android license audit](3DS_AZAHAR_LICENSE_AUDIT.md).
-The source review does not establish that an APK containing the optional Azahar core is redistributable or PR-ready.
+The pinned Azahar source has been inspected at commit `219d743a1e698101fe1ab8bef43e6563126c3c27`. The concrete
+cpp-httplib notice gap was fixed: its MIT text is now in `NOTICE` and the optional Android license asset, and the
+packaged APK was checked for both the component heading and full license text on 2026-11-24. Remaining questions
+include GLAD's generated output, generated system archive data, mixed GPL headers, and runtime changes in PokeDaisy's
+patch. The detailed source paths, build references, and unresolved obligations are recorded in
+[the Azahar Android license audit](3DS_AZAHAR_LICENSE_AUDIT.md). This work does not establish that an APK containing
+the optional Azahar core is redistributable or PR-ready.
 
 The default Android CI job intentionally skips Azahar. A separate `android-3ds` job now fetches the pinned Azahar
 submodule recursively and runs `:app:testDevUnitTest` plus `:app:assembleDev -Ppokedaisy.n3ds=true` on CI, so Kotlin,
@@ -59,5 +61,11 @@ passing consistently on GitHub's runners and the license/provenance questions ab
 
 ## Audit limits
 
-This was a source and workflow review only. It did not run Gradle, compile either Android variant, run ROM-backed tests,
-or inspect physical-device behavior. No claim about runtime stability follows from this document.
+This remains an incomplete upstream/readiness review. On 2026-11-24, the focused `DsStagePolicyTest` passed 19 tests;
+`Gen6Test.standaloneTouchOnlyPagesRequestTheSecondScreen` and
+`DsStagePolicyTest.standaloneTouchPagesStayVisibleAcrossEveryChosenLayout` passed; the manual/docsearch suite passed
+9 tests; and `:app:assembleDev` succeeded with `pokedaisy.n3ds=true`. The generated `assets/licenses.txt` in that APK
+contains cpp-httplib's complete MIT text. The installed Dev APK started into `LibraryActivity` on an S25 via the
+existing installation; no 3DS ROM was launched on-device in that check. Y gameplay testing continues in a disposable
+headless profile. Ultra Moon gameplay mapping and direct S25 game validation remain incomplete, and the unresolved
+license/provenance questions above prevent a claim of PR or distribution readiness.
