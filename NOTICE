@@ -101,7 +101,8 @@ Settings > LICENSES. Optional-build entries below say when they are included.
   root `license.txt` is GPL version 2, while files in the pinned tree also carry
   other explicit notices, including GPL version 3-or-later headers. The Android
   core statically links Dynarmic (permissive license in `externals/dynarmic/
-  LICENSE.txt`), MCL, ENet, LibreSSL, lodepng, FAAD2, SoundTouch, Teakra, cubeb,
+  LICENSE.txt`), MCL, ENet, LibreSSL, lodepng, cpp-httplib 0.14.0 (MIT; Yuji
+  Hirose, https://github.com/yhirose/cpp-httplib), FAAD2, SoundTouch, Teakra, cubeb,
   Sirit, glslang, SPIR-V Tools / Headers, Boost, Crypto++, fmt, zstd, xxHash,
   dds-ktx, nihstro, VMA, robin-map, Oaknut, and the Android game-mode header.
   Their checked-in license texts are included in Settings > LICENSES in builds

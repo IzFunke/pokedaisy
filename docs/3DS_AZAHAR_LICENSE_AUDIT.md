@@ -34,9 +34,10 @@ and does not infer whether the linker removes any unused objects.
 header identifies Copyright (c) 2023 Yuji Hirose and the MIT License; `externals/httplib/README.md` points to upstream
 commit `0a629d739127dcc5d828474a5aedae1f234687d3` and says MIT. There is no separate license file in that directory.
 Azahar's Android `src/android/app/src/main/res/values/licenses.xml` records the component name, description, link and
-copyright but no full MIT license text. PokeDaisy's `app/build.gradle.kts` `azaharParts` and `NOTICE` do not list
-cpp-httplib. The optional PokeDaisy license asset therefore needs this component's notice and full license text before
-the APK can be treated as notice-complete.
+copyright but no full MIT license text. PokeDaisy now lists cpp-httplib in `NOTICE` and includes the MIT text from the
+exact upstream commit in `third_party/licenses/cpp-httplib-MIT.txt`, conditionally included by
+`app/build.gradle.kts` for the optional Android 3DS license asset. The generated asset should still be checked in the
+release build output; this attribution change does not resolve any broader redistribution or compatibility question.
 
 ### GLAD and Khronos headers
 
@@ -90,7 +91,7 @@ adds PokeDaisy comments; this audit does not determine the licensing of the comb
 
 Before describing the Android 3DS package as redistributable or notice-complete:
 
-1. Add the missing cpp-httplib attribution and full MIT text to `NOTICE` and the optional in-app license asset.
+1. Confirm the optional Android 3DS license asset in a packaged build contains cpp-httplib's notice and full MIT text.
 2. Resolve GLAD's generated-code terms for this exact specification output and include both GLAD attribution and the
    separate Khronos header notice in the in-app license asset.
 3. Establish the origin and redistribution terms for each generated system archive array, or exclude them.
