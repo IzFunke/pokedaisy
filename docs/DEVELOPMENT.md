@@ -3936,6 +3936,8 @@ what the threaded renderer gave, for more moving parts. Both stay 3DS only.
 
 ## Build
 
+Use the wrapper for the host shell: in Windows PowerShell, start commands with `.\gradlew.bat`; in Linux/WSL/Docker, use `./gradlew`. Never invoke the extensionless POSIX `gradlew` from Windows. The commands below use the Unix form unless a Windows example is shown.
+
 ```bash
 git submodule update --init third_party/mgba third_party/rcheevos third_party/melonds third_party/dsperate third_party/bananads third_party/melonds-bananads  # first time only (or: make submodules)
 ./gradlew :app:assembleDebug                                        # or: make apk

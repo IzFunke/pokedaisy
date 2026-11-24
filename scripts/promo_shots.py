@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import subprocess
+from gradle_wrapper import run_gradle
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -158,9 +159,7 @@ def og(img, out):
 
 
 def render(slug):
-    subprocess.run(
-        ["./gradlew", ":app:recordPaparazziDebug", "--tests", f"*GamePromoShotsTest.{slug}_*", "-q"], cwd=ROOT, check=True,
-    )
+    run_gradle(ROOT, [":app:recordPaparazziDebug", "--tests", f"*GamePromoShotsTest.{slug}_*", "-q"], check=True)
 
 
 def stitch(slug):

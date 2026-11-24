@@ -93,7 +93,7 @@ CLAUDE.md is already in your context. Then read, before changing anything:
    docs/ROM_FEATURES.md's row, docs/manual/supported-games.md (the manual's rules: plain, second person, no em /
    en dashes or spaced hyphens, no real Pokémon / move / item names: name the game itself only), a
    docs/DEVELOPMENT.md section in the style of the others (how it was mapped, its gotchas), the website's
-   `compat.json` (`UPDATE_SITE_DATA=1 ./gradlew :app:testDebugUnitTest -Pquick --tests '*SiteDataExportTest'`),
+   `compat.json` (run via the host-platform wrapper: `UPDATE_SITE_DATA=1 .\gradlew.bat :app:testDebugUnitTest -Pquick --tests '*SiteDataExportTest'` on Windows, `UPDATE_SITE_DATA=1 ./gradlew :app:testDebugUnitTest -Pquick --tests '*SiteDataExportTest'` on Linux/WSL/Docker),
    NOTICE if you bundle anything new (you shouldn't need to: no game art, ever), and a short CLAUDE.md paragraph
    for the game in the style of the others **only** if it has a gotcha a future change would trip on.
 
@@ -102,7 +102,7 @@ CLAUDE.md is already in your context. Then read, before changing anything:
 - **Tests**: `make test-quick`, and the tests you touched by name while working
   (`make test-quick T='*FooDecodeTest'`; `GameTitlesTest`, `SiteDataExportTest`, `GameDataMigrationTest`,
   `BestEffortTest` by name when you touch detection). **Never a full run** (`make test`, `make check`,
-  `make test-roms`, a plain `./gradlew :app:testDebugUnitTest`, every Paparazzi class, all of ui-preview): CI runs
+  `make test-roms`, a plain platform Gradle wrapper (`.\gradlew.bat` on Windows, `./gradlew` on Linux/WSL/Docker), every Paparazzi class, all of ui-preview): CI runs
   them on the PR. `make test-quick` must pass before you write the report. If gradle can't build at all (no
   Android SDK), say so in the report rather than working around it.
 - **UI**: you shouldn't need any. If you change a screen, render just that one (ui-preview `-Ponly=...`, one

@@ -229,6 +229,8 @@ loading one keeps the battery save in memory (`load_state_keeping_save`), like t
 
 ## Testing: quick by default, full runs only with the user's OK
 
+**Gradle wrapper by host platform:** in native Windows PowerShell or `cmd.exe`, invoke Gradle only as `.\gradlew.bat`. Invoke `./gradlew` only from Linux, WSL, or Docker. Never run the extensionless POSIX `gradlew` from Windows; this checkout must include `gradlew.bat`. Do not change Windows file associations to work around a bad invocation. Host-side Python build/test scripts must use `scripts/gradle_wrapper.py` so they select the correct launcher.
+
 The user runs several agents at once and runs the full suites about once a day, so (the user's rule, 2026-11-01):
 
 - **Everyday check: `make test-quick`** (`./gradlew :app:testDebugUnitTest :shared:testDebugUnitTest -Pquick`, about 1 min warm; companion/data and

@@ -165,7 +165,7 @@ def main() -> int:
     elif plat == "NDS" and any((d["code"], d["rev"]) == (rom["code"], rom["revision"]) for d in compat.get("ds", [])):
         r.add("ok", "website", "compat.json's ds list has its header")
     else:
-        r.add("MISSING", "website", "compat.json is stale: UPDATE_SITE_DATA=1 ./gradlew :app:testDebugUnitTest -Pquick "
+        r.add("MISSING", "website", "compat.json is stale: UPDATE_SITE_DATA=1 <platform wrapper> :app:testDebugUnitTest -Pquick "
               "--tests '*SiteDataExportTest'")
 
     # The books

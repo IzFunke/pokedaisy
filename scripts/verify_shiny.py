@@ -26,6 +26,7 @@ import json
 import os
 import shutil
 import subprocess
+from gradle_wrapper import run_gradle
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -297,8 +298,7 @@ def docker(sh):
 
 
 def jvm():
-    subprocess.run([os.path.join(ROOT, "gradlew"), "-p", ROOT, ":shared:testDebugUnitTest", "--tests", "*ShinyVerifyTest", "--rerun", "-q"],
-                   check=True)
+    run_gradle(ROOT, ["-p", ROOT, ":shared:testDebugUnitTest", "--tests", "*ShinyVerifyTest", "--rerun", "-q"], check=True)
 
 
 def ppm(path):
