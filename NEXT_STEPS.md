@@ -550,7 +550,7 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 
 - Read-only auf frischem Profilklon mit `y-neighbor-go.state` (Checkpoint- und Original-`main`-Hashes unverändert): `DllField DllUSMirror`, Zone-Kandidat `0x08C6709E=2`, Sprachbyte `0x08C79C59=5` (Deutsch). Party bei `0x08CE1CE8`, Stride `0x1E4`, 6 verschlüsselte PK6-Slots; aus diesem Zustand 0 gültige Pokémon. Bag-Bereiche belegt: 0 Einträge. Kein Battle-Modul/-Datensatz aktiv. Screenshot zeigt den Haus-/PSS-Freundeslistenabschnitt. `y-after-dark-dialogue.state` bestätigt separat dieselbe Zone und leere Party/Tasche.
 - Dieser spätere, aber noch frühe Story-State reicht nicht für Companion-Party/Battle. `/root/y_companion_runtime` sucht jetzt vorhandene spätere States; wenn keiner mit Starter existiert, wird auf einer Wegwerfkopie gezielt bis zur Starterwahl/ersten Encounter weitergespielt und nur dort gespeichert. Vollständiges Intro bleibt unnötig; Name-Screen wird separat vertagt.
-- Aktive Agentenstränge: `/root/um_companion_runtime` geht auf einer Wegwerfkopie von `run6-photo-question.state` bis Starter/erster Encounter; spätere Erlaubnis Intro-Angaben beliebig zu wählen überschreibt den früheren Fotostopp. `/root/y_companion_runtime` sucht/populiert Y-Party/Battle/Inventar. `/root/android_crash_audit` ist abgeschlossen; sein Save-Lookup-Fix wurde integriert. HID-Namensscreen ist durch die neue Touch-Handler-Disassemblierung eingegrenzt und blockiert diese Stränge nicht.
+- Aktive Agentenstränge: `/root/um_companion_runtime` analysiert `PhotoView`/`TrainerPhoto` statisch, um eine zulässige Default-Auswahl am Kukui-Fotoprompt zu bestimmen; Root übernimmt den nächsten Headless-Schritt über Docker, weil WSL in der Agent-Shell fehlt. `/root/y_companion_runtime` setzt den isolierten S25-Save-Run ohne Savestate fort und liest Party/Battle/Bag direkt. `/root/android_crash_audit` ist abgeschlossen; sein Save-Lookup-Fix wurde integriert. HID-Namensscreen bleibt aus dem kritischen Pfad.
 
 ### Save-Lookup-Fix integriert
 
@@ -562,7 +562,13 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 
 - Isolierte frame-neutrale Läufe von `um-field-after-touch-test.state` und `ultra-moon-field-live.state`: Module `FieldRo FieldMenu FieldEffectCommon`. Trainer-Layout bei `0x33012818`: TID `0xC6B1`, SID `0x3380`, Gender `0`, Sprache `5`/Deutsch, Name `ELL` bei `+0x38` (`0x33012850`); passt zum Gen-7-`MyStatus`-Layout. Money-Kandidat `0x33015210=5000`.
 - Party-Kandidat `0x33F7FA44`, Stride `0x1E4`: sechs checksumgültige, aber leere PK7-Slots; Alternative `0x330128E4` ebenfalls leer. Bag-Kandidat `0x33011934` nullgefüllt; keine Battle-Daten und kein Battle-Modul. Alle 31 lokalen `main`-Kopien haben unformatierten Footer, 39 CRC-Fehler und Party-Zähler 0; dies sind keine validen Fortsetzungs-Saves.
-- Ultra-Mond-Datenumfang ist deshalb noch nicht genug für Companion. `/root/um_companion_runtime` setzt jetzt die im Foto-Gate gesicherte Wegwerfkopie bis Starter/erste Begegnung fort, statt das ganze Intro durchzuspielen; danach Party/Battle/Bag im selben Klon erneut messen. Originale bleiben unberührt.
+- Ultra-Mond-Datenumfang ist deshalb noch nicht genug für Companion. Ein isolierter Progress-State `work/usum-scene-investigation/um-photo-progress-20261124/after-center-touch.state` blieb bei `AppDemo SequencePlayer Object` und Kukuis Fotofrage; der Center-Touch war ungültig. Die zugehörige temporäre PNG wurde entfernt, der State blieb unverändert. Keine Wiederholung derselben Touch-/A-Proben; ein neuer Methodenwechsel ist erforderlich.
+- Agent-Shell kann den Linux-Headless-Binary nicht starten, da WSL ohne `/bin/bash` ist. Root kann den vorhandenen `pokedaisy-n3ds-builder`-Docker nutzen, sobald die Foto-Handleranalyse eine konkrete, nicht wiederholte Aktion liefert. Der spätere Fotoprompt ist weiterhin durch die spätere Intro-Freigabe gedeckt; danach nur bis Starter/erster Encounter, um Party-/Battle-/Bag-Daten zu erlangen.
+
+### Pokémon-Y-S25-Save-Checkpoint
+
+- Der echte S25-Y-`.sav`-Export wurde nur auf einer frischen isolierten Userdir-Kopie benutzt. Startmenü `DllStartMenu` bei Frame 299; Continue erreicht `DllField`/Zone 2 bei Frame 440. Original und Kopie blieben vor/nach hashgleich.
+- Ein `savestate`-Versuch genau im Feld stürzte Azahar mit Boost `archive_exception: unregistered class`/SIGSEGV ab; danach wurden keine RAM-Kommandos ausgeführt und keine Partywerte behauptet. Der Agent wiederholt den Continue-Pfad ohne Savestate/PNG und liest direkt bei `DllField`.
 
 ### Dev-Build auf S25
 
