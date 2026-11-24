@@ -28,6 +28,7 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | `wait N` | Runs N frames with the held keys. |
 | `waittight N` | Runs N frames with the normal full CPU slice even when step mode is enabled. Useful for comparing scheduler behavior after loading a checkpoint. |
 | `step N` | Runs N single-step scheduler iterations; reports elapsed time, calls and completed frames every two seconds. |
+| `tracefield MAX_STEPS [MAX_HITS] [MODROOT]` | Bounded ARM trace of the live `FieldMenu` handler at code +0x1AD4; checks all cores after each scheduler step and logs the matching core's PC, R0/R1/R4/LR and state byte R0+0xE9. Defaults to the active module root; caps: 1,000,000 scheduler steps and 100 hits, with progress every two seconds. |
 | `keys K` | Holds K from now on (`keys NONE` lets go). |
 | `press K` / `hold K N` | K for one frame (or N), then one frame without. |
 | `touch X Y [N]` | The stylus at (X, Y) on the bottom screen (320x240) for N frames (default 2), then up. |
@@ -47,6 +48,9 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | `echo TEXT` | Prints TEXT: a marker for a script fed live (stdin from `tail -f` on a file you append to). |
 | `peekf ADDR` / `hex ADDR [LEN]` | A float; LEN bytes (0x40) as 16-byte lines. |
 | `search32 V [MAX]` | Every aligned word equal to V in the game's memory (64 at most). |
+
+The handler offset is from the analyzed Ultra Moon `FieldMenu` CRO. Do not reuse it for other titles or revisions without
+verifying their handler location in the matching CRO first.
 
 `N3DS_STEP_RUNLOOP=1` makes `wait` use `RunLoop(false)` single-step iterations instead of the normal full CPU slice.
 This can get past a full-slice wait during initial boot; it is much slower, so use `waittight N` to compare full-slice

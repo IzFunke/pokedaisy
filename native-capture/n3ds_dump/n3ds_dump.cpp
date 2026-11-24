@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -294,6 +295,83 @@ static std::string moduleNames(Memory::MemorySystem& mem, u32 root) {
     return out;
 }
 
+struct CodeSegment {
+    u32 address;
+    u32 size;
+};
+
+static bool checkedAdd(u32 base, u32 offset, u32& result) {
+    if (base > std::numeric_limits<u32>::max() - offset) return false;
+    result = base + offset;
+    return true;
+}
+
+static bool isLoadedCroMagic(u32 magic) {
+    constexpr u32 MAGIC_CRO0 = 0x304F5243;
+    constexpr u32 MAGIC_FIXD = 0x44584946;
+    return magic == MAGIC_CRO0 || magic == MAGIC_FIXD;
+}
+
+// Resolve a loaded CRO's executable segment from the live module chain instead of assuming a title-specific address.
+static CodeSegment moduleCodeSegment(Memory::MemorySystem& mem, u32 root, const std::string& wanted) {
+    auto proc = process();
+    auto valid = [&](u32 address) { return proc && mem.IsValidVirtualAddress(*proc, address); };
+    u32 rootNext, rootTag;
+    if (!checkedAdd(root, 0x88, rootNext) || !checkedAdd(root, 0x80, rootTag) || !valid(rootNext) || !valid(rootTag) ||
+        mem.Read32(rootTag) != 0x304F5243) return {};
+
+    u32 module = mem.Read32(rootNext);
+    for (int n = 0; n < 32 && module != 0; ++n) {
+        u32 segmentCountAddress, moduleNext, moduleTag, nameAddress;
+        if (!checkedAdd(module, 0xCC, segmentCountAddress) || !checkedAdd(module, 0x88, moduleNext) ||
+            !checkedAdd(module, 0x80, moduleTag) || !checkedAdd(module, 0x84, nameAddress) ||
+            !valid(segmentCountAddress) || !valid(moduleNext) || !valid(moduleTag) || !valid(nameAddress) ||
+            !isLoadedCroMagic(mem.Read32(moduleTag))) return {};
+        const u32 name = mem.Read32(nameAddress);
+        if (!valid(name)) return {};
+        std::string moduleName;
+        for (u32 i = 0; i < 48; ++i) {
+            u32 charAddress;
+            if (!checkedAdd(name, i, charAddress) || !valid(charAddress)) break;
+            const char c = static_cast<char>(mem.Read8(charAddress));
+            if (c < 0x20 || c > 0x7E) break;
+            moduleName += c;
+        }
+        if (moduleName == wanted) {
+            u32 tableAddress;
+            if (!checkedAdd(module, 0xC8, tableAddress) || !valid(tableAddress)) return {};
+            const u32 table = mem.Read32(tableAddress); // rebased SegmentTableOffset
+            const u32 count = mem.Read32(segmentCountAddress);
+            // CROs have only a handful of segments. Bound both table traversal and address arithmetic before reading.
+            constexpr u32 MAX_CRO_SEGMENTS = 16;
+            if (count == 0 || count > MAX_CRO_SEGMENTS || !valid(table) ||
+                count > (std::numeric_limits<u32>::max() - table) / 12) return {};
+            const u32 tableEnd = table + count * 12 - 1;
+            if (!valid(tableEnd)) return {};
+            for (u32 i = 0; i < count; ++i) {
+                const u32 entry = table + i * 12;
+                u32 segmentTypeAddress;
+                if (!checkedAdd(entry, 11, segmentTypeAddress) || !valid(segmentTypeAddress)) return {};
+                u32 segmentAddressField, segmentAddressEnd, segmentSizeField, segmentSizeEnd, segmentTypeField;
+                if (!checkedAdd(entry, 0, segmentAddressField) || !checkedAdd(entry, 4, segmentSizeField) ||
+                    !checkedAdd(entry, 8, segmentTypeField) || !checkedAdd(segmentAddressField, 3, segmentAddressEnd) ||
+                    !checkedAdd(segmentSizeField, 3, segmentSizeEnd) || !valid(segmentAddressField) ||
+                    !valid(segmentAddressEnd) || !valid(segmentSizeField) || !valid(segmentSizeEnd) ||
+                    !valid(segmentTypeField)) return {};
+                if (mem.Read32(segmentTypeField) == 0) { // SegmentType::Code
+                    const u32 address = mem.Read32(segmentAddressField);
+                    const u32 size = mem.Read32(segmentSizeField);
+                    if (size == 0 || size > std::numeric_limits<u32>::max() - address) return {};
+                    return {address, size};
+                }
+            }
+            return {};
+        }
+        module = mem.Read32(moduleNext);
+    }
+    return {};
+}
+
 int main(int argc, char** argv) {
     if (argc < 3) {
         std::fprintf(stderr, "usage: n3ds_dump CART.3ds USERDIR [--save MAIN] [--new3ds] < script.txt\n");
@@ -433,6 +511,61 @@ int main(int argc, char** argv) {
             std::printf("step completed calls=%llu frames=%llu\n",
                         static_cast<unsigned long long>(completed),
                         static_cast<unsigned long long>(window->frames));
+        } else if (cmd == "tracefield") {
+            // tracefield MAX_STEPS [MAX_HITS] [MODROOT]: bounded ARM single-step trace of FieldMenu's handler entry.
+            constexpr u32 STEP_CAP = 1'000'000;
+            constexpr u32 HIT_CAP = 100;
+            if (a.empty()) {
+                std::puts("tracefield usage: tracefield MAX_STEPS [MAX_HITS] [MODROOT]");
+                continue;
+            }
+            const u32 maxSteps = std::min(number(a[0]), STEP_CAP);
+            const u32 maxHits = a.size() > 1 ? std::min(number(a[1]), HIT_CAP) : 16;
+            const u32 root = a.size() > 2 ? number(a[2]) : modRoot;
+            const auto code = moduleCodeSegment(mem, root, "FieldMenu");
+            constexpr u32 HANDLER_OFFSET = 0x1AD4;
+            u32 target;
+            if (maxSteps == 0 || maxHits == 0 || code.address == 0 ||
+                code.size < HANDLER_OFFSET + sizeof(u32) ||
+                !checkedAdd(code.address, HANDLER_OFFSET, target)) {
+                std::printf("tracefield stopped steps=%u hits_limit=%u modroot=%08x codebase=%08x\n",
+                            maxSteps, maxHits, root, code.address);
+                continue;
+            }
+            u32 hits = 0, completed = 0;
+            auto lastProgress = std::chrono::steady_clock::now();
+            for (; completed < maxSteps && hits < maxHits; ++completed) {
+                const auto result = system.RunLoop(false);
+                if (result != Core::System::ResultStatus::Success) {
+                    std::fprintf(stderr, "tracefield RunLoop: %d %s\n", static_cast<int>(result),
+                                 system.GetStatusDetails().c_str());
+                    break;
+                }
+                // RunLoop(false) visits every scheduled core; inspect each architectural PC, not only the last one.
+                for (u32 coreId = 0; coreId < system.GetNumCores() && hits < maxHits; ++coreId) {
+                    auto& core = system.GetCore(coreId);
+                    if (core.GetPC() != target) continue;
+                    const u32 r0 = core.GetReg(0);
+                    u32 stateAddress;
+                    const auto currentProcess = process();
+                    const int state = checkedAdd(r0, 0xE9, stateAddress) && currentProcess &&
+                                              mem.IsValidVirtualAddress(*currentProcess, stateAddress)
+                                          ? static_cast<int>(mem.Read8(stateAddress)) : -1;
+                    std::printf("tracefield hit step=%u core=%u frame=%llu pc=%08x r0=%08x r1=%08x r4=%08x lr=%08x state_e9=%d\n",
+                                completed + 1, coreId, static_cast<unsigned long long>(window->frames), core.GetPC(), r0,
+                                core.GetReg(1), core.GetReg(4), core.GetReg(14), state);
+                    ++hits;
+                }
+                const auto now = std::chrono::steady_clock::now();
+                if (std::chrono::duration<double>(now - lastProgress).count() >= 2.0) {
+                    std::printf("tracefield progress calls=%u/%u hits=%u frames=%llu\n", completed + 1, maxSteps,
+                                hits, static_cast<unsigned long long>(window->frames));
+                    std::fflush(stdout);
+                    lastProgress = now;
+                }
+            }
+            std::printf("tracefield done steps=%u/%u hits=%u target=%08x codebase=%08x\n",
+                        completed, maxSteps, hits, target, code.address);
         } else if (cmd == "keys") {
             setKeys(a.at(0));
         } else if (cmd == "press" || cmd == "hold") {
