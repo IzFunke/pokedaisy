@@ -569,6 +569,8 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 
 - Der echte S25-Y-`.sav`-Export wurde nur auf einer frischen isolierten Userdir-Kopie benutzt. Startmenü `DllStartMenu` bei Frame 299; Continue erreicht `DllField`/Zone 2 bei Frame 440. Original und Kopie blieben vor/nach hashgleich.
 - Ein `savestate`-Versuch genau im Feld stürzte Azahar mit Boost `archive_exception: unregistered class`/SIGSEGV ab; danach wurden keine RAM-Kommandos ausgeführt und keine Partywerte behauptet. Der Agent wiederholt den Continue-Pfad ohne Savestate/PNG und liest direkt bei `DllField`.
+- Retry ohne Savestate/Screenshots erreichte auf neuer Klonkopie `DllField`, Frame 497, Zone 2. Sprache `0x08C79C59=5` (Deutsch), Party `0x08CE1CE8`, sechs verschlüsselte Gen6-Slots mit 0 checksumgültigen Mon; Bag-Bereiche `0x08C67154` + Taschenoffsets leer; kein Battle-Modul. Der S25-Save ist ein echter weiterverwendbarer Startpunkt, aber noch vor Starter/Party. Original-Save und Klon waren nach RAM-Lesen hashgleich (`82C8E89B…33616`). RAM-Ausgabe: `work/y-runtime-s25-save-audit-retry-20261124/runtime-ram.txt`.
+- Nächster Schritt auf dieser Kopie: gezielt bis Starterwahl/Party und optional zum ersten Encounter, dann nur im Klon speichern und Companion-RAM nochmals prüfen. Keine Screenshots oder Savestates im aktuellen Retry.
 
 ### Dev-Build auf S25
 
