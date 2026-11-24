@@ -1,3 +1,32 @@
+# Coordination and runtime update (2026-11-24 01:35 CET)
+
+## Active workstreams
+
+- **Pokémon Y — `pokemon_y_route`:** read-only static/CRO investigation of the transition into `DllSequence DllBackGround DllFieldDemo`; determine whether a safe, evidence-based continuation exists. No emulator input or file edits.
+- **Ultra Moon — `ultra_moon_mapping`:** read-only comparison of saved isolated field/menu/touch states at the three PKMN-NTR candidate words (`0x3067107C`, `0x306A60EA`, `0x3066EB54`), using a separate scratch userdir if a process is needed. No frames, keys, touch, or save writes.
+- **UI/layout — `ui_3ds_parity`:** review complete in its own worktree. No change was justified: existing `DsStagePolicy` shares layout transitions and already tests 3DS single-screen behavior; a live title-state mismatch is still needed before changing the shared policy.
+- **Lead integration — root:** preserve the isolated gameplay checkpoints, reconcile CRO/runtime evidence, and implement only after a concrete signal/behavior is verified.
+
+## Pokémon Y evidence and anti-loop boundary
+
+The isolated in-game `main` remains SHA-256 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`; it has not changed since the saved in-game checkpoint. The route reached the downstairs entrance rug from the upper room. Movement is now measured: X at `0x08C670AE`, Y at `0x08C670B6` (not `0x08C670B8`); a 15-frame LEFT changed X `0x4404 → 0x4400`, and four 15-frame DOWN steps changed Y to `0x4428`. Zone remained `2` while inside.
+
+At the entrance, DOWN stopped changing position and the field-hold word at `0x08D03400` read `0x3D3`. A 15-frame A hold changed it to `0x120`; after 20 frames the modules became `DllSequence DllBackGround DllFieldDemo` and the hold word became `0x100`. The captured image stayed black through another 60 frames and a 20-frame A hold; module/zone state did not leave that sequence. This is the current anti-loop limit: do not repeat the same wait/A probes.
+
+Safe resume checkpoint: `work/y-runtime-companion-capture/y-after-dark-dialogue.state`, before the sequence modules loaded. Do not savestate once `DllSequence`/`DllFieldDemo` is loaded: the harness throws `boost::archive::archive_exception: unregistered class`. Do not run the older `y-bedroom-exit2.state` again: its loaded process SIGSEGV'd during `wait 10`. Both failures affected only isolated headless state; the in-game `main` hash above is unchanged. The Y process is stopped.
+
+## Ultra Moon passive baseline
+
+At isolated field-idle frame 437, modules were `FieldRo FieldMenu FieldEffectCommon`; raw bytes were `9D FF 9D FF` at `0x3067107C`, `6F 43 50 51` at `0x306A60EA`, and `55 AD 8D 73` at `0x3066EB54`. The paired screenshot shows field on top and a black lower framebuffer. This confirms only field-idle; it verifies no scene/menu/battle predicate. The process remains on that frame with no user save changes.
+
+## Next steps
+
+1. Finish the independent static Y sequence/CRO analysis and the read-only Ultra Moon saved-state comparison.
+2. If a reliable Y transition test is found, resume from the safe checkpoint; otherwise switch to static CRO/control-flow evidence or wait for an already-unlocked S25 session. Keep all tests on the isolated copy.
+3. Integrate no speculative memory address or screen policy. Preserve all existing DS behavior and the S25 app data.
+4. Continue translating every new player-visible setting/message in all eight locales and update the user manual for any newly shipped behavior.
+
+---
 # Coordination update (2026-11-24 00:58 CET)
 
 The persistent goal now includes the user's multi-agent coordination rules. Its pre-existing bytes were verified unchanged; the appended section occurs once (goal SHA-256: `7DA64A5704FD8560D65B73CB9427EFBE4211CFB60FF8CF186B595E9858829527`).
