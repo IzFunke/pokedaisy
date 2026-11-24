@@ -93,11 +93,23 @@ void setKeys(const std::string& spec) {
 
 HeadlessWindow* window = nullptr;
 
-void runFrames(u64 n) {
+void runFrames(u64 n, bool reportProgress = false) {
     auto& system = Core::System::GetInstance();
     const u64 target = window->frames + n;
+    const auto started = std::chrono::steady_clock::now();
+    u64 runLoopCalls = 0;
+    auto report = [&] {
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
+        std::printf("wait progress calls=%llu frames=%llu elapsed=%.3fs\n",
+                    static_cast<unsigned long long>(runLoopCalls),
+                    static_cast<unsigned long long>(window->frames), seconds);
+        std::fflush(stdout);
+    };
+    if (reportProgress) report(); // Make a stalled first RunLoop visible from outside.
     while (window->frames < target) {
         const auto result = system.RunLoop();
+        ++runLoopCalls;
+        if (reportProgress && (runLoopCalls == 1 || runLoopCalls % 10000 == 0)) report();
         if (result != Core::System::ResultStatus::Success) {
             std::fprintf(stderr, "RunLoop: %d %s\n", static_cast<int>(result), system.GetStatusDetails().c_str());
             std::exit(1);
@@ -301,6 +313,8 @@ int main(int argc, char** argv) {
     }
     system.RegisterCoreLoopThreadId();
     std::puts("loaded");
+    const char* waitProgressEnv = std::getenv("N3DS_WAIT_PROGRESS");
+    const bool waitProgress = waitProgressEnv && std::strcmp(waitProgressEnv, "1") == 0;
 
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -312,7 +326,7 @@ int main(int argc, char** argv) {
         for (std::string w; in >> w;) a.push_back(w);
         auto& mem = system.Memory();
         if (cmd == "wait") {
-            runFrames(number(a.at(0)));
+            runFrames(number(a.at(0)), waitProgress);
         } else if (cmd == "keys") {
             setKeys(a.at(0));
         } else if (cmd == "press" || cmd == "hold") {
