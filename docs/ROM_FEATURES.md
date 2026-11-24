@@ -970,6 +970,11 @@ features. It does not describe native 3DS title support. The native 3DS core and
 separately in [3DS upstream readiness](3DS_UPSTREAM_READINESS.md), including which titles are playable and which have
 a verified companion memory map.
 
+On an isolated European Pokémon Y run, the rendered PSS mirror loaded as `DllField` plus `DllUSMirror` while the
+ordinary field-menu marker was zero. The Gen 6 scene reader recognizes `DllUSMirror` as a touch-screen page, so the
+shared screen policy automatically presents the lower display in `ONE SCREEN`. This verifies that observed page's
+automatic presentation; it does not establish every X/Y menu transition or a complete play-through.
+
 Pokémon Ultra Moon (Europe) has additional read-only runtime evidence from the isolated `n3ds_dump` session: the
 `FieldRo` module appears with `FieldMenu` and `FieldEffectCommon` while the field is rendered, so the Android scene
 observer reports that observed module as `FIELD`. This enables field HUD/zoom scene handling, but does not by itself
