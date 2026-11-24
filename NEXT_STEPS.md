@@ -392,3 +392,9 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - Read-only Azahar trace confirms the bag red-X tap at bottom-local `(260,228)` maps to framebuffer `(300,468)`, inside the icon, and `engine:emu_window` feeds HID touch state. It did not close `DllBag`; no more identical bag-exit probes are justified.
 - The fresh empty Y profile reached German language confirmation and the visible Y title flare at frame530. After stopping and restarting with its isolated `main` (415,232 bytes, hash `1467BB75689DF04B17D7B19BAAC11AE387C9B99E81B4D8B46B74A0D6EF2EB9C0`), a single A and bounded wait returned a black frame at 122; module output was missing, so this is not a validated gameplay transition. No in-game save command was invoked. All pre-existing save hashes remained unchanged.
 - **Next:** read the captured launch transcript to check that the German-profile `main` was staged into Azahar's expected title directory and learn why module output was missing. Do not repeat the same black wait or bag-exit inputs. Continue only from a materially different title/runtime checkpoint. Preserve the Ultra Moon photo stop and the current S25 app data.
+
+## Cold-boot transcript result (2026-11-24 07:36 CET)
+
+- The log confirms the isolated German-profile `main` was mounted at Azahar's correct all-zero SDMC profile/title path and matches its backup (`1467BB75689DF04B17D7B19BAAC11AE387C9B99E81B4D8B46B74A0D6EF2EB9C0`). Existing saves remain unchanged.
+- On restart, A was sent before any screen was visible; at frame122 the capture was black and `moduleNames()` had no CRO chain. Normal loader messages appeared, no crash. This is not evidence of a missing save; the previous visible Y flare was in a warm German-confirmed process.
+- **Next:** one new cold boot with no input and a single bounded 240-frame wait, then inspect the stable screenshot/modules. Do not send keys before a visible action is established.
