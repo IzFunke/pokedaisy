@@ -26,6 +26,8 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | Command | What it does |
 | --- | --- |
 | `wait N` | Runs N frames with the held keys. |
+| `waittight N` | Runs N frames with the normal full CPU slice even when step mode is enabled. Useful for comparing scheduler behavior after loading a checkpoint. |
+| `step N` | Runs N single-step scheduler iterations; reports elapsed time, calls and completed frames every two seconds. |
 | `keys K` | Holds K from now on (`keys NONE` lets go). |
 | `press K` / `hold K N` | K for one frame (or N), then one frame without. |
 | `touch X Y [N]` | The stylus at (X, Y) on the bottom screen (320x240) for N frames (default 2), then up. |
@@ -45,6 +47,12 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | `peekf ADDR` / `hex ADDR [LEN]` | A float; LEN bytes (0x40) as 16-byte lines. |
 | `search32 V [MAX]` | Every aligned word equal to V in the game's memory (64 at most). |
 
+`N3DS_STEP_RUNLOOP=1` makes `wait` use `RunLoop(false)` single-step iterations instead of the normal full CPU slice.
+This can get past a full-slice wait during initial boot; it is much slower, so use `waittight N` to compare full-slice
+execution at a loaded checkpoint. `N3DS_WAIT_PROGRESS=1` prints the active wait's RunLoop call count, rendered-frame
+count and elapsed time, including markers around the first two calls. Both variables are diagnostic opt-ins; default
+behavior is unchanged.
+
 `N3DS_INTERP=1` runs Azahar's interpreter instead of the JIT. Sun's own save, two of three Moon saves and Alpha Sapphire's
 battles used to crash this tool as they loaded: the software renderer's worker threads shared Azahar's cached physical
 memory region (one thread's half-written cache gave another a region's start with another region's memory). Our patch
@@ -53,6 +61,6 @@ drops that cache and skips a texture that runs past the console's memory; they a
 `N3DS_LOG` sets Azahar's log filter (default `*:Warning`, e.g. `N3DS_LOG='*:Info'`).
 
 A module loads a few seconds before its screen shows (the field's with the start menu still up): wait ~500 frames after
-`pressuntil A DllPssMessageWindow` before walking. `savestate` fails on Pokemon X (a boost archive class isn't
-registered), so every run boots. With the user's save the field opens on a "changed console" message on the touch
-screen; after a touch the pictures stopped changing once (2026-11-15), not looked into.
+`pressuntil A DllPssMessageWindow` before walking. `savestate` still fails on Pokemon X (a boost archive class isn't
+registered), so every X run boots. Ultra Moon savestates work and can resume an isolated setup/intro checkpoint; never
+use a personal save directory for diagnostic inputs.

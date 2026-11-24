@@ -92,11 +92,13 @@ void setKeys(const std::string& spec) {
 }
 
 HeadlessWindow* window = nullptr;
+bool singleStepRunLoop = false;
 
-void runFrames(u64 n, bool reportProgress = false) {
+void runFrames(u64 n, bool reportProgress = false, bool singleStep = false) {
     auto& system = Core::System::GetInstance();
     const u64 target = window->frames + n;
     const auto started = std::chrono::steady_clock::now();
+    auto lastProgress = started;
     u64 runLoopCalls = 0;
     auto report = [&] {
         const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
@@ -107,9 +109,19 @@ void runFrames(u64 n, bool reportProgress = false) {
     };
     if (reportProgress) report(); // Make a stalled first RunLoop visible from outside.
     while (window->frames < target) {
-        const auto result = system.RunLoop();
+        if (reportProgress && runLoopCalls < 2) {
+            std::printf("wait RunLoop begin call=%llu frames=%llu\n",
+                        static_cast<unsigned long long>(runLoopCalls + 1),
+                        static_cast<unsigned long long>(window->frames));
+            std::fflush(stdout);
+        }
+        const auto result = system.RunLoop(!(singleStep || singleStepRunLoop));
         ++runLoopCalls;
-        if (reportProgress && (runLoopCalls == 1 || runLoopCalls % 10000 == 0)) report();
+        const auto now = std::chrono::steady_clock::now();
+        if (reportProgress && (runLoopCalls == 1 || now - lastProgress >= std::chrono::seconds(2))) {
+            report();
+            lastProgress = now;
+        }
         if (result != Core::System::ResultStatus::Success) {
             std::fprintf(stderr, "RunLoop: %d %s\n", static_cast<int>(result), system.GetStatusDetails().c_str());
             std::exit(1);
@@ -315,6 +327,8 @@ int main(int argc, char** argv) {
     std::puts("loaded");
     const char* waitProgressEnv = std::getenv("N3DS_WAIT_PROGRESS");
     const bool waitProgress = waitProgressEnv && std::strcmp(waitProgressEnv, "1") == 0;
+    const char* stepRunLoopEnv = std::getenv("N3DS_STEP_RUNLOOP");
+    singleStepRunLoop = stepRunLoopEnv && std::strcmp(stepRunLoopEnv, "1") == 0;
 
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -327,6 +341,38 @@ int main(int argc, char** argv) {
         auto& mem = system.Memory();
         if (cmd == "wait") {
             runFrames(number(a.at(0)), waitProgress);
+        } else if (cmd == "waittight") {
+            // Compare the normal full-slice path against step mode at an already-booted checkpoint.
+            const bool previousMode = singleStepRunLoop;
+            singleStepRunLoop = false;
+            runFrames(number(a.at(0)), waitProgress);
+            singleStepRunLoop = previousMode;
+        } else if (cmd == "step") {
+            // Diagnostic stepping avoids running a full CPU slice if a game has entered a long wait.
+            const u64 count = number(a.at(0));
+            const auto started = std::chrono::steady_clock::now();
+            auto lastProgress = started;
+            u64 completed = 0;
+            for (; completed < count; ++completed) {
+                const auto result = system.RunLoop(false);
+                if (result != Core::System::ResultStatus::Success) {
+                    std::fprintf(stderr, "Step RunLoop: %d %s\n", static_cast<int>(result),
+                                 system.GetStatusDetails().c_str());
+                    break;
+                }
+                const auto now = std::chrono::steady_clock::now();
+                if (now - lastProgress >= std::chrono::seconds(2)) {
+                    const double seconds = std::chrono::duration<double>(now - started).count();
+                    std::printf("step progress calls=%llu frames=%llu elapsed=%.3fs\n",
+                                static_cast<unsigned long long>(completed + 1),
+                                static_cast<unsigned long long>(window->frames), seconds);
+                    std::fflush(stdout);
+                    lastProgress = now;
+                }
+            }
+            std::printf("step completed calls=%llu frames=%llu\n",
+                        static_cast<unsigned long long>(completed),
+                        static_cast<unsigned long long>(window->frames));
         } else if (cmd == "keys") {
             setKeys(a.at(0));
         } else if (cmd == "press" || cmd == "hold") {
