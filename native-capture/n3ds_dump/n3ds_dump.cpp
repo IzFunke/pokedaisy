@@ -94,6 +94,34 @@ void setKeys(const std::string& spec) {
 HeadlessWindow* window = nullptr;
 bool singleStepRunLoop = false;
 
+struct TouchMapping {
+    u32 framebuffer_x;
+    u32 framebuffer_y;
+    u32 left;
+    u32 top;
+    u32 right;
+    u32 bottom;
+};
+
+TouchMapping mapTouch(const Frontend::EmuWindow& emuWindow, u32 local_x, u32 local_y) {
+    const auto& layout = emuWindow.GetFramebufferLayout();
+    const auto& screen = layout.bottom_screen;
+    return {
+        screen.left + local_x * (screen.right - screen.left) / 320,
+        screen.top + local_y * (screen.bottom - screen.top) / 240,
+        screen.left,
+        screen.top,
+        screen.right,
+        screen.bottom,
+    };
+}
+
+void printTouchMapping(const char* command, u32 local_x, u32 local_y, const TouchMapping& mapping) {
+    std::printf("%s local=(%u,%u) bottom_screen=(%u,%u)-(%u,%u) framebuffer=(%u,%u)\n", command,
+                local_x, local_y, mapping.left, mapping.top, mapping.right, mapping.bottom,
+                mapping.framebuffer_x, mapping.framebuffer_y);
+}
+
 void runFrames(u64 n, bool reportProgress = false, bool singleStep = false) {
     auto& system = Core::System::GetInstance();
     const u64 target = window->frames + n;
@@ -329,6 +357,8 @@ int main(int argc, char** argv) {
     const bool waitProgress = waitProgressEnv && std::strcmp(waitProgressEnv, "1") == 0;
     const char* stepRunLoopEnv = std::getenv("N3DS_STEP_RUNLOOP");
     singleStepRunLoop = stepRunLoopEnv && std::strcmp(stepRunLoopEnv, "1") == 0;
+    const char* touchTraceEnv = std::getenv("N3DS_TOUCH_TRACE");
+    const bool touchTrace = touchTraceEnv && std::strcmp(touchTraceEnv, "1") == 0;
 
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -383,13 +413,21 @@ int main(int argc, char** argv) {
             setKeys("NONE");
             runFrames(1, waitProgress);
         } else if (cmd == "touch") {
-            const auto& l = emuWindow.GetFramebufferLayout().bottom_screen;
-            const u32 x = l.left + number(a.at(0)) * (l.right - l.left) / 320;
-            const u32 y = l.top + number(a.at(1)) * (l.bottom - l.top) / 240;
-            emuWindow.TouchPressed(x, y);
+            const u32 localX = number(a.at(0)), localY = number(a.at(1));
+            const auto mapping = mapTouch(emuWindow, localX, localY);
+            const bool accepted = emuWindow.TouchPressed(mapping.framebuffer_x, mapping.framebuffer_y);
+            if (touchTrace) {
+                printTouchMapping("touch", localX, localY, mapping);
+                std::printf("touch accepted=%s\n", accepted ? "yes" : "no");
+                std::fflush(stdout);
+            }
             runFrames(a.size() > 2 ? number(a[2]) : 2);
             emuWindow.TouchReleased();
             runFrames(1);
+        } else if (cmd == "touchmap") {
+            const u32 localX = number(a.at(0)), localY = number(a.at(1));
+            printTouchMapping("touchmap", localX, localY, mapTouch(emuWindow, localX, localY));
+            std::fflush(stdout);
         } else if (cmd == "shot") {
             std::printf("shot %s %s\n", a.at(0).c_str(), writeShot(a[0]) ? "ok" : "FAILED");
         } else if (cmd == "shots") {

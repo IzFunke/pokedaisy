@@ -31,6 +31,7 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 | `keys K` | Holds K from now on (`keys NONE` lets go). |
 | `press K` / `hold K N` | K for one frame (or N), then one frame without. |
 | `touch X Y [N]` | The stylus at (X, Y) on the bottom screen (320x240) for N frames (default 2), then up. |
+| `touchmap X Y` | Prints the bottom-screen bounds and mapped framebuffer coordinate without input or frame advancement. |
 | `shot FILE` / `shots PREFIX EVERY COUNT` | Top screen over the bottom one, as a 400x480 PNG. |
 | `regions` / `dump DIR` | The game process's mapped memory (base, size, permissions); `dump` writes each as `<base>.bin`. |
 | `peek8/16/32 ADDR`, `poke8/16/32 ADDR V` | The game process's memory. |
@@ -53,6 +54,11 @@ execution at a loaded checkpoint. `N3DS_WAIT_PROGRESS=1` prints the active `wait
 count, rendered-frame count and elapsed time, including markers around the first two calls. This makes a slow key pulse
 observable while it is waiting for its frame to render. Both variables are diagnostic opt-ins; default behavior is
 unchanged.
+
+`N3DS_TOUCH_TRACE=1` adds a line to each `touch` command with the supplied bottom-local coordinates, current
+`bottom_screen` bounds, mapped framebuffer coordinate, and whether `TouchPressed` accepted that coordinate. It does not
+change touch duration or release behavior. The frame-neutral `touchmap X Y` command prints the same bounds and mapping
+without injecting touch or advancing emulation; use it to verify a target point before issuing `touch`.
 
 On Windows, `scripts/run_n3ds_dump_bounded.ps1` runs the harness under an external wall-clock deadline, records tagged
 stdout and stderr lines in a new log file, and kills the child process tree when the deadline expires (exit code 124).
