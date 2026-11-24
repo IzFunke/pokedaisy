@@ -320,8 +320,11 @@ has Weedle; `Gen6Test.pokemonYReadsLikeX`). Its save is X's format. The S25 Ultr
 Companion behavior remain unverified on-device. Headless field and PSS captures cover the mapped screen policy.
 
 On 2026-11-24, an isolated EU Y session restored a frame-242 bedroom/PSS checkpoint. One X press and 60 no-key frames
-opened the field menu (`Beutel`, trainer label, `Speichern`, `Optionen`); one A opened `DllBag`, and a 60-frame idle
-settled on the German `Items` page showing `Nichts`. All five configured pocket starts read zero, matching that empty
+opened the field menu (`Beutel`, trainer label, `Speichern`, `Optionen`); one A replaced the field modules with standalone
+`DllBag`, and a 60-frame idle settled on the German `Items` page showing `Nichts`. The first scene pass treated an
+unknown standalone touch module as `SCREEN`; `Gen6Reader.sceneOf` now recognizes configured touch-only modules outside
+the field while keeping battle classification first, so `DllBag` follows the shared `MENU` / lower-screen policy. A
+regression test covers the standalone module. All five configured pocket starts read zero, matching that empty
 screen. The source and clone `main` hashes stayed
 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`; no in-game save was written. This checks the empty
 bag path and a displayed trainer label only. It does not validate a populated party, items, or a complete play-through.

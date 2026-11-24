@@ -973,7 +973,10 @@ a verified companion memory map.
 On an isolated European Pokémon Y run, the rendered PSS mirror loaded as `DllField` plus `DllUSMirror` while the
 ordinary field-menu marker was zero. The Gen 6 scene reader recognizes `DllUSMirror` as a touch-screen page, so the
 shared screen policy automatically presents the lower display in `ONE SCREEN`. This verifies that observed page's
-automatic presentation; it does not establish every X/Y menu transition or a complete play-through.
+automatic presentation; it does not establish every X/Y menu transition or a complete play-through. A later isolated
+checkpoint showed the German bag page rendered by `DllBag` without the field module; the scene reader now classifies
+that standalone touch-screen module as `MENU` as well. That save's five pocket roots were all zero, matching the screen's
+empty `Nichts` state, so populated-item and party reads remain unverified.
 
 Pokémon Ultra Moon (Europe) has additional read-only runtime evidence from the isolated `n3ds_dump` session: the
 `FieldRo` module appears with `FieldMenu` and `FieldEffectCommon` while the field is rendered, so the Android scene

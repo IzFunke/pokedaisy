@@ -317,6 +317,13 @@ class Gen6Test {
         assertEquals(Gen6Reader.Scene.SCREEN, scene("DllTownmap\nDllZukan\nDllBackGround", null))
         assertEquals(Gen6Reader.Scene.SCREEN, scene("DllTrainerCase", null))
         assertEquals(Gen6Reader.Scene.SCREEN, scene("DllConfig", null))
+        // EU Y's bag replaces DllField while drawing the touch-only Items page; it must float like a DS bag.
+        val yBag = Gen6Reader.sceneOf("DllBag", null, Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!)
+        assertEquals(Gen6Reader.Scene.MENU, yBag)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yBag!!, 0))
+        assertTrue(com.pokedaisy.app.n3dsAutoTouchCanDismiss(yBag, 0))
+        // A battle's bag is still governed by the battle scene/controller, not this field-page module fallback.
+        assertEquals(Gen6Reader.Scene.BATTLE, scene("DllBattle\nDllBag", null))
         // Between two screens and on the title: can't tell.
         // START's PSS menu (and a page of it) waits on the touch screen: MENU, as the X menu; its notes don't.
         assertEquals(Gen6Reader.Scene.MENU, scene("DllField\nDllPssMainMenu", fieldMenu(0, 0)))

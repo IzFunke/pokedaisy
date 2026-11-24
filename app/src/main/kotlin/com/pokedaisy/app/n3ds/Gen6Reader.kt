@@ -72,7 +72,7 @@ object Gen6Reader {
         val battleModule: String = "DllBattle",
         /** The title's / start's modules: no screen of the game's own. */
         val notScreens: Set<String> = NOT_SCREENS,
-        /** Field modules that wait on the touch screen alone ([FIELD_TOUCH]). */
+        /** Modules that present a touch-screen-only page ([FIELD_TOUCH]). */
         val fieldTouch: Set<String> = FIELD_TOUCH,
         /** Sun / Moon: a byte that's non-zero while the X menu is open (instead of [fieldMenuRoot]'s object). It's set
          * under a text box too, so it counts only while [fieldHold] isn't. */
@@ -127,13 +127,14 @@ object Gen6Reader {
     /** The modules that are the title and the start menu, and the field's: a screen is any other. */
     val NOT_SCREENS = setOf("DllTitle", "DllBackGround", "DllSequence", "DllStartMenu")
 
-    /** Field modules that wait on the touch screen alone, the top screen dimmed: MENU too. Save's "save the game?" with
+    /** Modules that wait on the touch screen alone, the top screen dimmed: MENU too. Save's "save the game?" with
      * its Yes / No (the X menu's marker is cleared meanwhile), and START's PSS menu and its pages (headless, 2026-11-15:
      * START loads DllPssMainMenu beside the field; Y's open PSS mirror can appear as DllUSMirror without that module
-     * or the field-menu pointer (observed headless 2026-11-24). The cart's other DllPss* are its pages. Not
+     * or the field-menu pointer (observed headless 2026-11-24). Y's bag is a standalone DllBag module while the top
+     * screen remains in the field (observed headless 2026-11-24). The cart's other DllPss* are its pages. Not
      * DllPssMessageWindow: the PSS's notes ride along on the plain field. */
     val FIELD_TOUCH = setOf(
-        "DllReport", "DllUSMirror", "DllPssMainMenu", "DllPssCharaMenu", "DllPssConfig", "DllPssFavorite", "DllPssIconSelect",
+        "DllReport", "DllBag", "DllUSMirror", "DllPssMainMenu", "DllPssCharaMenu", "DllPssConfig", "DllPssFavorite", "DllPssIconSelect",
         "DllPssPlaySelect", "DllPssRuleSelect", "DllPssAssistPower",
     )
 
@@ -322,6 +323,9 @@ object Gen6Reader {
         // A battle whose controller isn't mapped ([Config.battleUi] 0: Omega Ruby / Alpha Sapphire, Sun / Moon so far) has
         // no battle buttons to stand for its touch screen: both screens side by side, as a screen of the game's own.
         if (c.battleModule in names) return if (c.battleUi != 0 || c.battleMenu != 0) Scene.BATTLE else Scene.SCREEN
+        // Some touch-only pages replace the field module instead of loading beside it (the EU Y bag does this).
+        // Keep battle classification above this check so a battle's own bag state remains BATTLE.
+        if (names.any { it in c.fieldTouch }) return Scene.MENU
         return if (names.all { it in c.notScreens }) null else Scene.SCREEN
     }
 
