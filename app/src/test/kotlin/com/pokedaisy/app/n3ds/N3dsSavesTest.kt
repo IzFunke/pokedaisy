@@ -61,6 +61,30 @@ class N3dsSavesTest {
         }
     }
 
+    @Test fun checkingForASaveDoesNotCopyAzaharsWorkingArchiveIntoTheSharedFolder() {
+        val root = Files.createTempDirectory("pokedaisy-y-library-save-check").toFile()
+        try {
+            val azaharSave = File(N3dsSaves.saveFolder(root, N3dsCart.POKEMON_Y_USA), "main")
+            azaharSave.parentFile!!.mkdirs()
+            val original = byteArrayOf(10, 20, 30)
+            azaharSave.writeBytes(original)
+            val sharedRoot = File(root, "shared-saves")
+            val shared = File(sharedRoot, "Pokemon Y (Europe).sav")
+
+            assertTrue(N3dsSaves.hasSave(root, sharedRoot, File("Pokemon Y (Europe).3ds"), N3dsCart.POKEMON_Y_USA))
+            assertEquals(
+                azaharSave,
+                N3dsSaves.existingSaveFile(root, sharedRoot, File("Pokemon Y (Europe).3ds"), N3dsCart.POKEMON_Y_USA),
+            )
+
+            assertFalse(shared.exists())
+            assertFalse(sharedRoot.exists())
+            assertEquals(original.toList(), azaharSave.readBytes().toList())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
     @Test fun failedAtomicSyncKeepsTheExistingSharedPathUntouched() {
         val root = Files.createTempDirectory("pokedaisy-y-azahar-sync-fail").toFile()
         try {

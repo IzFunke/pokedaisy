@@ -55,7 +55,7 @@ object N3dsSaves {
     /** The durable PokeDaisy save location. Azahar gets a working copy in its SD tree when the game starts. */
     fun sharedSaveRoot(context: Context, prefs: com.pokedaisy.app.Prefs = com.pokedaisy.app.Prefs(context)): File =
         prefs.n3dsSavesDirOverride?.takeIf { it.isNotBlank() }?.let(::File)
-            ?: com.pokedaisy.app.SavesLocation.dir(context, prefs)
+            ?: File(context.getExternalFilesDir(null) ?: context.filesDir, "saves")
 
     /** The archive uses the ROM's basename, matching PokeDaisy's other game saves. */
     fun sharedSavePath(context: Context, prefs: com.pokedaisy.app.Prefs, rom: File, titleId: Long): File =
@@ -98,6 +98,16 @@ object N3dsSaves {
         return copyArchiveToShared(legacy, shared)
     }
 
+    /** Locate an existing archive for display without migrating it; launch-time [prepare] owns migration. */
+    internal fun existingSaveFile(userDir: File, sharedRoot: File, rom: File, titleId: Long): File? {
+        val shared = File(sharedRoot, sharedSaveName(rom))
+        if (shared.isFile && shared.length() > 0L) return shared
+        val oldShared = File(sharedRoot, "${archiveFileName(titleId)}.3ds-save")
+        if (oldShared.isFile && oldShared.length() > 0L) return oldShared
+        val legacy = File(saveFolder(userDir, titleId), "main")
+        return legacy.takeIf { it.isFile && it.length() > 0L }
+    }
+
     /** Import Azahar's archive into the ROM-named `.sav` path without removing the source copy. */
     internal fun copyArchiveToShared(source: File, shared: File): File = runCatching {
         if (shared.isFile && shared.length() > 0L) return shared
@@ -105,8 +115,14 @@ object N3dsSaves {
         shared
     }.getOrElse { source }
 
+    /** Read-only save discovery for library cards. Unlike [saveFile], this never migrates or copies an archive. */
     fun hasSave(context: Context, prefs: com.pokedaisy.app.Prefs, rom: File, titleId: Long): Boolean =
-        saveFile(context, prefs, rom, titleId) != null
+        existingSaveFile(root(context, prefs), sharedSaveRoot(context, prefs), rom, titleId) != null
+
+    /** File-system-only version used to verify discovery without an Android context or touching app data. */
+    internal fun hasSave(userDir: File, sharedRoot: File, rom: File, titleId: Long): Boolean {
+        return existingSaveFile(userDir, sharedRoot, rom, titleId) != null
+    }
 
     private fun metadata(folder: File) = File(folder.parentFile, "00000001.metadata")
 

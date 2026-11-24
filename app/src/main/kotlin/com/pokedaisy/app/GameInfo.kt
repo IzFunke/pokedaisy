@@ -110,9 +110,17 @@ class GameInfo(
 
             val n3dsTitleId = if (rom.extension.lowercase() in com.pokedaisy.app.n3ds.N3dsCart.EXTENSIONS)
                 com.pokedaisy.app.n3ds.N3dsCart.header(rom)?.titleId else null
+            val n3dsCanonicalSave = n3dsTitleId?.let { titleId ->
+                com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(context, prefs, rom, titleId)
+            }
             val n3dsSave = n3dsTitleId?.let { titleId ->
-                com.pokedaisy.app.n3ds.N3dsSaves.saveFile(context, prefs, rom, titleId)
-                    ?: com.pokedaisy.app.n3ds.N3dsSaves.sharedSavePath(context, prefs, rom, titleId)
+                // Show whichever archive already exists. Migration belongs to launch; opening game info is read-only.
+                com.pokedaisy.app.n3ds.N3dsSaves.existingSaveFile(
+                    com.pokedaisy.app.n3ds.N3dsSaves.root(context, prefs),
+                    com.pokedaisy.app.n3ds.N3dsSaves.sharedSaveRoot(context, prefs),
+                    rom,
+                    titleId,
+                ) ?: n3dsCanonicalSave
             }
             val save = n3dsSave ?: SavesLocation.saveFor(context, prefs, rom)
             val savesDir = save.parentFile ?: SavesLocation.dir(context, prefs)
@@ -123,6 +131,9 @@ class GameInfo(
                     val kind = if (n3dsTitleId == null) GameSaves.kind(save.length()) else null
                     add(tr("SIZE") to (sizeLabel(save.length()) + (kind?.let { " · $it" } ?: "")))
                     add(tr("MODIFIED") to dateLabel(save.lastModified()))
+                    if (n3dsCanonicalSave != null && save.absolutePath != n3dsCanonicalSave.absolutePath) {
+                        add(tr("WILL BE") to n3dsCanonicalSave.absolutePath)
+                    }
                 } else {
                     add(tr("FILE") to tr("None yet - made by the game's first save"))
                     add(tr("WILL BE") to save.absolutePath)
