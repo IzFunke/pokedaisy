@@ -1,3 +1,24 @@
+# Coordination update (2026-11-24 01:41 CET)
+
+## Workstream status
+
+- **Pokémon Y — `pokemon_y_route`:** static/runtime review complete. No Y `DllFieldDemo.cro` export inventory exists yet. `DllFieldDemo` is omitted from `Gen6Reader.NOT_SCREENS`, so the current generic scene fallback classifies the observed `DllSequence DllBackGround DllFieldDemo` trio as `SCREEN`; whether that is correct remains unverified. Do not change the policy from a module name alone.
+- **Ultra Moon — `ultra_moon_mapping`:** complete. Existing before/after touch savestates have identical candidate bytes; a confirmed X-menu, battle, or bag transition remains necessary.
+- **UI/layout — `ui_3ds_parity`:** complete in its worktree with no code change; shared layout policy/test coverage is present, while runtime scene detection remains title-specific.
+- **Lead integration — root:** continue with a static Y CRO/control-flow pass, then take a focused code change only if the field-demo screen semantics can be established.
+
+## Y anti-loop evidence
+
+The headless frame counter advanced while `DllSequence DllBackGround DllFieldDemo` remained loaded, but screenshots stayed fully black. The prior A and wait probes are documented and must not be repeated. The last safe resume point is `work/y-runtime-companion-capture/y-after-dark-dialogue.state`; do not save states after the sequence modules load. The isolated save hash remains `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`.
+
+## Next steps
+
+1. Inspect the Pokémon Y ROMFS for its `DllFieldDemo` asset and its CRO imports/exports, using read-only extraction in `work/`.
+2. If that does not establish scene semantics, compare the pre-sequence safe state to the available runtime state without repeating inputs, or wait for safe physical-device access.
+3. Leave `Gen6Reader.NOT_SCREENS` unchanged until the title-specific behavior is verified. Keep all existing user data, S25 app data, and the branch intact.
+4. Keep Pokémon Y and Ultra Moon at equal priority; no speculative mappings or upstream PRs.
+
+---
 # Coordination update (2026-11-24 01:36 CET)
 
 ## Active workstreams
