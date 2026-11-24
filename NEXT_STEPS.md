@@ -366,3 +366,8 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - **Ultra Moon save recognition:** source trace found library, Game Info, Save Editor, session staging and sync all use the canonical `<ROM basename>.sav` resolver. An isolated title archive exists at 445,440 bytes with expected metadata, but its inner save checksums and the running app's selected user-data root are not established. No code defect or production change was justified. Preserve the photo-choice stop at `Welches dieser Fotos stammt gleich noch mal von dir?`.
 - **Validation/status:** named `Gen6Test` Gradle task completed as `UP-TO-DATE`; prior focused run passed 16 tests (9 ROM-dependent skips). Manual checks passed 9/9 and built 147 pages. `git diff --check` and bounded-supervisor smoke tests are clean. `feature/azahar-3ds-single-screen` is pushed through `0dac58f9`; private `work/` stays untracked.
 - **Next:** review the isolated Y starter run for repeated PK6 structure/checksum and Companion evidence, then implement only validated mappings with focused tests. Revisit device testing on the S25 only when unlocked normally; install future app builds using `adb install -r`. Do not clear app data or pass the Ultra Moon photo prompt.
+
+## Save-path validation update (2026-11-24 06:59 CET)
+
+- Re-ran only `N3dsSavesTest` and `SavesLocationTest` with `--rerun-tasks`: 17 tests, 0 failures/errors/skips. Gradle rebuilt dependencies in 3m40s; the filtered test classes passed. This supports the existing canonical `.sav` resolver and does not establish which Azahar data root the installed app currently uses.
+- No app source changed in this validation pass, so no new APK was installed. The existing Dev install and its data remain untouched.
