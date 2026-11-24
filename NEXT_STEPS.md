@@ -1,3 +1,13 @@
+# Coordination update (2026-11-24 01:46 CET)
+
+- **Pokémon Y:** static ROMFS extraction confirms `DllFieldDemo.cro` imports `DllSequence`; it still does not establish which display that scene needs.
+- **UI/layout — `ui_3ds_parity`:** the follow-up review is complete in its separate worktree with no changes. `sceneOf` deliberately defaults unrecognized modules to `SCREEN` to avoid hiding a potentially required touch page. Treating `DllFieldDemo` as `NOT_SCREENS` would not by itself guarantee a safe scene transition because a null classification preserves the prior scene.
+- **Ultra Moon:** the before/after touch-state candidates remain unchanged and do not establish menu/battle behavior.
+- **Lead — root:** keep current scene policy and user data unchanged. Next required evidence is paired top/bottom frames with the Y module trio stably loaded, plus the scene/touch request immediately before and after its transition. A black fade frame alone is inconclusive.
+
+No product code changed in the classification review. The goal remains active; do not submit an upstream PR or infer new RAM mappings from the module names.
+
+---
 # Coordination update (2026-11-24 01:43 CET)
 
 - **Lead — root:** statically extracted Pokémon Y's `DllFieldDemo.cro` to ignored `work/`; it exports `nnroControlObject_` and the shared background callback, and imports `DllSequence`. No runtime/game input was used for this extraction.
