@@ -54,6 +54,27 @@ count, rendered-frame count and elapsed time, including markers around the first
 observable while it is waiting for its frame to render. Both variables are diagnostic opt-ins; default behavior is
 unchanged.
 
+On Windows, `scripts/run_n3ds_dump_bounded.ps1` runs the harness under an external wall-clock deadline, records tagged
+stdout and stderr lines in a new log file, and kills the child process tree when the deadline expires (exit code 124).
+For example:
+
+```powershell
+$userDir = (Resolve-Path '.\scratch\isolated-userdir').Path
+$rom = (Resolve-Path '.\Pokemon Y (Europe).3ds').Path
+$saveCopy = (Resolve-Path '.\scratch\Pokemon Y.sav').Path
+$arguments = @($rom, $userDir, '--save', $saveCopy)
+pwsh -NoProfile -File .\scripts\run_n3ds_dump_bounded.ps1 `
+  -Executable (Resolve-Path '.\native-capture\n3ds_dump\build\n3ds_dump.exe').Path `
+  -ArgumentListJson (ConvertTo-Json -Compress -InputObject $arguments) `
+  -TimeoutSeconds 300 -LogFile '.\scratch\pokemon-y-headless.log' -IsolatedUserDir $userDir
+```
+
+The log path must not already exist. The explicit `-IsolatedUserDir` is a caller acknowledgement, not a safety check;
+always use a disposable user directory and save copy because the game may write into that directory. This helper does
+not inspect or alter ROMs, saves, or user data. It can stop Azahar only after the operating system terminates its
+process; it does not add an interrupt into a currently executing core call. Run the smoke check with
+`pwsh -NoProfile -File .\scripts\test_run_n3ds_dump_bounded.ps1`; it uses only temporary fake child processes.
+
 `N3DS_INTERP=1` runs Azahar's interpreter instead of the JIT. Sun's own save, two of three Moon saves and Alpha Sapphire's
 battles used to crash this tool as they loaded: the software renderer's worker threads shared Azahar's cached physical
 memory region (one thread's half-written cache gave another a region's start with another region's memory). Our patch

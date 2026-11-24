@@ -319,6 +319,13 @@ RomFS (same layout): text, zones, Town Map, types and icons equal X's, the wild 
 has Weedle; `Gen6Test.pokemonYReadsLikeX`). Its save is X's format. The S25 Ultra boots Y to its title menu; field, menu and
 Companion behavior remain unverified on-device. Headless field and PSS captures cover the mapped screen policy.
 
+On 2026-11-24, an isolated EU Y session restored a frame-242 bedroom/PSS checkpoint. One X press and 60 no-key frames
+opened the field menu (`Beutel`, trainer label, `Speichern`, `Optionen`); one A opened `DllBag`, and a 60-frame idle
+settled on the German `Items` page showing `Nichts`. All five configured pocket starts read zero, matching that empty
+screen. The source and clone `main` hashes stayed
+`9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`; no in-game save was written. This checks the empty
+bag path and a displayed trainer label only. It does not validate a populated party, items, or a complete play-through.
+
 ## Omega Ruby / Alpha Sapphire (2026-11-17)
 
 OR (`000400000011C400`, `CTR-P-ECRA`) and AS (`000400000011C500`, `CTR-P-ECLA`), the US Rev 2 carts: `GameKind.POKEMON_OMEGA_RUBY`
