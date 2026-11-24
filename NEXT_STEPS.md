@@ -343,3 +343,9 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 
 - Using the patched progress-enabled single-step scheduler, the isolated frame-658 German title menu accepted one A and `wait 120` returned normally after 70.9 s with modules `DllField`, frame counter 122. The screenshot remains black, so this is likely still a load/transition or a headless-render issue; it is not enough to claim playable field or companion support. No second key, save write, or source-save change occurred; the SHA-256 remains `9B68354B…EE100`.
 - Next bounded probe reloads the same saved menu state in a fresh clone, sends one A, then waits 180 frames with progress and no keys to distinguish a short black transition from a persistent render/session issue. Stop on an unreadable personal-choice prompt or stalled progress.
+
+## Pokémon Y first rendered runtime checkpoint (2026-11-24)
+
+- The patched single-step run from the isolated German `Weiter` menu progressed with one A and no later input to frame 242 / modules `DllField DllUSMirror`. The screenshot `work/y-runtime-stepwait-240-final.png` shows the bedroom and German PSS categories (`Freunde`, `Bekannte`, `Passanten`); an emulator savestate is preserved at `work/y-runtime-stepwait-240-final.state` (11,245,302 bytes).
+- Source and clone save hashes remain `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`; no in-game save was written. Trainer memory at the existing X/Y root reads German byte 5 and UTF-16 trainer name `IzFunk3` (case in the pixel-font screenshot is ambiguous). The captured party region is allocator/pointer-like rather than a validated packed party; bag bytes and zone values are not semantically validated. No mapping changes are justified yet.
+- Next read-only check loads this state and inspects X/Y's field-menu root at `0x08C54044` to see whether the PSS module presents a verified touch/menu marker. Do not change the scene policy from this one sample.
