@@ -45,6 +45,15 @@ class DsStagePolicyTest {
         }
     }
 
+    @Test fun standaloneTouchPagesStayVisibleAcrossEveryChosenLayout() {
+        for (layout in DsLayout.entries) {
+            assertTrue(
+                "$layout presents a standalone page requested by the game",
+                n3dsTouchVisibleForLayout(layout, manuallyOpened = false, autoWanted = true),
+            )
+        }
+    }
+
     @Test fun threeDsDualScreenLayoutsKeepBothScreensAndNeverUseTheFloatingOneScreenFit() {
         for (layout in listOf(DsLayout.SIDE_BY_SIDE, DsLayout.LARGE_SMALL, DsLayout.STACKED)) {
             val pair = com.pokedaisy.app.companion.DsLayouts.arrange(layout, 1080, 720, fill = false,

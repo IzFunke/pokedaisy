@@ -360,6 +360,16 @@ class Gen6Test {
     }
 
     @Test
+    fun standaloneTouchOnlyPagesRequestTheSecondScreen() {
+        val config = Gen6Reader.POKEMON_X_USA
+        for (module in listOf("DllBag", "DllPssMainMenu", "DllPssCharaMenu")) {
+            val scene = Gen6Reader.sceneOf(module, null, config)
+            assertEquals("$module is a standalone lower-screen page", Gen6Reader.Scene.MENU, scene)
+            assertTrue("$module requests lower-screen presentation", com.pokedaisy.app.n3dsTouchWanted(scene!!, 0))
+        }
+    }
+
+    @Test
     fun ultraMoonMapsOnlyObservedSetupPagesAndFieldModule() {
         val ultraMoon = N3dsCart.POKEMON_ULTRA_MOON_USA
         for (module in listOf("LangSelect", "HeroSelect", "StrInput")) {
