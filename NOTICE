@@ -122,6 +122,13 @@ Settings > LICENSES. Optional-build entries below say when they are included.
   generated loader's terms and the overall license-page treatment still need
   review before distribution. This notice does not assert that the combined
   APK is ready for redistribution.
+  Azahar's `externals/open_source_archives/Readme.md` attributes its generated
+  system archive files to `B3n30/citra_system_archives` at commit
+  `0baa5f5773432f04e3e671859780ded965c4248c`; that generator README says it
+  creates custom archives because the original 3DS archives are copyrighted.
+  The pinned Azahar tree does not state separate licensing terms for the
+  generated data, which remain unresolved:
+  https://github.com/B3n30/citra_system_archives/tree/0baa5f5773432f04e3e671859780ded965c4248c
 - melonDS for BananaDS (third_party/melonds-bananads), Copyright (c) melonDS
   team, GNU GPL 3.0 - https://github.com/melonDS-emu/melonDS, at the commit
   BananaDS pins, with BananaDS's patches and PokeDaisy's
