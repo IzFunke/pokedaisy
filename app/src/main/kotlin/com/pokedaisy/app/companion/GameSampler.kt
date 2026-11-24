@@ -16,25 +16,13 @@ class GameSampler(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + worker)
     private val closed = atomic(false)
-    /** IDLE, READING, or READING_AGAIN. READING includes delivery on [game], not just worker decode. */
-    private val readState = atomic(STATE_IDLE)
+    /** Held through delivery on [game], not just worker decode. */
+    private val reads = CoalescedSampleGate()
     private var timer: Job? = null
 
     fun request() {
         if (closed.value || !current()) return
-        if (!claimRead()) return
-        sample()
-    }
-
-    /** Claim one sample, or remember exactly one follow-up while capture, decode, or delivery is active. */
-    private fun claimRead(): Boolean {
-        while (true) {
-            when (readState.value) {
-                STATE_IDLE -> if (readState.compareAndSet(STATE_IDLE, STATE_READING)) return true
-                STATE_READING -> if (readState.compareAndSet(STATE_READING, STATE_READING_AGAIN)) return false
-                STATE_READING_AGAIN -> return false
-            }
-        }
+        if (reads.request()) sample()
     }
 
     private fun sample() {
@@ -60,20 +48,7 @@ class GameSampler(
 
     /** Called on the game dispatcher after delivery; a queued request becomes the next sample without an idle gap. */
     private fun finishRead() {
-        while (true) {
-            if (closed.value || !current()) {
-                readState.value = STATE_IDLE
-                return
-            }
-            when (readState.value) {
-                STATE_READING_AGAIN -> if (readState.compareAndSet(STATE_READING_AGAIN, STATE_READING)) {
-                    sample()
-                    return
-                }
-                STATE_READING -> if (readState.compareAndSet(STATE_READING, STATE_IDLE)) return
-                STATE_IDLE -> return
-            }
-        }
+        if (reads.finish(allowFollowUp = !closed.value && current())) sample()
     }
 
     /** Hosts with a frame-based cadence call [request] themselves; iOS uses this foreground-safe timer. */
@@ -85,13 +60,9 @@ class GameSampler(
         }
     }
 
-    fun close() { closed.value = true; timer?.cancel(); scope.cancel() }
+    fun close() { closed.value = true; reads.close(); timer?.cancel(); scope.cancel() }
 
     companion object {
-        private const val STATE_IDLE = 0
-        private const val STATE_READING = 1
-        private const val STATE_READING_AGAIN = 2
-
         fun forGame(telemetry: TelemetryStore, gameBoy: Boolean, nds: Boolean = false,
                     game: CoroutineDispatcher, current: () -> Boolean, after: (SnapshotView) -> Unit): GameSampler {
             val buffers = if (gameBoy) null else RamSnapshot.Buffers(nds)

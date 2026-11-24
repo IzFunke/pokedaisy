@@ -1,5 +1,6 @@
 package com.pokedaisy.app.n3ds
 
+import com.pokedaisy.app.companion.CoalescedSampleGate
 import java.util.ArrayDeque
 import java.util.concurrent.Executor
 
@@ -30,31 +31,16 @@ internal class N3dsSamplingPipeline<C, T>(
     private val captureQueue = SerialExecutor(captureExecutor)
     private val decodeQueue = SerialExecutor(decodeExecutor)
     private val lock = Any()
-    private var closed = false
-    private var busy = false
-    private var followUpRequested = false
+    private val requests = CoalescedSampleGate()
 
     fun request() {
         if (!isCurrent()) return
-        val start = synchronized(lock) {
-            if (closed) return
-            if (busy) {
-                followUpRequested = true
-                false
-            } else {
-                busy = true
-                true
-            }
-        }
-        if (start) enqueueCapture()
+        if (requests.request()) enqueueCapture()
     }
 
     /** Invalidates queued or in-flight work; a blocking host capture is allowed to return, but cannot publish. */
     fun close() {
-        synchronized(lock) {
-            closed = true
-            followUpRequested = false
-        }
+        synchronized(lock) { requests.close() }
     }
 
     private fun enqueueCapture() {
@@ -83,7 +69,7 @@ internal class N3dsSamplingPipeline<C, T>(
     private fun complete(result: N3dsSampleResult<T>) {
         try {
             synchronized(lock) {
-                if (!closed && isCurrent()) deliver(result)
+                if (!requests.isClosed && isCurrent()) deliver(result)
             }
         } finally {
             finishSample()
@@ -91,25 +77,13 @@ internal class N3dsSamplingPipeline<C, T>(
     }
 
     private fun finishSample() {
-        val runAgain = synchronized(lock) {
-            if (closed || !isCurrent()) {
-                followUpRequested = false
-                busy = false
-                false
-            } else if (followUpRequested) {
-                followUpRequested = false
-                true
-            } else {
-                busy = false
-                false
-            }
-        }
+        val runAgain = requests.finish(allowFollowUp = isCurrent())
         if (runAgain) enqueueCapture()
     }
 
     private fun isCurrent(): Boolean = currentGeneration() == sessionGeneration
 
-    private fun isActive(): Boolean = synchronized(lock) { !closed } && isCurrent()
+    private fun isActive(): Boolean = !requests.isClosed && isCurrent()
 }
 
 /** Serializes tasks even when a host supplies a shared or multi-threaded executor. */
