@@ -482,3 +482,27 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - Ultra-Mond-Rohdump liegt in `work/usum-scene-investigation/photo-gate-readonly-b79010d3/readonly-sample.txt`; gerenderter Screenshot 116 Byte/schwarz; throwaway Userdir daneben. Keines der Originale geändert.
 - **Headless toolchain:** Docker builder image/toolchain und ein altes Linux build cache existieren. `docker ps/top` zeigt jedoch fünf langlebige Y-Emulatorprozesse, die alle dieselbe `work/n3ds-dump-linux/n3ds_dump`-Datei verwenden (einer CPU-busy). Daher wurde das Touch-Trace-Commit noch nicht kompiliert und die gemeinsame ausführbare Datei nicht ersetzt. Nächster sicherer Build muss eine getrennte CMake build directory verwenden oder erfolgen, nachdem der Y-Prozesszustand gesichert und der gemeinsame Build koordiniert wurde.
 - **Y name entry:** letzte untersuchte UI bleibt bei `DllIntro DllStrInput` um Frame4673 mit uneindeutigem `N N|`. Keine weitere Eingabe oder Bestätigung. Erst zuverlässige `touchmap`-/TouchTrace-Ausgabe nutzen.
+
+## Arbeitsplan nach Ergänzung (2026-11-24 10:05 CET)
+
+- Goal-Datei geprüft: Abschnitt 8 ist genau einmal vorhanden; es war keine Dateimutation nötig. Der bisherige Goal-Text wurde nicht verändert.
+- Abgeschlossene Agentenarbeit in getrennten Worktrees: `y_mapping_audit` (keine belegte Party-Adresse vor Starterwahl), `usum_mapping` (bestehende Saves sind nullgefüllt; kein verifizierter Team-/Taschen-Mapping), `layout_parity` (kein UI-Fix erforderlich; fokussierte Tests bestanden). Keine Agenten aktiv.
+- S25: Dev APK per `adb install -r` aktualisiert; `firstInstallTime` blieb 2026-11-23 18:29:14, `setup_done=true`, App-Speicher-Einstellungen bleiben erhalten. LibraryActivity sichtbar; kein Crash/ANR im geprüften Logfenster. Keine ROM gestartet.
+- Root: Architektur-Evidence geprüft; `touchmap` in separatem Build-Verzeichnis kompiliert und frame-neutral mit Y-ROM geprüft. Die fünf bestehenden Y-Prozesse/Binaries blieben unberührt.
+- Blocker: Pokémon Y Eingabe bleibt ohne verlässlich kalibrierten Tastaturpfad; Ultra-Mond hat keine verifizierte Team-/Taschen-/Szenenadresse. GLAD-generierte Loader-Lizenz bleibt ungeklärt.
+- Nächste Schritte: erst mit aktuellem isoliertem Y-Namenscreen-Checkpoint die Touch-/Tastaturzuordnung prüfen; parallel eine sichere USUM-Signierlösung recherchieren, ohne private Schlüssel ins Repo aufzunehmen. Danach Plan/Branchstatus erneut festhalten. Keine Upstream-PR.
+
+## Agentenbefunde: Parität, Übersetzungen und Saves (2026-11-24)
+
+- **UI/Overlay:** `syncDsStage()` leitet 3DS an `n3dsStageLayout()` weiter; dieses delegiert Arrangement/Fitting an `DsLayouts` und `fitTouchWindow`. Shared layout settings, Auto-Window, dim-close und transition overlay sind abgedeckt. Es gab keinen belegten Fix. Im detached Worktree erfolgreich: `:app:testDevUnitTest --tests com.pokedaisy.app.DsStagePolicyTest --tests com.pokedaisy.app.n3ds.Gen6Test -x :app:licensesAsset --no-daemon` (4 Min, SUCCESS).
+- **Übersetzungen:** 3DS-Core-/Game-Saves-Einstellungen sind in allen unterstützten App-Sprachen in `TrSettings.kt` vorhanden; Save-/Fehlertexte in `TrLibrary.kt`. Vollständigkeits- und Suchregressionen sind bereits in `TranslationsTest.kt` / `N3dsSettingRowsTest.kt` vorhanden. Kein neuer Lauf, keine Änderung.
+- **Save-Pfade/Editor:** `N3dsSaves.sharedSaveName()` erzeugt ROM-Basename plus `.sav`; `SavesLocation.saveFor()` nutzt den 3DS-Override bzw. Standard-Save-Ordner; Bibliothek/GameInfo/SaveEditor lösen denselben Pfad auf. Fokus-Tests (`N3dsSavesTest`, `Gen6XySaveEditorTest`, `Gen7UsUmSaveTest`, `SaveFileEditsTest`) im separaten Worktree erfolgreich, BUILD SUCCESSFUL. Keine realen Saves verwendet.
+- **Offen:** Pokémon Y ist schreibbar in `Gen6XySaveEditor`; Ultra-Mond bleibt bewusst read-only. Eine frische MemeCrypto-Signatur braucht RSA-Private-Key-Material; `CLAUDE.md` und `docs/3DS-SAVE-EDITOR-BRIDGE.md` untersagen das Einbetten/Committen. Der Parser prüft derzeit nur Struktur/CRCs, nicht die Signatur. Keine erlaubte integrierte Signierlösung gefunden; nicht schreiben oder unsigniert akzeptieren.
+- **Nächster Schritt:** den kompilierten Harness auf einen sicheren Namenscreen-Checkpoint anwenden; keine Eingabe, bis die konkrete Tastaturaktion sichtbar und zuverlässig zugeordnet ist. Danach Plan/Branchstatus speichern, ohne ROM/Saves/Keys zu committen.
+
+## Touch-Trace-Build und frame-neutrale Koordinatenprüfung (2026-11-24)
+
+- Neuer vollständiger `n3ds_dump`-Build in eigenem Verzeichnis `work/n3ds-dump-touchtrace-build`, getrennt vom aktiven `work/n3ds-dump-linux`-Binary: Ninja 1453/1453 erfolgreich. GCC 12 meldete zwei `-Wstringop-overread`-Warnungen aus Azahar (`artic_cache.h` und `ticket.cpp`); kein Fehler im neuen Harness.
+- Frame-neutrale Probe mit read-only Pokémon-Y-ROM und neuem Throwaway-Userdir `work/touchtrace-map-scratch`: `touchmap 160 120` meldete `bottom_screen=(40,240)-(360,480) framebuffer=(200,360)`; danach `frames 0`. Keine Touch-/Key-Eingabe, kein Frame und kein bestehender Save/State geladen.
+- Der Probe-Harness bestätigt die allgemeine 3DS-Koordinatenabbildung. Die konkrete Y-Namenseingabe ist noch nicht verifiziert, weil kein aktueller, sicherer Name-Screen-Checkpoint vorliegt.
+- Der neue Build und Throwaway-Userdir bleiben private Artefakte unter `work/`; nicht committen oder löschen.
