@@ -258,6 +258,7 @@ val licensesAsset by tasks.registering {
         "glslang (Azahar) - bundled component licenses" to "third_party/azahar/externals/glslang/LICENSE.txt",
         "SPIR-V Tools (Azahar) - Apache 2.0" to "third_party/azahar/externals/spirv-tools/LICENSE",
         "SPIR-V Headers (Azahar) - Khronos license notices" to "third_party/azahar/externals/spirv-headers/LICENSE",
+        "Khronos khrplatform.h (Azahar) - permission notice" to "third_party/licenses/khronos-khrplatform.txt",
         "Boost (Azahar) - Boost Software License 1.0" to "third_party/azahar/externals/boost/LICENSE_1_0.txt",
         "Crypto++ (Azahar) - public-domain and attribution notices" to "third_party/azahar/externals/cryptopp/LICENSE",
         "fmt (Azahar) - MIT" to "third_party/azahar/externals/fmt/LICENSE",

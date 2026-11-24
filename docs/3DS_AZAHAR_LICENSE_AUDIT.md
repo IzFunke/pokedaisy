@@ -46,8 +46,8 @@ records the GL/GLES APIs and generation command. Azahar's Android license catalo
 and David Herberth copyright, but no license grant or text. The official GLAD v0.1.36 README says generated code may
 be public domain, WTFPL or CC0, and cautions that Khronos specification-source licenses may apply. The exact
 redistribution terms for this generated output are not established by the pinned tree. Separately,
-`externals/glad/include/KHR/khrplatform.h` carries a Khronos copyright and permission notice; that notice is also
-missing from PokeDaisy's optional license asset.
+`externals/glad/include/KHR/khrplatform.h` carries a Khronos copyright and permission notice. Its exact notice is now
+included in PokeDaisy's optional license asset as a separate entry; this does not settle the generated loader's terms.
 
 Primary references: `third_party/azahar/externals/glad/Readme.md`, `src/glad.c`,
 `include/KHR/khrplatform.h`, and Azahar's Android `licenses.xml`; see the [GLAD v0.1.36 upstream README](https://github.com/Dav1dde/glad/blob/v0.1.36/README.md)
@@ -92,8 +92,8 @@ adds PokeDaisy comments; this audit does not determine the licensing of the comb
 Before describing the Android 3DS package as redistributable or notice-complete:
 
 1. Confirm the optional Android 3DS license asset in a packaged build contains cpp-httplib's notice and full MIT text.
-2. Resolve GLAD's generated-code terms for this exact specification output and include both GLAD attribution and the
-   separate Khronos header notice in the in-app license asset.
+2. Resolve GLAD's generated-code terms for this exact specification output and determine the correct GLAD attribution.
+   Confirm the separate Khronos header notice appears in the packaged optional license asset.
 3. Establish the origin and redistribution terms for each generated system archive array, or exclude them.
 4. Review the mixed GPL headers, FAAD2's version choice, the PokeDaisy patch and the source/binary compliance package
    together. Do not infer compatibility from the root `license.txt` alone.

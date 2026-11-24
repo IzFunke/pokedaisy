@@ -115,9 +115,10 @@ Settings > LICENSES. Optional-build entries below say when they are included.
   Khronos specification licenses may apply; the applicable terms for these
   exact generated files therefore remain unresolved. The separate
   `externals/glad/include/KHR/khrplatform.h` carries Khronos's own permission
-  notice. These notices need a complete license-page treatment and review
-  before distribution. This notice does not assert that the combined APK is
-  ready for redistribution.
+  notice, included separately in the optional Android license asset. The
+  generated loader's terms and the overall license-page treatment still need
+  review before distribution. This notice does not assert that the combined
+  APK is ready for redistribution.
 - melonDS for BananaDS (third_party/melonds-bananads), Copyright (c) melonDS
   team, GNU GPL 3.0 - https://github.com/melonDS-emu/melonDS, at the commit
   BananaDS pins, with BananaDS's patches and PokeDaisy's
