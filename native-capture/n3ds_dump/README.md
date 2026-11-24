@@ -49,9 +49,10 @@ only turns the player), joined with commas (`A,UP`, `CUP,CRIGHT`), or `NONE`. A 
 
 `N3DS_STEP_RUNLOOP=1` makes `wait` use `RunLoop(false)` single-step iterations instead of the normal full CPU slice.
 This can get past a full-slice wait during initial boot; it is much slower, so use `waittight N` to compare full-slice
-execution at a loaded checkpoint. `N3DS_WAIT_PROGRESS=1` prints the active wait's RunLoop call count, rendered-frame
-count and elapsed time, including markers around the first two calls. Both variables are diagnostic opt-ins; default
-behavior is unchanged.
+execution at a loaded checkpoint. `N3DS_WAIT_PROGRESS=1` prints the active `wait`, `press`, or `hold` RunLoop call
+count, rendered-frame count and elapsed time, including markers around the first two calls. This makes a slow key pulse
+observable while it is waiting for its frame to render. Both variables are diagnostic opt-ins; default behavior is
+unchanged.
 
 `N3DS_INTERP=1` runs Azahar's interpreter instead of the JIT. Sun's own save, two of three Moon saves and Alpha Sapphire's
 battles used to crash this tool as they loaded: the software renderer's worker threads shared Azahar's cached physical

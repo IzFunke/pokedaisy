@@ -377,9 +377,11 @@ int main(int argc, char** argv) {
             setKeys(a.at(0));
         } else if (cmd == "press" || cmd == "hold") {
             setKeys(a.at(0));
-            runFrames(cmd == "hold" ? number(a.at(1)) : 1);
+            // Input pulses also run emulated frames. In single-step diagnostic mode one rendered frame can
+            // require many RunLoop(false) calls; without the same progress marker as `wait`, a press looks hung.
+            runFrames(cmd == "hold" ? number(a.at(1)) : 1, waitProgress);
             setKeys("NONE");
-            runFrames(1);
+            runFrames(1, waitProgress);
         } else if (cmd == "touch") {
             const auto& l = emuWindow.GetFramebufferLayout().bottom_screen;
             const u32 x = l.left + number(a.at(0)) * (l.right - l.left) / 320;

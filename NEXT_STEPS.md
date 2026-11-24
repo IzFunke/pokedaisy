@@ -296,3 +296,45 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - **Photo-choice stop gate — `usum_photo_gate`:** the exact safe stop is the visible German prompt `Welches dieser Fotos stammt gleich noch mal von dir?` in `work/usum-intro-progress/photo_choice.png`, before the photo grid. Send no more input once this text appears. `AppDemo SequencePlayer Object` is used both in ordinary narration and at the prior prompt, so it is not a discriminator; `HeroSelect`/`StrInput` are later and therefore too late as a safety gate. Static CRO trigger IDs are not physically mapped.
 - **Active workstreams:** root stopped Ultra Moon at the user's explicit photo-choice boundary; `pokemon_y_headless_playthrough` is progressing a separate isolated Y clone toward a starter checkpoint. Layout, translation, save-path, Y evidence, and photo-gate agents completed their bounded tasks in separate worktrees. No S25 build/install/input was performed.
 - **Next:** preserve the Ultra Moon photo prompt until the user reauthorizes crossing that choice; continue Y from the isolated clone and validate a populated party after an in-game save. The harness and translated subtitle fix are already on the feature branch; implement only mappings supported by repeatable evidence. No upstream PR.
+
+## Coordination update (2026-11-24, resumed investigation)
+
+- The requested attachment was reread; its single coordination section remains present. No app settings, app data, ROMs, or source saves were changed.
+- **Pokémon Y:** the isolated no-input run reached frame 540 and is still in `DllTitle DllBackGround DllSequence`, transitioning through the Y logo. The Y agent plans one START pulse, then will inspect the title/menu before any continuation choice. No input or save write has occurred yet.
+- **Ultra Moon:** a focused read-only follow-up found no safe `FieldRo` battle/party/bag predicate. The existing frame-437 capture validates trainer data at `0x33012818` (German language byte 5 and trainer name `ELL`), but candidate party `0x33F7FA44` is empty and bag `0x33011934` is zero. Relevant gameplay CROs were not extracted, so no positive gameplay contrast exists. Do not map these candidates or advance beyond the saved photo-question prompt.
+- **Upstream delta review:** the recent harness diagnostics and `tk()` subtitle fix have no actionable `CLAUDE.md` / `docs/DEVELOPMENT.md` deviations; no files changed.
+- **Local build check:** `:app:compileDevKotlin` completed. The full `:app:testDevUnitTest` run was started by mistake and stopped after the project rule was identified; it did not complete. Future validation must be limited to named focused tests unless the user approves a full run.
+- **Active workstreams:** Y isolated intro/runtime evidence; Ultra Moon static module investigation; root integration and state protection. No device test or upstream PR.
+
+## Validation update (2026-11-24)
+
+- Focused tests passed: `:app:testDevUnitTest --tests '*N3dsSceneTransitionTest' --tests '*DsStagePolicyTest' -Pquick --no-daemon` (23 tests, zero failures).
+- `:app:compileDevKotlin` had already completed successfully during the interrupted full-suite attempt. That full suite did not finish and was not retried; no broad run was authorized.
+- Ultra Moon follow-up is now searching read-only ROM/ROMFS archives for the missing gameplay CROs so the earlier static-analysis blocker can be addressed without touching the game state.
+
+## Session update (2026-11-24, Y transition stall and CRO recovery)
+
+- **Pokémon Y:** the isolated title reached German `Weiter` with existing profile `lzFunk3`; the private recovery state is `work/y-y-runtime-evidence-menu.state` at frame 658. One A was sent, but the menu faded black; no in-game save was written and the source save remained hash-identical to its clone (`9B68354B…EE100`, 415,232 bytes). A no-input `wait 120` stalled at frame 844 after >90 seconds, so it was interrupted. The next attempt will restore frame 658 in a fresh isolated userdir and use the measured `N3DS_STEP_RUNLOOP=1` / bounded `waittight 60` path. Do not send further input if that stalls.
+- **Ultra Moon:** the archive blocker is cleared: `work/extract-usum-gameplay-cros.py` extracts EU `FieldRo.cro`, `FieldMenu.cro`, `Battle.cro`, `Bag.cro` and related CROs into ignored `work/usum-static-gameplay-cro/`. Static symbols show field-to-battle and battle-to-bag/party relationships, but inspected import entries are linker veneers, not scene callers. There is still no positive gameplay RAM sample, so no production runtime/scene mapping is justified. The photo-question stop remains in place.
+- **Regression checks:** the focused DS/3DS layout and scene transition tests passed (23 tests, 0 failures). `git diff --check` is clean; only this persistent plan file is modified outside ignored `work/` artifacts.
+
+## Scheduler follow-up (2026-11-24)
+
+- Restoring the isolated Y frame-658 menu state into a fresh userdir preserved the source and clone hashes, but did not resolve input throughput: a single-frame A command stalled for ~36 seconds under `N3DS_STEP_RUNLOOP=1` before `waittight` could run. The agent stopped that isolated session without sending another input. Keep frame 658 as the safe recovery point and do not repeat the same press path; pursue a different headless strategy or use the previously built x86_64/Android route only when explicitly appropriate. No save write occurred.
+- The Y title/menu and Ultra Moon CRO investigations remain parallel; no unverified production memory mappings were added.
+
+## Diagnostics plan update (2026-11-24)
+
+- The Y `press A` stall is not proven to be an emulator deadlock: `press`/`hold` call `runFrames()` without the wait-progress flag, so single-step `core.Step()` can block with no telemetry. Next engineering action is opt-in progress logging for key-pulse commands in a dedicated worktree. Do not retry Y until that harness diagnostic is reviewed and built.
+- Ultra Moon disassembly now has real code bytes after the import-veneer region in `FieldRo.o`, but there are no local function symbols and simple ARM/Thumb branch scans did not recover callers of the imported battle-start veneers. Continue mapping internal relocations against code, with candidates explicitly marked static/unverified.
+
+## Ultra Moon disassembly checkpoint (2026-11-24)
+
+- `FieldRo` code contains imports for `EventBattleCall::CallWild/CallTrainer`, `GameEventManager::CallEvent`, and `BattleInst::StartBattle`; `Battle` imports party selection and battle-party data methods. The imported code addresses are linker veneers, and no direct ARM branch callsites or local symbols were recovered. `nnroControlObject_` is a generic dispatch table. `Battle` module presence is only a candidate scene signal, not validated; do not add it to `startupSceneOf` until a positive runtime battle sample proves it.
+- Exact static offsets and reproduction commands are in ignored `work/usum-static-gameplay-cro/disassembly-followup.txt`. No emulator input or production source changes resulted.
+
+## Headless progress patch verification (2026-11-24)
+
+- Reviewed and integrated the 8-line `N3DS_WAIT_PROGRESS` forwarding change for `press` and `hold` plus its README update. Built the patched `n3ds_dump` target successfully with the existing Linux Azahar build cache; output had only existing Azahar/GCC warnings. Default behavior remains unchanged when the env flag is off.
+- With telemetry enabled, `press A` on the isolated Y title-menu savestate returned normally (first RunLoop 0.022 s), kept `DllStartMenu`/German `Weiter`, and wrote no save. `waittight 60` advanced 59 frames in ~42.8 s then stalled before returning; the container was stopped. The exact causes remain undetermined.
+- Next diagnostic uses `N3DS_STEP_RUNLOOP=1` and `wait 60` (not `waittight`) to test the slower single-step scheduler with observable progress. Keep the source save hash unchanged and stop if progress stalls.
