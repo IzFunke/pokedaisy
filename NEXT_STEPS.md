@@ -1,3 +1,26 @@
+# Coordination update (2026-11-24 01:36 CET)
+
+## Active workstreams
+
+- **Pokémon Y — `pokemon_y_route`:** read-only static/CRO investigation of `DllSequence DllBackGround DllFieldDemo` and the black transition after leaving the house. No further emulator inputs until a distinct evidence-based route is identified.
+- **Ultra Moon — `ultra_moon_mapping`:** comparison complete in a separate scratch process. The pre/post touch states had identical modules and candidate words; no production signal was verified. No code change.
+- **UI/layout — `ui_3ds_parity`:** review complete in its own worktree. No narrow code fix was justified because shared layout policy and regression tests already cover basic 3DS single-screen behavior; the gap is verified title-state detection.
+- **Lead integration — root:** update durable research/plan, then resume implementation when source/runtime evidence identifies a safe, testable change.
+
+## Current state and guardrails
+
+- The Y isolated `main` hash is still `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`; the process is stopped on the pre-sequence safe checkpoint. Do not repeat the same black-screen wait/A probes or savestate inside `DllSequence`.
+- Ultra Moon field-idle and pre/post touch captures do not validate the candidate scene words. Do not infer X-menu, battle, or bag behavior; preserve all existing setup/profile stops.
+- The S25 is locked and has not been touched this pass. Preserve app data and saves; no uninstall/reset, no personal-save changes, no ROM/save/key commits, and no upstream PR.
+
+## Next steps
+
+1. Finish the independent Y static sequence/CRO analysis. Resume the isolated checkpoint only if it supplies a materially different diagnostic.
+2. Seek a confirmed Ultra Moon X-menu/battle/bag sample only within the already authorized isolated test context; otherwise continue static code/reference analysis without enabling guessed addresses.
+3. Make the next code change only when a concrete behavior defect is established, keep new UI strings in all eight locales, and update the manual for visible behavior.
+4. Recheck this plan before a context handoff; Pokémon Y and Ultra Moon remain equal priorities.
+
+---
 # Coordination and runtime update (2026-11-24 01:35 CET)
 
 ## Active workstreams
