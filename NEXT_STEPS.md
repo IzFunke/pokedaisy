@@ -338,3 +338,8 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - Reviewed and integrated the 8-line `N3DS_WAIT_PROGRESS` forwarding change for `press` and `hold` plus its README update. Built the patched `n3ds_dump` target successfully with the existing Linux Azahar build cache; output had only existing Azahar/GCC warnings. Default behavior remains unchanged when the env flag is off.
 - With telemetry enabled, `press A` on the isolated Y title-menu savestate returned normally (first RunLoop 0.022 s), kept `DllStartMenu`/German `Weiter`, and wrote no save. `waittight 60` advanced 59 frames in ~42.8 s then stalled before returning; the container was stopped. The exact causes remain undetermined.
 - Next diagnostic uses `N3DS_STEP_RUNLOOP=1` and `wait 60` (not `waittight`) to test the slower single-step scheduler with observable progress. Keep the source save hash unchanged and stop if progress stalls.
+
+## Pokémon Y load transition checkpoint (2026-11-24)
+
+- Using the patched progress-enabled single-step scheduler, the isolated frame-658 German title menu accepted one A and `wait 120` returned normally after 70.9 s with modules `DllField`, frame counter 122. The screenshot remains black, so this is likely still a load/transition or a headless-render issue; it is not enough to claim playable field or companion support. No second key, save write, or source-save change occurred; the SHA-256 remains `9B68354B…EE100`.
+- Next bounded probe reloads the same saved menu state in a fresh clone, sends one A, then waits 180 frames with progress and no keys to distinguish a short black transition from a persistent render/session issue. Stop on an unreadable personal-choice prompt or stalled progress.
