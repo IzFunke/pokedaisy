@@ -1,6 +1,9 @@
 # Coordination update (2026-11-24 01:46 CET)
 
-- **Ultra Moon live run:** after the documented one-frame A press, the isolated `userdir20` remained at frame 439 with `FieldRo FieldMenu FieldEffectCommon`; the saved screenshot is unchanged. A subsequent `wait 120` command has not returned, so no newer frame/screenshot is available. No more input has been sent. The agent is stopping only this isolated process gracefully; recheck `userdir20/main` against its pre-input backup before resuming. Last reported SHA-256 is `90A3A00E0A4D9BCC05164BB54AF380A996943F5CCDA4800A7E7D41DB35E1D725`.
+- **Ultra Moon — confirmed stop:** the isolated `wait 120` eventually returned at frame 559. The same exterior scene and `FieldRo FieldMenu FieldEffectCommon` remained; slot 0 at candidate `0x33F7FA44` was still zero. The process exited through the harness shutdown path. `userdir20/main` still exactly matches its pre-input backup (445,440 bytes; SHA-256 `90A3A00E0A4D9BCC05164BB54AF3800A996943F5CCDA4800A7E7D41DB35E1D725`). No save or other userdir changed. Next run is on a new clone and will use one short, observed input at a time toward the starter.
+- **Pokémon Y — new diagnostic:** a separate read-only CRO control-flow trace is checking `DllFieldDemo.cro`'s `nnroControlObject_` path for actual screen/render selection evidence. No repeated key or wait probes.
+
+- **Ultra Moon live run — earlier checkpoint:** after the one-frame A press, `userdir20` was still at frame 439 with `FieldRo FieldMenu FieldEffectCommon`. The bounded idle then returned at frame 559; final state and cleanup are recorded above.
 - **Goal coordination:** the persistent goal attachment already contains exactly one `## 8. Ergänzung: Effizientere Multi-Agent-Koordination` section; it was left unchanged to avoid a duplicate.
 
 - **Pokémon Y:** static ROMFS extraction confirms `DllFieldDemo.cro` imports `DllSequence`; it still does not establish which display that scene needs.
