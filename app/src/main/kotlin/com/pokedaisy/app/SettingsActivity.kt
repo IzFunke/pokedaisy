@@ -817,7 +817,7 @@ class SettingsActivity : ComponentActivity() {
                 }
             }.takeIf { com.pokedaisy.app.companion.data.TelemetrySampler.NDS_SUPPORT },
             SettingRow(
-                tk("3DS CORE"), prefs.n3dsCore.valueLabel(), subtitle = "Only AZAHAR is available",
+                tk("3DS CORE"), prefs.n3dsCore.valueLabel(), subtitle = tk("Only AZAHAR is available"),
                 labelBadge = com.pokedaisy.app.companion.NewFeatures.badge(com.pokedaisy.app.companion.NewFeatures.N3DS_CORE),
             ) {
                 val cores = com.pokedaisy.app.companion.N3dsCore.offered()
