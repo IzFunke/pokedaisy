@@ -398,3 +398,59 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - The log confirms the isolated German-profile `main` was mounted at Azahar's correct all-zero SDMC profile/title path and matches its backup (`1467BB75689DF04B17D7B19BAAC11AE387C9B99E81B4D8B46B74A0D6EF2EB9C0`). Existing saves remain unchanged.
 - On restart, A was sent before any screen was visible; at frame122 the capture was black and `moduleNames()` had no CRO chain. Normal loader messages appeared, no crash. This is not evidence of a missing save; the previous visible Y flare was in a warm German-confirmed process.
 - **Next:** one new cold boot with no input and a single bounded 240-frame wait, then inspect the stable screenshot/modules. Do not send keys before a visible action is established.
+
+## Weiterarbeit nach Goal-Ergänzung (2026-11-24)
+
+- **Goal-Datei:** `C:\Users\beben\.codex\attachments\f7f19961-5891-4d88-b4be-358dd5c90b86\goal-objective.md` wurde zuvor geprüft. Der Abschnitt `## 8. Ergänzung: Effizientere Multi-Agent-Koordination` ist genau einmal vollständig vorhanden; bestehender Text blieb unverändert.
+- **Pokémon Y:** Im frischen isolierten deutschen Profil wurde der sichtbare Professor-Dialog einmal mit A fortgesetzt. Bei Frame 2868 blieb `DllIntro` aktiv; Platan steht weiter entfernt neben einem Pokéball, aber es gibt derzeit keinen sichtbaren Text, Prompt oder Auswahl. Keine weitere Taste und kein Spielstand-Schreibvorgang. Nächster Schritt: begrenztes Warten ohne Eingabe, bis ein neuer sichtbarer Dialog/Prompt erscheint; keine Eingabe bei Übergängen oder nicht sichtbaren Entscheidungen.
+- **Ultra-Mond:** erneute Prüfung fand keinen positiven Laufzeitbeleg für Kampf/Team/Tasche. Der Frame-437-Sample zeigt `FieldRo FieldMenu FieldEffectCommon`; Kandidaten-Team bei `0x33F7FA44` ist leer und Tasche bei `0x33011934` null. Die eingefrorene Fotoauswahl hat keinen synchronisierten RAM-/Modullisten-Sample. Keine Produktionszuordnung geändert. Nicht über `Welches dieser Fotos stammt gleich noch mal von dir?` hinausgehen. Günstigster nächster sicherer Schritt wäre ein synchroner read-only Dump von Screenshot, CRO-Liste und Kandidatenbereichen am unveränderten Prompt; das belegt nur den Promptzustand, keine Gameplay-Szene.
+- **Parallel laufend:** eine gezielte gemeinsame DS/3DS-Touchfenster-/Overlay-Paritätsprüfung mit möglichem eng begrenztem Fix und fokussierter Regression. Änderungen ausschließlich in isoliertem Worktree; anschließend prüfen und integrieren.
+- **Schutz:** Alt-Saves und S25-App-Daten unangetastet; keine Hardware-Eingabe. Keine ROMs, Saves oder Schlüssel ins Git; kein Upstream-PR.
+
+## Touch-Overlay-Regression und Y-Intro (2026-11-24)
+
+- **UI-Parität:** Review bestätigte, dass alleinstehende `DllBag`-/`DllPss*`-Module schon als untere Bildschirmseite (`SCREEN`) klassifiziert und automatisch angezeigt werden. Es wurde keine Produktionslücke gefunden. Neue explizite Regressionen dafür kamen in Commit `001aeb76` hinzu; der fokussierte Gradle-Aufruf blieb ohne Ausgabe hängen und wurde abgebrochen. Die neuen Tests sind daher **noch nicht verifiziert**. Im Root-Worktree mit den bestehenden Y-/Ultra-Mond-Assertions zusammengeführt.
+- **Pokémon Y:** Isolierter deutscher Intro-Lauf zeigt bei Frame 2988 Platan mit einem kleinen grünen Pokémon und den Anfang des nächsten Satzes „Wie du vielleicht weißt, wird dies…“. Der vorherige Wait hat keine Frames weitergeschaltet; keine Eingabe wurde gesendet. Nächster Schritt: im nachweislich funktionierenden progress-enabled Single-Step-Wait-Modus begrenzt und ohne Tasten warten, danach vollständigen Text/Marker prüfen. Kein A bis zur sichtbaren vollständigen Dialogzeile.
+- **Ultra-Mond:** kein laufender Emulator und kein bestätigter null-input-Runner für das isolierte Foto-Checkpoint-Statefile. Deshalb wurde kein State geladen und keine Eingabe gesendet. Für einen sicheren Diagnose-Dump ist erst ein verifizierter Runner nötig, der `loadstate`, `modules`, `frames`, read-only RAM-Ausgabe und Screenshot ohne `wait`/Eingabe unterstützt.
+- **Repo:** Integration ist lokal im bestehenden Branch; `NEXT_STEPS.md` ist aktualisiert. Private `work/`-Artefakte bleiben untracked. Kein Push/PR in diesem Schritt.
+
+## Touch-Overlay-Test verifiziert (2026-11-24)
+
+- Die neue Regression machte sichtbar, dass standalone `DllBag` nachweislich als `MENU` statt `SCREEN` klassifiziert wird (damit untere Touch-Seite, passend zum beobachteten Y-Bag-Verhalten). Der Erwartungswert des Tests wurde korrigiert; Produktionslogik blieb unverändert.
+- Fokussierter Dev-Lauf bestanden: `Gen6Test.standaloneTouchOnlyPagesRequestTheSecondScreen` und `DsStagePolicyTest.standaloneTouchPagesStayVisibleAcrossEveryChosenLayout`; `BUILD SUCCESSFUL`, beide Tests abgeschlossen.
+- Der lokale Regressionstest-Commit wurde aktualisiert. Keine APK-Änderung oder Geräteinstallation nötig.
+
+## Pokémon Y Intro-Fortsetzung (2026-11-24, Frame 3170)
+
+- Ein einzelnes A war bereits vor dem begrenzten Wait gesendet worden; der anschließende Frame-3170-Screenshot zeigt eine gerahmte Kalos-Pokémon-Illustration (u. a. Chespin/Fletchling), `DllIntro`, ohne Text oder Weiter-Marker. Seitdem keine Eingabe. Nächster Schritt: bounded no-input wait120, dann erneut inspizieren; kein Tastendruck ohne sichtbaren vollständigen Dialog/Prompt.
+- Keine dauerhafte Y-Spielstandänderung: weiter frisches isoliertes Profil. Bestehende Quellspielstände und Ultra-Mond-Fotoauswahl unverändert.
+
+## Goal-Wiederaufnahme und parallele Fortsetzung (2026-11-24)
+
+- Goal erneut vollständig gelesen. Die Anforderungen 1–8 bleiben aktiv; insbesondere geht es weiter um vollständige Y/Ultra-Mond-Spielzustandserkennung, Companion und reale Gerätevalidierung, nicht nur um Tests/Audits.
+- **Pushed:** Regressionstest-Commit `ea8bc583` liegt jetzt auf `origin/feature/azahar-3ds-single-screen`. Enthält nur zwei Testdateien; fokussierte Dev-Tests sind bestanden. Kein PR.
+- **Pokémon Y:** Frame 3350: `DllIntro`, stabiler vollständiger deutscher Erklärungstext über Pokémon, kein sichtbarer Marker trotz vollständigem 400×480 Capture. Der User hat Intro-Fortsetzung ausdrücklich autorisiert; nächster Schritt ist genau ein A für normalen Fließtext und danach bounded wait/Inspektion, mit Stopp vor personalisierter Profilwahl.
+- **S25:** `adb devices -l` zeigt die Wireless-Verbindung. Read-only Status: Gerät `Dozing`; Dev-App noch VersionCode 23 / `1.6.2-beta.1`, `firstInstallTime` weiter `2026-11-23 18:29:14`, `lastUpdateTime` `2026-11-24 07:03:42`. Keine Eingabe/Installation in diesem Test-only-Schritt.
+- **Agenten:** Pokémon Y isolierter Headless-Lauf aktiv; Architektur-Agent untersucht eine konkrete gemeinsame Companion-/Screen-Policy-Verbesserung in separatem Worktree; Upstream-Agent bearbeitet präzise veraltete README-Aussage im eigenen Worktree. Alle parallel geschriebenen Änderungen werden vor Integration geprüft.
+- **Ultra-Mond:** bleibt gleichrangig. Foto-Checkpoint bleibt unverändert; aktueller Host hat keinen Emulatorprozess. `n3ds_dump.cpp` belegt inzwischen eine sichere Befehlsfolge ohne emulierte Frames (`loadstate`, `modroot`, `modules`, `frames`, `hex`, `shot`), aber lokaler Build und ROM-Datei sind in diesem Checkout nicht vorhanden. Nächster Schritt ist zu klären, ob das vorhandene Headless-Artefakt/ROM aus der bereits genutzten Umgebung erreichbar ist, ohne externe Quelldaten zu verschieben oder zu ändern.
+
+## Layout-Geometrie und Upstream-README (2026-11-24)
+
+- **Shared layout fix:** `n3dsStageArrangement()` now rounds floating touchscreen box dimensions and center coordinates using the same nearest-pixel convention as shared `DsLayouts`. New odd-stage-size regression in `DsStagePolicyTest`. Focused Dev class passed: 19 tests, 0 failures. Commit `47f568ab` is pushed to the existing feature branch.
+- **Upstream documentation:** README now states that opt-in Android Azahar can launch decrypted supported 3DS carts, while Companion mapping coverage is separately qualified (X/ORAS/Sun/Moon mapped; Y still being verified; USUM gameplay mapping unverified). Commit `5922ec15` is included on the feature branch. From `website/`, `node --test test/docs.test.js test/docsearch.test.js` passed 9/9.
+- **Y:** current isolated intro continues with ordinary German narration; at frame 3594 it showed “Manche von ihnen leben auf dem Land, andere in der Luft und wieder andere im Wasser…”. A bounded no-input wait is in progress before further ordinary-text input. Still no save write to user data.
+- **Current upstream gates:** no PR. License obligations remain unresolved: Azahar mixed GPL terms, FAAD2 GPL-only compatibility for the combined APK, generated GLAD license grant, and complete distribution-license-page review. README accurately avoids calling the implementation fully supported or PR-ready.
+- **Working tree:** only `NEXT_STEPS.md` and ignored/private `work/` artifacts are changed/untracked; implementation commits are pushed.
+
+## Dev-Build-Validierung auf S25 (2026-11-24)
+
+- Azahar-fähiger Dev-Build erfolgreich: `./gradlew --project-prop=pokedaisy.n3ds=true :app:assembleDev -Pquick --no-daemon --console=plain`.
+- Per autorisiertem `adb install -r` aktualisiert. Paket bleibt VersionCode 23 / 1.6.2-beta.1; `firstInstallTime` unverändert (`2026-11-23 18:29:14`), `lastUpdateTime` aktualisiert auf `2026-11-24 09:12:24`, `setup_done=true`. S25 blieb `Dozing`; App nicht gestartet, kein Touch/Unlock, keine Spielstände oder Settings verändert.
+- **Ultra Moon headless:** statische Quellprüfung beweist, dass `loadstate`, `modroot`, `modules`, `frames`, `hex`, `shot` im `n3ds_dump`-CLI keinen Frame und keine Eingabe ausführen; `shot` schreibt ausschließlich ein PNG. Der Linux-Binary und das eingefrorene Foto-Gate-Statefile existieren. Der erforderliche entschlüsselte ROM-Pfad fehlt in repo-lokalen Aufzeichnungen, daher kein Lauf und kein Guess. Vorbereitetes read-only Kommando bleibt: loadstate; `modroot 0x008B2000`; modules/frames; `hex` für `0x33012818`, `0x33F7FA44`, `0x33011934`; shot; frames. Kein Wait/Input/Savestate.
+- **Pokémon Y:** Dialog über die Lebensräume blieb nach einem weiteren 60-Frame-Wait unverändert, vollständig und ohne Marker. Wegen expliziter Intro-Freigabe wird mit genau einem A und bounded wait weitergespielt, innerhalb des isolierten Profils.
+
+## APK-Hinweisstatus und Runtime-Check (2026-11-24)
+
+- cpp-httplib-Lizenztext ist durch `:app:licensesAsset` mit `--project-prop=pokedaisy.n3ds=true` erfolgreich in `app/build/generated/licenses/licenses.txt` enthalten; APK-Archiveintrag `assets/licenses.txt` geprüft (NOTICE + vollständiger MIT-Text, Copyright 2017 yhirose). Restliche Lizenzfragen bleiben offen.
+- Neu paketierter Azahar-Dev-APK mit Lizenzattribution wurde erneut per `adb install -r` installiert. `firstInstallTime=2026-11-23 18:29:14` unverändert; `setup_done=true`; `lastUpdateTime=2026-11-24 09:15:02`. Danach die App einmal normal in der Bibliothek gestartet: Activity startete in 882 ms, keine `FATAL EXCEPTION` im letzten Logfenster. Die App wurde nicht zur ROM geöffnet; keine Touch-Eingabe und keine Save-Pfade/Spielstände geändert.
+- Das Gerät zeigte nach Install `Awake`, mit PokeDaisy Library als oberster Activity. Weitere Eingabe pausiert, solange die Nutzung unklar ist. Direkte Geräte-Gameplaytests bleiben ausstehend; Headless Y läuft in isoliertem Profil.
