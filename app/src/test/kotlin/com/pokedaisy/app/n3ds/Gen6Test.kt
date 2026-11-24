@@ -328,14 +328,23 @@ class Gen6Test {
         )
         assertEquals(Gen6Reader.Scene.MENU, yPssMenu)
         assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssMenu!!, 0))
-        // The blue round arrow closes that overlay; the ordinary field/PSS friends view remains on the lower screen.
-        val yPssClosed = Gen6Reader.sceneOf(
+        // The captured EU Y checkpoint exposes the open PSS directly as DllUSMirror; the ordinary X-menu pointer is 0.
+        val yPssMirror = Gen6Reader.sceneOf(
             "DllField\nDllUSMirror",
             fieldMenu(0, 0),
             Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!,
         )
-        assertEquals(Gen6Reader.Scene.FIELD, yPssClosed)
-        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssClosed!!, 0))
+        assertEquals(Gen6Reader.Scene.MENU, yPssMirror)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yPssMirror!!, 0))
+        assertTrue(com.pokedaisy.app.n3dsAutoTouchCanDismiss(yPssMirror, 0))
+        // With neither PSS module nor field-menu marker, this is ordinary field presentation.
+        val yField = Gen6Reader.sceneOf(
+            "DllField",
+            fieldMenu(0, 0),
+            Gen6Reader.configFor(N3dsCart.POKEMON_Y_USA)!!,
+        )
+        assertEquals(Gen6Reader.Scene.FIELD, yField)
+        assertTrue(com.pokedaisy.app.n3dsTouchWanted(yField!!, 0))
         assertEquals(Gen6Reader.Scene.MENU, scene("DllField\nDllUSC02\nDllPssCharaMenu", fieldMenu(0, 0)))
         assertEquals(Gen6Reader.Scene.FIELD, scene("DllField\nDllUSC02\nDllPssMessageWindow", fieldMenu(0, 0)))
         assertNull(scene("", null))

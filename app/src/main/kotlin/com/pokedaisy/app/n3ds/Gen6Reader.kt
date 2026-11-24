@@ -129,10 +129,11 @@ object Gen6Reader {
 
     /** Field modules that wait on the touch screen alone, the top screen dimmed: MENU too. Save's "save the game?" with
      * its Yes / No (the X menu's marker is cleared meanwhile), and START's PSS menu and its pages (headless, 2026-11-15:
-     * START loads DllPssMainMenu beside the field; the cart's other DllPss* are its pages). Not DllPssMessageWindow:
-     * the PSS's notes ride along on the plain field. */
+     * START loads DllPssMainMenu beside the field; Y's open PSS mirror can appear as DllUSMirror without that module
+     * or the field-menu pointer (observed headless 2026-11-24). The cart's other DllPss* are its pages. Not
+     * DllPssMessageWindow: the PSS's notes ride along on the plain field. */
     val FIELD_TOUCH = setOf(
-        "DllReport", "DllPssMainMenu", "DllPssCharaMenu", "DllPssConfig", "DllPssFavorite", "DllPssIconSelect",
+        "DllReport", "DllUSMirror", "DllPssMainMenu", "DllPssCharaMenu", "DllPssConfig", "DllPssFavorite", "DllPssIconSelect",
         "DllPssPlaySelect", "DllPssRuleSelect", "DllPssAssistPower",
     )
 
