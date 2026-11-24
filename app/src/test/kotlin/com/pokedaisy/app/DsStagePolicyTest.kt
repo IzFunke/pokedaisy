@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.roundToInt
 
 class DsStagePolicyTest {
     private fun enabled(
@@ -109,6 +110,24 @@ class DsStagePolicyTest {
             assertTrue(kotlin.math.abs((touch.left + touch.right) - width) <= 1f)
             assertTrue(kotlin.math.abs((touch.top + touch.bottom) - height) <= 1f)
         }
+    }
+
+    @Test fun threeDsFloatingWindowRoundsPixelSizeLikeSharedScreenLayouts() {
+        val width = 401
+        val height = 803
+        val frame = 31f
+        val fit = com.pokedaisy.app.companion.fitTouchWindow(
+            width * com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE - frame,
+            height * com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE - frame,
+        )
+        val touch = requireNotNull(
+            n3dsStageArrangement(DsLayout.ONE_SCREEN, width, height, fill = true, floating = false, framePx = frame).touch,
+        )
+
+        assertEquals(fit.width.roundToInt(), touch.width)
+        assertEquals(fit.height.roundToInt(), touch.height)
+        assertTrue(kotlin.math.abs(touch.left + touch.right - width) <= 1)
+        assertTrue(kotlin.math.abs(touch.top + touch.bottom - height) <= 1)
     }
 
     @Test fun threeDsPipAutoOrManualOverrideFloatsWhileSideBySideStaysSelected() {

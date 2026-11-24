@@ -7,6 +7,7 @@ import com.pokedaisy.app.companion.DsLayouts
 import com.pokedaisy.app.companion.TOUCH_WINDOW_HEIGHT_SHARE
 import com.pokedaisy.app.companion.TOUCH_WINDOW_WIDTH_SHARE
 import com.pokedaisy.app.companion.fitTouchWindow
+import kotlin.math.roundToInt
 
 /** Whether the app should arrange a Nintendo game's screens on this single display. */
 internal fun dsStageEnabled(
@@ -87,10 +88,11 @@ internal fun n3dsStageArrangement(
             height * TOUCH_WINDOW_HEIGHT_SHARE - framePx,
             touchAspect,
         )
-        val touchWidth = fit.width.toInt()
-        val touchHeight = fit.height.toInt()
-        val x = (width - touchWidth) / 2
-        val y = (height - touchHeight) / 2
+        // DsLayouts uses rounded pixel boxes too; keep the floating 3DS screen centred the same way on odd-sized stages.
+        val touchWidth = fit.width.roundToInt()
+        val touchHeight = fit.height.roundToInt()
+        val x = ((width - touchWidth) / 2f).roundToInt()
+        val y = ((height - touchHeight) / 2f).roundToInt()
         return DsArrangement(
             alone,
             DsBox(x, y, x + touchWidth, y + touchHeight),
