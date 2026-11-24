@@ -181,8 +181,11 @@ In the works.
 
 Any Game Boy, Game Boy Color, GBA or DS game plays. The companion knows Red to Crystal, FireRed, LeafGreen, Emerald,
 Ruby and Sapphire in every language, Platinum, HeartGold, SoulSilver, Black, White, Black 2 and White 2, and dozens of
-ROM hacks, **in the exact version listed** (another version shows a "not supported" notice). Drop your ROM into the
-[ROM check](https://pokedaisy.com/#check) to see what works with it: it never leaves your browser.
+ROM hacks, **in the exact version listed** (another version shows a "not supported" notice). An opt-in Android Azahar
+build can also launch decrypted Pokémon X, Y, Omega Ruby, Alpha Sapphire, Sun, Moon, Ultra Sun and Ultra Moon. Companion
+data is mapped for X, Omega Ruby, Alpha Sapphire, Sun and Moon; Y's support is still being verified, and Ultra Sun and
+Ultra Moon do not yet have verified gameplay mappings. Drop your ROM into the [ROM check](https://pokedaisy.com/#check)
+to see what works with it: it never leaves your browser.
 
 <details>
 <summary><strong>The full list, game by game</strong> (✅ works · ◐ partly · — not yet)</summary>
