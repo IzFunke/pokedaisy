@@ -8,6 +8,34 @@
 No product code changed in the classification review. The goal remains active; do not submit an upstream PR or infer new RAM mappings from the module names.
 
 ---
+# Coordination update (2026-11-24, resumed)
+
+## Active workstreams
+
+- **Pokémon Y — `pokemon_y_route`:** `DllFieldDemo`/`DllSequence` CROs show `CommandKeyWait` but no touch symbols. One-frame A loads `DllSequence`; one-frame B changes modules to the exact trio `DllSequence DllBackGround DllFieldDemo` at frame 17. A second B1 at frame 19 leaves the trio/zone/coordinates unchanged and the raw buffers black. Isolated main hash `0D1D7665…D95F2` is unchanged. Headless Azahar key indices are A/B/Up/Down/Left/Right=`0/1/4/5/6/7`; Android masks are `0x01/0x02/0x10/0x20/0x40/0x80`. These transport IDs do not decode GFL scene-input semantics. Do not repeat these pulses without a new event/checkpoint; no long holds/waits, in-sequence savestates, game save, or S25 input.
+- **Ultra Moon — `usum_headless_progress` / `ultra_moon_integration`:** run on isolated `userdir26` is stopped. German was confirmed there; settled `LangSelect` displays meaningful content on both screens and verifies `SCREEN`. Next modules were `AppDemo SequencePlayer Object`; top ocean/title intro rendered, bottom stayed black. A bounded A-every-60 probe reached 600 frames without `FieldRo`, so do not repeat it. Static CRO disassembly shows edge-trigger checks for logical IDs 16 and 32, but searches found no GFL enum/library/test mapping them to physical keys; Azahar HID values are not equivalent evidence. Do not send more input or infer gameplay state until the mapping is sourced. `userdir26/main`, its baseline checkpoint, and source `userdir20/main` remain SHA-256 `90A3A00E…35E1D725` (445,440 bytes). No profile/photo choice or in-game save was made; S25 untouched.
+- **Ultra Moon source audit — `ultra_moon_integration`:** completed without code changes. Existing code recognizes `LangSelect`, `HeroSelect`, `StrInput`, and `FieldRo`; no USUM gameplay `Config` is justified because party/trainer candidates remain unvalidated.
+- **Architecture/upstream — `upstream_fixes`:** completed a targeted audit in its own worktree. It found no safe compliance fix to make without resolving the existing Azahar license/provenance blockers. The original requirements and current limits are documented in `docs/3DS_UPSTREAM_READINESS.md` and `docs/3DS_AZAHAR_LICENSE_AUDIT.md`.
+- **UI/layout — `ui_3ds_parity`:** completed a fresh source/test review in its own worktree with no change. Layout transitions already share `dsStageLayout`; the remaining DS per-frame fade flags versus 3DS scene polling are core-specific, and changing FIELD or battle-menu visibility without runtime evidence could hide required game content.
+- **Lead — root:** keep the user branch and save data intact; review agent evidence and make the next product change only where a concrete behavior is verified. Do not run Gradle builds concurrently with agents.
+
+## Live resource and safety check
+
+- Root branch baseline: `feature/azahar-3ds-single-screen` at `916dd4a8`. This turn changes only `NEXT_STEPS.md` and `RESEARCH.md`; the existing ignored/untracked `work/` diagnostics remain excluded. Do not commit `work/`.
+- The S25 appears in `adb devices`, but `dumpsys power` reports `mWakefulness=Dozing`; do not wake or send game input. Existing app process is present, but this is not evidence of a currently displayed game state.
+- A read-only Android check confirms the resumed activity is `com.pokedaisy.app.dev/LibraryActivity`; the last 500 `AndroidRuntime` log lines contain no crash. No game is open, and this does not validate Pokémon Y/Ultra Moon runtime behavior.
+- The Android emulator is awake but has no resumed PokeDaisy app process. The separate Docker-backed headless Ultra Moon process was found later and remains isolated from the Android emulator.
+- Pokémon Y's established isolated in-game save at `work/y-headless-input-matrix/userdir/.../main` remains SHA-256 `9B68354BD2527AF3D2EBC852E085D0366C732A8ED21FCFF5606B24FA4A9EE100`. The separate recent A/B probe clone at `work/y-runtime-companion-capture/userdir/.../main` remains `0D1D76657703452704D84BE800762F7D9522A43F610B02C691182D7F411D95F2`. Both were untouched; no further test should substitute one for the other.
+- Ultra Moon setup and field-idle module evidence is available, but the published candidate menu/battle/party addresses remain unverified. Do not enable those mappings until the isolated gameplay sample validates structure/checksums and repeats.
+
+## Immediate next steps
+
+1. Keep the Y screen policy unchanged; the CROs and black raw frames still do not prove lower-screen or touch semantics. Resume gameplay only from a verified safe event/checkpoint, without repeating the established A/B pulses.
+2. For Ultra Moon, do not guess physical buttons for GFL trigger IDs 16/32. Seek a trustworthy labeled mapping or wait for a naturally reached gameplay checkpoint where a known control can be tested on the isolated clone.
+3. Implement title-state/Companion mappings only after repeated structure/checksum validation. Add focused regression tests, all-language strings, and manual updates with any visible feature change.
+4. When a code change is ready, reserve the root Gradle output directory, build, and install with `adb install -r` only when the S25 is awake/appropriate. No upstream PR without explicit approval.
+
+---
 # Coordination update (2026-11-24 01:43 CET)
 
 - **Lead — root:** statically extracted Pokémon Y's `DllFieldDemo.cro` to ignored `work/`; it exports `nnroControlObject_` and the shared background callback, and imports `DllSequence`. No runtime/game input was used for this extraction.
