@@ -46,9 +46,10 @@ folded into the older matrix.
 
 The pinned Azahar source has been inspected at commit `219d743a1e698101fe1ab8bef43e6563126c3c27`. The concrete
 cpp-httplib notice gap was fixed: its MIT text is now in `NOTICE` and the optional Android license asset, and the
-packaged APK was checked for both the component heading and full license text on 2026-11-24. Remaining questions
-include GLAD's generated output, generated system archive data, mixed GPL headers, and runtime changes in PokeDaisy's
-patch. The detailed source paths, build references, and unresolved obligations are recorded in
+packaged APK was checked for both the component heading and full license text on 2026-11-24. The separate Khronos
+`khrplatform.h` permission notice is also included in the optional asset and verified in the rebuilt APK; GLAD's
+generated-loader terms remain unresolved. Other questions include generated system archive data, mixed GPL headers,
+and runtime changes in PokeDaisy's patch. The detailed source paths, build references, and unresolved obligations are recorded in
 [the Azahar Android license audit](3DS_AZAHAR_LICENSE_AUDIT.md). This work does not establish that an APK containing
 the optional Azahar core is redistributable or PR-ready.
 
@@ -65,7 +66,7 @@ This remains an incomplete upstream/readiness review. On 2026-11-24, the focused
 `Gen6Test.standaloneTouchOnlyPagesRequestTheSecondScreen` and
 `DsStagePolicyTest.standaloneTouchPagesStayVisibleAcrossEveryChosenLayout` passed; the manual/docsearch suite passed
 9 tests; and `:app:assembleDev` succeeded with `pokedaisy.n3ds=true`. The generated `assets/licenses.txt` in that APK
-contains cpp-httplib's complete MIT text. The installed Dev APK started into `LibraryActivity` on an S25 via the
-existing installation; no 3DS ROM was launched on-device in that check. Y gameplay testing continues in a disposable
+contains the cpp-httplib MIT text and the separate Khronos khrplatform permission notice. The installed Dev APK started
+into `LibraryActivity` on an S25 via the existing installation; no 3DS ROM was launched on-device in that check. Y gameplay testing continues in a disposable
 headless profile. Ultra Moon gameplay mapping and direct S25 game validation remain incomplete, and the unresolved
 license/provenance questions above prevent a claim of PR or distribution readiness.
