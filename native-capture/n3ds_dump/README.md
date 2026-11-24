@@ -58,9 +58,10 @@ unchanged.
 `N3DS_TOUCH_TRACE=1` adds lines to each `touch` command with the supplied bottom-local coordinates, current
 `bottom_screen` bounds, mapped framebuffer coordinate, and whether `TouchPressed` accepted that coordinate. It also
 prints the registered `emu_window` touch-device's normalized position and pressed state after the press, after the
-requested frames, and after release. This distinguishes an in-bounds pointer from the state delivered by the input
-device. The trace does not change touch duration or release behavior. The frame-neutral `touchmap X Y` command prints
-the bounds and mapping without injecting touch or advancing emulation; use it to verify a target point before issuing
+requested frames, and after release. It also reads the latest HID shared-memory touch-ring entry, including its index,
+pixel coordinates, and valid bit. This distinguishes an in-bounds pointer from the state delivered to the emulated
+game. The trace does not change touch duration or release behavior. The frame-neutral `touchmap X Y` command prints the
+bounds and mapping without injecting touch or advancing emulation; use it to verify a target point before issuing
 `touch`.
 
 On Windows, `scripts/run_n3ds_dump_bounded.ps1` runs the harness under an external wall-clock deadline, records tagged

@@ -129,6 +129,26 @@ void printTouchDeviceStatus(const char* phase, const Input::TouchDevice& device)
                 pressed ? "yes" : "no");
 }
 
+std::shared_ptr<Kernel::Process> process();
+
+void printHidTouchStatus(Memory::MemorySystem& mem, const char* phase) {
+    constexpr u32 HID_SHARED_MEMORY = 0x10000000;
+    constexpr u32 TOUCH_INDEX_OFFSET = 0xB8;
+    constexpr u32 TOUCH_ENTRIES_OFFSET = 0xC8;
+    constexpr u32 TOUCH_ENTRY_SIZE = 8;
+    auto proc = process();
+    if (!proc || !mem.IsValidVirtualAddress(*proc, HID_SHARED_MEMORY + 0x100)) {
+        std::printf("hid touch %s unavailable\n", phase);
+        return;
+    }
+    const u32 index = mem.Read32(*proc, HID_SHARED_MEMORY + TOUCH_INDEX_OFFSET) % 8;
+    const u32 entry = HID_SHARED_MEMORY + TOUCH_ENTRIES_OFFSET + index * TOUCH_ENTRY_SIZE;
+    const u16 x = mem.Read16(*proc, entry);
+    const u16 y = mem.Read16(*proc, entry + 2);
+    const u32 valid = mem.Read32(*proc, entry + 4) & 0x7F;
+    std::printf("hid touch %s index=%u x=%u y=%u valid=%u\n", phase, index, x, y, valid);
+}
+
 void runFrames(u64 n, bool reportProgress = false, bool singleStep = false) {
     auto& system = Core::System::GetInstance();
     const u64 target = window->frames + n;
@@ -433,10 +453,16 @@ int main(int argc, char** argv) {
                 std::fflush(stdout);
             }
             runFrames(a.size() > 2 ? number(a[2]) : 2);
-            if (touchTrace) printTouchDeviceStatus("after-frames", *touchDevice);
+            if (touchTrace) {
+                printTouchDeviceStatus("after-frames", *touchDevice);
+                printHidTouchStatus(mem, "after-frames");
+            }
             emuWindow.TouchReleased();
             runFrames(1);
-            if (touchTrace) printTouchDeviceStatus("after-release", *touchDevice);
+            if (touchTrace) {
+                printTouchDeviceStatus("after-release", *touchDevice);
+                printHidTouchStatus(mem, "after-release");
+            }
         } else if (cmd == "touchmap") {
             const u32 localX = number(a.at(0)), localY = number(a.at(1));
             printTouchMapping("touchmap", localX, localY, mapTouch(emuWindow, localX, localY));
