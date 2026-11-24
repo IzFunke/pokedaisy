@@ -461,3 +461,10 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - **Android Y-Absturz:** aktueller Dev-APK startet auf dem S25 bis zur Bibliothek (LibraryActivity, kalt, 882 ms); kein `FATAL EXCEPTION` im letzten Logfenster. Ein separater Diagnose-Worktree wertet vorhandene Crash-Evidenz aus, ohne ROM/Appdaten auf dem Gerät anzurühren.
 - **License:** cpp-httplib MIT notice wurde in generiertes Lizenzasset und APK verifiziert und gepusht. Nächster read-only Audit befasst sich ausschließlich mit offizieller GLAD-Lizenz/Generierungsprovenienz.
 - **Ultra Moon:** Null-Frame read-only capture commands sind geprüft, aber Ausführung wartet auf den zuvor benutzten ROM-Pfad; kein globaler PC-Scan und kein checkpoint load.
+
+## Headless Touch-Diagnoseinstrumentierung (2026-11-24)
+
+- `n3ds_dump` hat jetzt optionales `N3DS_TOUCH_TRACE=1` (bottom screen rect, lokale Koordinate, tatsächlich gemappte Framebufferkoordinate, `TouchPressed` accepted/rejected) und frame-neutrales `touchmap X Y`. Die bestehende Touch-Dauer und Release-Reihenfolge bleiben gleich. Änderung `447f3eab` ist gepusht.
+- **Validierung:** `git diff --check` sauber; fokussierter statischer Check bestätigte, dass `touchmap` weder `RunLoop`, `runFrames`, noch Touch-/Key-Injection aufruft und dass Trace am echten `TouchPressed`-Ergebnis hängt. C++-Compile ist in der Windows-Umgebung nicht verfügbar: kein Host-C++-Compiler, Azahar im dedizierten Worktree nicht initialisiert; daher nicht als kompiliert behaupten.
+- **Pokémon Y:** Name-Eingabe bleibt bei Frame4666 in `DllIntro DllStrInput`; geschätzte Touch-/Dpad-Eingaben bewegen Fokus nicht konsistent. Keine Bestätigung, keine weitere Eingabe. Der Harness muss erst mit der neuen Instrumentierung gebaut und mit `touchmap` kalibriert werden.
+- **S25:** letzter read-only Vordergrundstatus war YouTube. Der aktuelle APK mit Khronos-Notice wurde lokal gebaut, seine Lizenzliste im APK verifiziert; Update auf dem Gerät wartet, bis es nicht störend ist.
