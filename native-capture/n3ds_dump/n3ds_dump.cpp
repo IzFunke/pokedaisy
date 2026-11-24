@@ -22,6 +22,7 @@
 #include "common/settings.h"
 #include "core/core.h"
 #include "core/frontend/emu_window.h"
+#include "core/frontend/input.h"
 #include "core/hle/kernel/kernel.h"
 #include "core/hle/kernel/process.h"
 #include "core/hle/kernel/vm_manager.h"
@@ -120,6 +121,12 @@ void printTouchMapping(const char* command, u32 local_x, u32 local_y, const Touc
     std::printf("%s local=(%u,%u) bottom_screen=(%u,%u)-(%u,%u) framebuffer=(%u,%u)\n", command,
                 local_x, local_y, mapping.left, mapping.top, mapping.right, mapping.bottom,
                 mapping.framebuffer_x, mapping.framebuffer_y);
+}
+
+void printTouchDeviceStatus(const char* phase, const Input::TouchDevice& device) {
+    const auto [x, y, pressed] = device.GetStatus();
+    std::printf("touch device %s normalized=(%.4f,%.4f) pressed=%s\n", phase, x, y,
+                pressed ? "yes" : "no");
 }
 
 void runFrames(u64 n, bool reportProgress = false, bool singleStep = false) {
@@ -359,6 +366,9 @@ int main(int argc, char** argv) {
     singleStepRunLoop = stepRunLoopEnv && std::strcmp(stepRunLoopEnv, "1") == 0;
     const char* touchTraceEnv = std::getenv("N3DS_TOUCH_TRACE");
     const bool touchTrace = touchTraceEnv && std::strcmp(touchTraceEnv, "1") == 0;
+    std::unique_ptr<Input::TouchDevice> touchDevice;
+    if (touchTrace)
+        touchDevice = Input::CreateDevice<Input::TouchDevice>(Settings::values.current_input_profile.touch_device);
 
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -419,11 +429,14 @@ int main(int argc, char** argv) {
             if (touchTrace) {
                 printTouchMapping("touch", localX, localY, mapping);
                 std::printf("touch accepted=%s\n", accepted ? "yes" : "no");
+                printTouchDeviceStatus("after-press", *touchDevice);
                 std::fflush(stdout);
             }
             runFrames(a.size() > 2 ? number(a[2]) : 2);
+            if (touchTrace) printTouchDeviceStatus("after-frames", *touchDevice);
             emuWindow.TouchReleased();
             runFrames(1);
+            if (touchTrace) printTouchDeviceStatus("after-release", *touchDevice);
         } else if (cmd == "touchmap") {
             const u32 localX = number(a.at(0)), localY = number(a.at(1));
             printTouchMapping("touchmap", localX, localY, mapTouch(emuWindow, localX, localY));

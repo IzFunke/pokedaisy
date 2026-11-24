@@ -506,3 +506,18 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 - Frame-neutrale Probe mit read-only Pokémon-Y-ROM und neuem Throwaway-Userdir `work/touchtrace-map-scratch`: `touchmap 160 120` meldete `bottom_screen=(40,240)-(360,480) framebuffer=(200,360)`; danach `frames 0`. Keine Touch-/Key-Eingabe, kein Frame und kein bestehender Save/State geladen.
 - Der Probe-Harness bestätigt die allgemeine 3DS-Koordinatenabbildung. Die konkrete Y-Namenseingabe ist noch nicht verifiziert, weil kein aktueller, sicherer Name-Screen-Checkpoint vorliegt.
 - Der neue Build und Throwaway-Userdir bleiben private Artefakte unter `work/`; nicht committen oder löschen.
+
+## Pokémon-Y-Namenscreen: Savestate und tatsächlicher Touch-Status (2026-11-24)
+
+- Den laufenden isolierten Y-Prozess per `savestate` bei `frames=4673`, Modulen `DllIntro DllStrInput` gesichert: `work/y-runtime-name-current.state`, SHA-256 `E8A4C8D9DA155A63A5E5152CC5CE1BA9664B86E1A707C17711A30DCA1163CC6D`. Der Originalprozess blieb mit seinem ursprünglichen Binary aktiv.
+- Eine separate Kopie des Wegwerf-Userdirs lädt den Checkpoint; Original-`main` und Kopie hatten vor der Probe denselben SHA-256 `1467BB75689DF04B17D7B19BAAC11AE387C9B99E81B4D8B46B74A0D6EF2EB9C0`. Sämtliche Eingaben liefen ausschließlich auf der Kopie.
+- `n3ds_dump.cpp`/README erweitern `N3DS_TOUCH_TRACE=1` jetzt zusätzlich um den Status des registrierten `emu_window`-Touch-Geräts. Der isolierte Trace meldet für den sichtbaren Backspace-Treffer local `(264,110)` -> framebuffer `(304,350)` den normalisierten Touch `(0.8250,0.4583)`, `pressed=yes` nach Press und Frames, `pressed=no` nach Release. Der HID-Input-Gerätepfad erhält also den erwarteten Touchzustand.
+- Trotzdem änderten zwei kurze Backspace-Taps, ein 10-Frame-Tap, der B-Tastentreffer `(144,181)`, A, D-pad RIGHT und circle-pad LEFT den sichtbaren `N N|`-Text nicht. Keine Taste wurde bestätigt. Der S25 wurde nicht zum Spielstart benutzt. Keine weiteren gleichartigen Tastaturproben, bis eine neue Methode konkrete Evidenz liefert.
+- Der Zusatzharness wurde inkrementell im getrennten Buildverzeichnis erfolgreich gebaut (2/2); nur bereits bekannte GCC/Azahar-Warnungen. Der Benutzername `Beben` ist weiterhin nicht eingegeben, und ein In-Game-Speicherstand ist noch nicht erstellt.
+- **Nächster Schritt:** die tatsächlichen HID-Shared-Memory-Touchwerte bzw. die Y-Tastatursteuerung im Namenbildschirm untersuchen. Den gespeicherten Checkpoint und die isolierte Userdir-Kopie wiederverwenden; nicht vom Anfang beginnen und den Original-Userdir nicht verändern.
+
+## Touch-Gerätestatus-Diagnose (2026-11-24)
+
+- `N3DS_TOUCH_TRACE=1` zeigt nach dem neuen Harness-Commit auch den registrierten `emu_window`-Touchgeräte-Status. Bei einer isolierten B-Tastenposition bestätigte der Lauf nach Checkpoint-Laden: `accepted=yes`, normalisiert `(0.4500,0.7542) pressed=yes` direkt nach Press und nach 2 Frames, nach Release `(0.0000,0.0000) pressed=no`. Die Touchdauer und Release-Logik blieben unverändert.
+- Der Zusatz wurde zweimal inkrementell erfolgreich kompiliert (2/2). Ein Runtime-Probe-Lauf mit der finalen Bedingung für `N3DS_TOUCH_TRACE` gab die erwarteten Statuswerte aus. Standardläufe erzeugen kein zusätzliches Touchgerät.
+- Ergebnis: Pixelabbildung und registriertes Touch-Input-Gerät liefern den gewünschten Wert; dennoch reagiert die Y-Namenseingabe nicht sichtbar. Die nächste Diagnose muss HID-Shared-Memory bzw. die spielinterne Eingabeverarbeitung prüfen, nicht weitere gleiche Touchpunkte ausprobieren.
