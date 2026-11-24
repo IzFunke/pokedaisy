@@ -11,9 +11,9 @@ SHELL := /bin/bash
 # Keep Make targets on the matching launcher. In Windows shells, call the
 # batch wrapper through cmd.exe; never execute the extensionless POSIX script.
 ifeq ($(OS),Windows_NT)
-GRADLEW ?= cmd.exe /d /c '.\gradlew.bat'
+GRADLEW := cmd.exe /d /c '.\gradlew.bat'
 else
-GRADLEW ?= ./gradlew
+GRADLEW := ./gradlew
 endif
 
 PKG           := com.pokedaisy.app
