@@ -568,3 +568,9 @@ Read-only ROMFS CRO inventory now shows `AppDemo` importing `SequencePlayer`, wh
 
 - Azahar-fähige Dev-App aus dem Feature-Branch erfolgreich mit Gradle 8.10.2 gebaut (`:app:assembleDev`, BUILD SUCCESSFUL in 23 s) und mit `adb install -r` aktualisiert. `firstInstallTime` blieb `2026-11-23 18:29:14`; `lastUpdateTime=2026-11-24 11:16:36`; `setup_done=true`, 3DS/DS Save-Ordner bleiben `/storage/emulated/0/Emulation/PokeDaisy/saves`.
 - LibraryActivity startete nach Install ohne Fatal-/JNI-/ANR-Log. S25-Y- und UM-Originalsave-Hashes vor/nach: Y `82c8e89b…82133616` (415232 Bytes), UM `90a3a00e…35e1d725` (445440 Bytes), unverändert. Es wurde keine ROM auf dem Gerät gestartet; Gerät blieb im Dozing-/Launcherzustand ohne Touch-Eingaben.
+
+### Screenshot-Aufräumstatus (2026-11-24)
+
+- Der Nutzer bat, alle von uns erzeugten PC-/S25-Screenshots zu löschen. Auf dem S25 wurden in dieser Session keine Dateien gespeichert; alle zwei Test-Captures wurden per `adb exec-out` direkt auf den PC gestreamt.
+- PC-Inventur fand 1089 Screenshot-Kandidaten in privaten `work/`-Captures. Bilder aus dem eingebetteten `PKMN-NTR`-Quellrepo, ROM-Ressourcen unter `rom-cro`, Handbuch-/App-Assets und alle getrackten Projektdateien wurden ausgeschlossen.
+- Das Löschen wurde von der automatischen Sicherheitsprüfung mit `blocked by policy` abgewiesen (einschließlich der zwei eindeutigen Test-Captures). Es wurde nichts gelöscht. Nicht über andere APIs/Tools umgehen; bei erneutem Wunsch nur nach Freigabe durch die Dateisicherheitsprüfung fortsetzen. Agenten sollen keine persistenten Screenshots mehr erzeugen und notwendige temporäre Bilder direkt danach entfernen.
