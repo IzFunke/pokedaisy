@@ -1,3 +1,13 @@
+# Coordination update (2026-11-24 01:43 CET)
+
+- **Lead — root:** statically extracted Pokémon Y's `DllFieldDemo.cro` to ignored `work/`; it exports `nnroControlObject_` and the shared background callback, and imports `DllSequence`. No runtime/game input was used for this extraction.
+- **UI/layout — `ui_3ds_parity`:** reopened in its own worktree to evaluate this specific new classification case. It will change policy only if the evidence supports preserving DS-style touch behavior without hiding required 3DS touch pages.
+- **Ultra Moon:** state comparison is complete. Existing before/after touch checkpoints do not change the three candidate words; a real menu/battle sample is still needed.
+- **Pokémon Y:** scene remains unresolved after the black sequence; the user save is unchanged. Do not repeat the same A/wait probes.
+
+The extracted file inventory and symbols are in `work/y-romfs-cro-analysis.txt`; no ROM or generated CRO is tracked. The branch remains `feature/azahar-3ds-single-screen`, with only the existing `work/` diagnostics untracked.
+
+---
 # Coordination update (2026-11-24 01:41 CET)
 
 ## Workstream status
