@@ -250,7 +250,7 @@ val licensesAsset by tasks.registering {
         "LibreSSL (Azahar) - ISC and original OpenSSL notices" to "third_party/azahar/externals/libressl/COPYING",
         "lodepng (Azahar) - zlib license" to "third_party/azahar/externals/lodepng/lodepng/LICENSE",
         "cpp-httplib 0.14.0 (Azahar) - MIT" to "third_party/licenses/cpp-httplib-MIT.txt",
-        "FAAD2 (Azahar) - GPL v2" to "third_party/azahar/externals/faad2/faad2/COPYING",
+        "FAAD2 (Azahar) - GNU GPL v2 or later" to "third_party/azahar/externals/faad2/faad2/COPYING",
         "SoundTouch (Azahar) - GNU LGPL v2.1" to "third_party/azahar/externals/soundtouch/COPYING.TXT",
         "Teakra (Azahar) - MIT" to "third_party/azahar/externals/teakra/LICENSE",
         "cubeb (Azahar) - ISC-style license" to "third_party/azahar/externals/cubeb/LICENSE",
